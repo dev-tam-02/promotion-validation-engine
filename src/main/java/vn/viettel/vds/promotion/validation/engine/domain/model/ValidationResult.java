@@ -1,0 +1,70 @@
+package vn.viettel.vds.promotion.validation.engine.domain.model;
+
+import java.util.List;
+
+public class ValidationResult {
+    private boolean matched;
+    private String message;
+    private String candidateId;
+
+    // Additional fields for rule execution
+    private Boolean ok;
+    private String decision;
+    private List<String> reasonCodes;
+
+    public ValidationResult() {
+    }
+
+    public ValidationResult(boolean matched, String message) {
+        this.matched = matched;
+        this.message = message;
+    }
+
+    public boolean isMatched() {
+        return matched;
+    }
+
+    public void setMatched(boolean matched) {
+        this.matched = matched;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getCandidateId() {
+        return candidateId;
+    }
+
+    public void setCandidateId(String candidateId) {
+        this.candidateId = candidateId;
+    }
+
+    public Boolean getOk() {
+        return ok;
+    }
+
+    public void setOk(Boolean ok) {
+        this.ok = ok;
+    }
+
+    public String getDecision() {
+        return decision;
+    }
+
+    public void setDecision(String decision) {
+        this.decision = decision;
+    }
+
+    public List<String> getReasonCodes() {
+        return reasonCodes;
+    }
+
+    public void setReasonCodes(List<String> reasonCodes) {
+        this.reasonCodes = reasonCodes;
+    }
+}

@@ -1,0 +1,53 @@
+package vn.viettel.validation.rules.tier
+
+import vn.viettel.vds.promotion.validation.engine.domain.model.*
+
+global Candidate candidate
+
+rule "Tier - Free Shipping Minimum"
+agenda-group "tier-validation"
+when
+    $customer : Customer()
+    $order : Order(totalAmount >= 500000)
+    $result : ValidationResult()
+    eval(candidate.isTier() && "free_ship_tier".equals(candidate.getId()))
+then
+    $result.setMatched(true);
+    $result.setMessage("Free shipping tier validation passed");
+end
+
+rule "Tier - Free Shipping Insufficient Amount"
+agenda-group "tier-validation"
+when
+    $customer : Customer()
+    $order : Order(totalAmount < 500000)
+    $result : ValidationResult()
+    eval(candidate.isTier() && "free_ship_tier".equals(candidate.getId()))
+then
+    $result.setMatched(false);
+    $result.setMessage("Minimum order 500,000 VND required for free shipping");
+end
+
+rule "Tier - Premium Tier Validation"
+agenda-group "tier-validation"
+when
+    $customer : Customer(segments contains "PREMIUM")
+    $order : Order(totalAmount >= 200000)
+    $result : ValidationResult()
+    eval(candidate.isTier() && "premium_tier".equals(candidate.getId()))
+then
+    $result.setMatched(true);
+    $result.setMessage("Premium tier validation passed");
+end
+
+rule "Tier - Category Restriction"
+agenda-group "tier-validation"
+when
+    $customer : Customer()
+    $order : Order(hasNoItemInCategory("electronics"))
+    $result : ValidationResult()
+    eval(candidate.isTier() && "electronics_tier".equals(candidate.getId()))
+then
+    $result.setMatched(false);
+    $result.setMessage("This tier requires at least one electronics item");
+end

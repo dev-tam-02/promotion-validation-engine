@@ -1,0 +1,41 @@
+package vn.viettel.validation.rules.loyalty
+
+import vn.viettel.vds.promotion.validation.engine.domain.model.*
+
+global Candidate candidate
+
+rule "Loyalty - Points Redemption"
+agenda-group "loyalty-validation"
+when
+    $customer : Customer(loyaltyTier in ("GOLD", "PLATINUM"))
+    $order : Order(totalAmount >= 100000)
+    $result : ValidationResult()
+    eval(candidate.isLoyalty())
+then
+    $result.setMatched(true);
+    $result.setMessage("Loyalty points redemption validation passed");
+end
+
+rule "Loyalty - Insufficient Tier"
+agenda-group "loyalty-validation"
+when
+    $customer : Customer(loyaltyTier not in ("GOLD", "PLATINUM"))
+    $order : Order()
+    $result : ValidationResult()
+    eval(candidate.isLoyalty())
+then
+    $result.setMatched(false);
+    $result.setMessage("Loyalty tier must be GOLD or PLATINUM for redemption");
+end
+
+rule "Loyalty - Weekend Bonus"
+agenda-group "loyalty-validation"
+when
+    $customer : Customer(loyaltyTier == "PLATINUM")
+    $order : Order(totalAmount >= 50000)
+    $result : ValidationResult()
+    eval(candidate.isLoyalty() && "weekend_bonus".equals(candidate.getCode()))
+then
+    $result.setMatched(true);
+    $result.setMessage("Weekend loyalty bonus validation passed");
+end

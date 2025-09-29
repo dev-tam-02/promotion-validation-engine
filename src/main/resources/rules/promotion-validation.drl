@@ -1,0 +1,26 @@
+package rules;
+
+import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
+import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
+import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;
+import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
+
+rule "Complex Customer Rule"
+when
+    $customer : Customer(
+        segment in ("SEG001", "Tạo muộn"),
+        redemptionsPerDay >= 2,
+        redeemingCodeHolder == true,
+        ( totalDiscountedAmount >= 2.00 || redemptionsPerIncentive >= 32 )
+    )
+    $order : Order()
+    exists( OrderItem(
+        productName == "Kenya - Espresso",
+        sku == "500g",
+        ruleCode == "Sản phẩm để set rule 01"
+    ) from $order.getItems() )
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Complex Customer Rule matched");
+end

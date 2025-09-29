@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.promix.platform</groupId>
+        <artifactId>promix-starter-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath/>
+    </parent>
+
+    <artifactId>validation-engine</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>validation-engine</name>
+    <description>validation-engine</description>
+
+    <properties>
+        <drools.version>10.1.0</drools.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-web-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-error-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-validation-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-cache-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-observer-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-data-mongo-spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.mongock</groupId>
+                    <artifactId>mongock-springboot</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-data-jpa-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-resilience-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.promix.platform</groupId>
+            <artifactId>promix-discovery-eureka-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- Drools / KIE -->
+        <dependency>
+            <groupId>org.kie</groupId>
+            <artifactId>kie-api</artifactId>
+            <version>${drools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-core</artifactId>
+            <version>${drools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-compiler</artifactId>
+            <version>${drools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-mvel</artifactId>
+            <version>${drools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-xml-support</artifactId>
+            <version>${drools.version}</version>
+        </dependency>
+
+        <!-- H2 Database for JPA -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Mongock for database migrations -->
+        <dependency>
+            <groupId>io.mongock</groupId>
+            <artifactId>mongock-springboot-v3</artifactId>
+            <version>5.4.4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mongock</groupId>
+            <artifactId>mongodb-springdata-v4-driver</artifactId>
+            <version>5.4.4</version>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.promix.platform</groupId>
+                <artifactId>promix-bom</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Override versions to resolve upper bound dependency conflicts -->
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.40.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>4.13.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mongock</groupId>
+                <artifactId>mongock-utils</artifactId>
+                <version>5.4.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

@@ -1,0 +1,356 @@
+# Validation Engine Service Configuration
+# Comprehensive configuration for all Promix custom starters
+
+spring:
+  application:
+    name: rule-engine
+
+  # MongoDB Configuration (Data Mongo Starter)
+  data:
+    mongodb:
+      database: rule_engine
+      host: promixhub.com
+      port: 27017
+      username: root
+      password: 123123a@
+      authentication-database: admin
+
+      # Connection pool settings
+      options:
+        min-connections-per-host: 2
+        max-connections-per-host: 10
+        threads-allowed-to-block-for-connection-multiplier: 5
+        max-wait-time: 120000
+        max-connection-idle-time: 600000
+        max-connection-life-time: 1800000
+        connect-timeout: 10000
+        socket-timeout: 0
+
+      # SSL/TLS Configuration
+      ssl:
+        enabled: false
+        invalid-host-name-allowed: false
+
+      # Replica Set Configuration
+      replica-set-name:
+
+      # Write Concern Configuration
+      write-concern:
+        w: 1
+        w-timeout: 10000
+        j: true
+      # Read Preference Configuration
+      read-preference: primary
+
+  # Messages Configuration for Error Message Fallbacks
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+    cache-duration: PT10M  # Cache for 10 minutes
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+# Promix Platform Configuration
+promix:
+  # Web Starter Configuration
+  web:
+    response-template-enabled: true
+    request-trimming-enabled: true
+    exception-handling-enabled: true
+    response-template:
+      include-metadata: false
+      include-tracing: false
+
+  # Error Starter Configuration (Updated for new promix-error starter)
+  error:
+    mode: hybrid  # api, bundle, hybrid (updated default to hybrid)
+    fallback-to-bundle: true
+
+    # Dynamic refresh configuration (updated structure)
+    refresh:
+      rate: 3600000  # Refresh rate in milliseconds (1 hour)
+
+    # API-based message source configuration (updated structure)
+    api:
+      enabled: false  # Changed default to true for hybrid mode
+      base-url: http://error  # Updated default base URL
+      fetch-path: /api/v1/message-source/fetch  # Updated default path
+      connect-timeout-ms: 2000
+      read-timeout-ms: 3000
+
+  # Validation Starter Configuration
+  validation:
+    enabled: true
+    fail-fast: false
+    groups-enabled: true
+    locale-enabled: true
+
+  # Data MongoDB Starter Configuration
+  data:
+    mongodb:
+      enabled: true
+      repository-scan-enabled: true
+      audit:
+        enabled: true
+        date-time-provider: system
+      field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
+      auto-index-creation: true
+
+      # GridFS Configuration
+      gridfs:
+        database: rule-engine-files
+        bucket: fs
+
+      # Transaction Configuration
+      transaction:
+        default-timeout: 30
+        rollback-on-commit-failure: true
+
+  # Resilience Starter Configuration
+  resilience:
+    enabled: true
+    circuit-breaker:
+      enabled: true
+      default-config:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 60000
+        permitted-number-of-calls-in-half-open-state: 3
+        minimum-number-of-calls: 10
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        wait-duration-in-open-state: 60000
+        automatic-transition-from-open-to-half-open-enabled: true
+    retry:
+      enabled: true
+      default-config:
+        max-attempts: 3
+        wait-duration: 500
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    rate-limiter:
+      enabled: false
+      default-config:
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0
+    bulkhead:
+      enabled: false
+      default-config:
+        max-concurrent-calls: 25
+        max-wait-duration: 0
+    time-limiter:
+      enabled: false
+      default-config:
+        timeout-duration: 1s
+        cancel-running-future: true
+
+  # Messaging Starter Configuration
+  messaging:
+    enabled: true
+    kafka:
+      bootstrap-servers:
+        - kafka-1:9092
+        - kafka-2:9093
+        - kafka-3:9094
+      client-id: rule-engine
+      enable-avro: false
+
+      # Producer Configuration
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+        acks: all
+        retries: 5
+        batch-size: 16384
+        linger: 10
+        compression-type: snappy
+        buffer-memory: 33554432
+        enable-idempotence: true
+        max-in-flight: 5
+        request-timeout: 30000
+        delivery-timeout: 120000
+        retry-backoff: 100
+        transaction-id-prefix: rule-engine-tx
+        use-avro: false
+
+      # Consumer Configuration
+      consumer:
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        group-id: rule-engine-group
+        auto-offset-reset: earliest
+        enable-auto-commit: false
+        max-poll: 500
+        max-poll-interval: 300000
+        fetch-min-bytes: 1
+        fetch-max-bytes: 52428800
+        fetch-max-wait: 500
+        isolation-level: read_committed
+        concurrency: 3
+        batch-listener: true
+        ack-mode: MANUAL_IMMEDIATE
+        session-timeout: 30000
+        heartbeat-interval: 10000
+        use-avro: false
+        specific-avro-reader: true
+
+        # Retry Configuration
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 1.5
+          max-interval: 5000
+
+        # Error Handling
+        error-handling:
+          enable-dlq: true
+          dlq-topic-suffix: .DLT
+          dlq-partitioning-enabled: false
+          max-failures: 3
+          include-headers: true
+
+      # Admin Configuration
+      admin:
+        operation-timeout: 60000
+        close-timeout: 30000
+        auto-create-topics: false
+        default-partitions: 3
+        default-replication-factor: 1
+
+      # Schema Registry (for Avro support)
+      schema-registry:
+        url: http://localhost:8081
+        auto-register-schemas: true
+        subject-name-strategy: io.confluent.kafka.serializers.subject.TopicNameStrategy
+        basic-auth-enabled: false
+        basic-auth-user-info:
+
+      # Tracing
+      tracing:
+        enabled: false
+        service-name: rule-engine
+        trace-id-header-enabled: true
+        span-id-header-enabled: true
+        baggage-header-enabled: false
+
+      # Topic Definitions
+      topics:
+        promotion-rule-engine-events: promotion_rule-engine_events
+        promotion-rule-engine-events-dlq: promotion_rule-engine_events_dlq
+        promotion-rule-engine-commands: promotion_rule-engine_commands
+        promotion-rule-engine-commands-dlq: promotion_rule-engine_commands_dlq
+  cache:
+    enabled: true
+    caffeine:
+      enabled: true
+      maximum-size: 1000
+      expire-after-write: 10m
+    redis:
+      enabled: true
+      prefix: "rule-engine-cache:"
+      default-ttl: 30m
+      timeout: 5s
+      cluster:
+        nodes:
+          - "node1:6379"
+          - "node2:6380"
+          - "node3:6381"
+        max-redirects: 5
+      lettuce:
+        pool:
+          max-active: 200
+          max-idle: 100
+          min-idle: 20
+          max-wait: 3s
+        cluster:
+          refresh-period: 30s
+          adaptive: true
+
+# Validation Engine Configuration
+validation:
+  engine:
+    session-pool:
+      enable-pooling: true
+      core-pool-size: 5
+      max-pool-size: 20
+      session-ttl-minutes: 60
+      idle-timeout-minutes: 30
+      cleanup-interval-minutes: 15
+      pre-warm-pool: true
+    compilation:
+      cache-enabled: true
+      cache-max-size: 100
+      cache-ttl-minutes: 120
+    bundle:
+      preload-enabled: true
+      preload-on-startup: false
+      preload-timeout-minutes: 10
+      prewarm-session-pool: true
+      prewarm-session-count: 3
+      health-check-interval-seconds: 300
+    monitoring:
+      enabled: true
+      metrics-collection: true
+      cache-stats-enabled: true
+# Kafka Topic Configuration (Legacy property support)
+kafka:
+  topics:
+    promotion-rule-engine-events: promotion_rule-engine_events
+    promotion-rule-engine-events-dlq: promotion_rule-engine_events_dlq
+    promotion-rule-engine-commands: promotion_rule-engine_commands
+    promotion-rule-engine-commands-dlq: promotion_rule-engine_commands_dlq
+  consumer:
+    group-id: rule-engine-group
+
+# Server Configuration
+server:
+  port: 6013
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  compression:
+    enabled: true
+    mime-types:
+      - text/html
+      - text/plain
+      - text/css
+      - application/json
+      - application/xml
+    min-response-size: 1024
+  error:
+    include-stacktrace: never
+    include-message: always
+    include-binding-errors: always
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    diskspace:
+      enabled: true
+    db:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: rule-engine
+      environment: local

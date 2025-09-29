@@ -1,0 +1,98 @@
+# validation-engine Service Configuration
+
+spring:
+  application:
+    name: validation-engine
+
+  # MongoDB Configuration
+  data:
+    mongodb:
+      database: ${MONGO_DATABASE:rule_engine}
+      host: ${MONGO_HOST:mongodb}
+      port: ${MONGO_PORT:27017}
+      username: ${MONGO_USERNAME:root}
+      password: ${MONGO_PASSWORD:123123a@}
+      authentication-database: ${MONGO_AUTH_DB:admin}
+
+      # Connection pool settings
+      options:
+        min-connections-per-host: 2
+        max-connections-per-host: 10
+        threads-allowed-to-block-for-connection-multiplier: 5
+        max-wait-time: 120000
+        max-connection-idle-time: 600000
+        max-connection-life-time: 1800000
+        connect-timeout: 10000
+        socket-timeout: 0
+
+      # SSL/TLS Configuration
+      ssl:
+        enabled: false
+        invalid-host-name-allowed: false
+
+      # Write Concern Configuration
+      write-concern:
+        w: 1
+        w-timeout: 10000
+        j: true
+
+      # Read Preference Configuration
+      read-preference: primary
+
+# Server Configuration
+server:
+  port: 6013
+
+# Eureka Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-registry:8761/eureka
+
+# Promix Platform Configuration - Only essential overrides
+promix:
+  # MongoDB Configuration
+  data:
+    mongodb:
+      enabled: true
+      repository-scan-enabled: true
+      audit:
+        enabled: true
+        date-time-provider: system
+      field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
+      auto-index-creation: true
+
+      # GridFS Configuration for file storage
+      gridfs:
+        database: rule-engine-files
+        bucket: fs
+
+      # Transaction Configuration
+      transaction:
+        default-timeout: 30
+        rollback-on-commit-failure: true
+
+  # Kafka Configuration
+  messaging:
+    kafka:
+      bootstrap-servers:
+        - kafka-1:9092
+        - kafka-2:9093
+        - kafka-3:9094
+      client-id: validation-engine
+      consumer:
+        group-id: validation-engine-group
+
+  # Cache Configuration
+  cache:
+    redis:
+      enabled: true
+      prefix: "validation-engine-cache:"
+      default-ttl: 30m
+      cluster:
+        nodes:
+          - node1:6379
+          - node2:6380
+          - node3:6381
+
+# Note: Liquibase is not used with MongoDB - MongoDB handles schema evolution automatically

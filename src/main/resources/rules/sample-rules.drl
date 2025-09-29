@@ -1,0 +1,213 @@
+package rules;
+
+import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
+import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
+import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;
+import vn.viettel.vds.promotion.validation.engine.domain.model.Redemption;
+import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
+
+// Rule 1: Customer segment rule
+rule "Customer Segment Rule"
+when
+    $customer : Customer(segment in ("VIP", "GOLD"))
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer is in VIP or GOLD segment");
+end
+
+// Rule 2: Customer loyalty tier rule
+rule "Customer Loyalty Tier Rule"
+when
+    $customer : Customer(loyaltyTier == "PLATINUM")
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer is in PLATINUM loyalty tier");
+end
+
+// Rule 3: Redeeming code holder rule
+rule "Redeeming Code Holder Rule"
+when
+    $customer : Customer(redeemingCodeHolder == true)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer is a redeeming code holder");
+end
+
+// Rule 4: Any order item rule
+rule "Any Order Item Rule"
+when
+    $order : Order(hasAnyItemInCategory("COFFEE"))
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order has at least one coffee item");
+end
+
+// Rule 5: Every order item rule
+rule "Every Order Item Rule"
+when
+    $order : Order(hasEveryItemInCategory("COFFEE"))
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("All items in the order are coffee");
+end
+
+// Rule 6: None of the order items rule
+rule "None Of The Order Items Rule"
+when
+    $order : Order(hasNoItemInCategory("COFFEE"))
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order has no coffee items");
+end
+
+// Rule 7: Most expensive of the order items rule
+rule "Most Expensive Order Item Rule"
+when
+    $order : Order()
+    $item : OrderItem() from $order.getMostExpensiveItem()
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Most expensive item: " + $item.getProductName());
+end
+
+// Rule 8: Cheapest of the order items rule
+rule "Cheapest Order Item Rule"
+when
+    $order : Order()
+    $item : OrderItem() from $order.getCheapestItem()
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Cheapest item: " + $item.getProductName());
+end
+
+// Rule 9: Total amount rule
+rule "Total Amount Rule"
+when
+    $order : Order(totalAmount >= 100.0)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order total amount is at least $100");
+end
+
+// Rule 10: Initial amount rule
+rule "Initial Amount Rule"
+when
+    $order : Order(initialAmount >= 120.0)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order initial amount is at least $120");
+end
+
+// Rule 11: Items quantity rule
+rule "Items Quantity Rule"
+when
+    $order : Order(itemsQuantity >= 5)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order has at least 5 items");
+end
+
+// Rule 12: Price of each item rule
+rule "Price Of Each Item Rule"
+when
+    $order : Order()
+    not( OrderItem( price < 10.0 ) from $order.getItems() )
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("All items in the order cost at least $10");
+end
+
+// Rule 13: Price of any item rule
+rule "Price Of Any Item Rule"
+when
+    $order : Order()
+    exists( OrderItem( price >= 50.0 ) from $order.getItems() )
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("At least one item in the order costs at least $50");
+end
+
+// Rule 14: Total orders value rule
+rule "Total Orders Value Rule"
+when
+    $customer : Customer(totalOrdersValue >= 1000.0)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer's total orders value is at least $1000");
+end
+
+// Rule 15: Total discounted amount rule
+rule "Total Discounted Amount Rule"
+when
+    $customer : Customer(totalDiscountedAmount >= 200.0)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer's total discounted amount is at least $200");
+end
+
+// Rule 16: Redemptions per day rule
+rule "Redemptions Per Day Rule"
+when
+    $customer : Customer(redemptionsPerDay < 3)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer has less than 3 redemptions per day");
+end
+
+// Rule 17: Customer metadata rule
+rule "Customer Metadata Rule"
+when
+    $customer : Customer(getAcquisitionChannel() == "ONLINE")
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Customer was acquired online");
+end
+
+// Rule 18: Order metadata rule
+rule "Order Metadata Rule"
+when
+    $order : Order(getCurrency() == "USD")
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Order currency is USD");
+end
+
+// Rule 19: Redemption metadata rule
+rule "Redemption Metadata Rule"
+when
+    $redemption : Redemption(getLocationId() == "STORE_001")
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("Redemption location is STORE_001");
+end
+
+// Rule 20: Complex rule combining multiple conditions
+rule "Complex Rule"
+when
+    $customer : Customer(segment == "VIP", redemptionsPerDay < 3)
+    $order : Order(totalAmount >= 100.0)
+    $redemption : Redemption(redeemingCodeHolder == true)
+    $result : ValidationResult()
+then
+    $result.setMatched(true);
+    $result.setMessage("VIP customer with less than 3 redemptions per day, order total at least $100, and is a redeeming code holder");
+end
