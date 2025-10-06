@@ -41,7 +41,7 @@ spring:
 
 # Server Configuration
 server:
-  port: 6013
+  port: 16013
 
 # Eureka Configuration
 eureka:
