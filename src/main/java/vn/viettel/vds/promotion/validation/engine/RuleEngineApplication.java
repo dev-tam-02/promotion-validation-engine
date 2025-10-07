@@ -8,8 +8,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 public class RuleEngineApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RuleEngineApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RuleEngineApplication.class, args);
+    }
 
 }

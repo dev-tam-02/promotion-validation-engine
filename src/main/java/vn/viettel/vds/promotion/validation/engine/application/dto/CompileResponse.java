@@ -9,7 +9,8 @@ public class CompileResponse {
     private Long size;
     private List<String> logs;
 
-    public CompileResponse() {}
+    public CompileResponse() {
+    }
 
     public CompileResponse(String bundleHash, Engine engine, Long size, List<String> logs) {
         this.bundleHash = bundleHash;
@@ -56,7 +57,8 @@ public class CompileResponse {
         private String type;
         private String droolsVersion;
 
-        public Engine() {}
+        public Engine() {
+        }
 
         public Engine(String type, String droolsVersion) {
             this.type = type;

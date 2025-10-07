@@ -36,9 +36,9 @@ public class PerformanceMonitoringController {
     private final ExecutionMetricsService metricsService;
 
     public PerformanceMonitoringController(KieSessionManager sessionManager,
-                                         CachedCompilationService compilationService,
-                                         BundlePreloadService preloadService,
-                                         ExecutionMetricsService metricsService) {
+                                           CachedCompilationService compilationService,
+                                           BundlePreloadService preloadService,
+                                           ExecutionMetricsService metricsService) {
         this.sessionManager = sessionManager;
         this.compilationService = compilationService;
         this.preloadService = preloadService;
@@ -46,9 +46,9 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get performance overview",
-               description = "Get comprehensive performance metrics overview")
+            description = "Get comprehensive performance metrics overview")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Performance metrics retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Performance metrics retrieved successfully")
     })
     @GetMapping("/overview")
     public ResponseEntity<PerformanceOverview> getPerformanceOverview() {
@@ -70,11 +70,11 @@ public class PerformanceMonitoringController {
             ExecutionMetricsService.ExecutionStats executionStats = metricsService.getExecutionStats();
 
             PerformanceOverview overview = new PerformanceOverview(
-                sessionStats,
-                compilationStats,
-                bundleHealth,
-                executionStats,
-                Instant.now()
+                    sessionStats,
+                    compilationStats,
+                    bundleHealth,
+                    executionStats,
+                    Instant.now()
             );
 
             return ResponseEntity.ok(overview);
@@ -86,7 +86,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get session pool statistics",
-               description = "Get detailed statistics for KIE session pools")
+            description = "Get detailed statistics for KIE session pools")
     @GetMapping("/session-pools")
     public ResponseEntity<Map<String, KieSessionPool.PoolStatistics>> getSessionPoolStats() {
         logger.debug("Getting session pool statistics");
@@ -105,7 +105,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get session pool statistics for specific bundle",
-               description = "Get detailed statistics for a specific bundle's session pool")
+            description = "Get detailed statistics for a specific bundle's session pool")
     @GetMapping("/session-pools/{bundleHash}")
     public ResponseEntity<KieSessionPool.PoolStatistics> getSessionPoolStats(
             @Parameter(description = "Bundle hash") @PathVariable String bundleHash) {
@@ -128,7 +128,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get compilation cache statistics",
-               description = "Get detailed compilation cache performance metrics")
+            description = "Get detailed compilation cache performance metrics")
     @GetMapping("/compilation-cache")
     public ResponseEntity<CompilationCacheService.CompilationCacheStats> getCompilationCacheStats() {
         logger.debug("Getting compilation cache statistics");
@@ -144,10 +144,10 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Clear compilation cache",
-               description = "Clear all entries from the compilation cache")
+            description = "Clear all entries from the compilation cache")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Cache cleared successfully"),
-        @ApiResponse(responseCode = "500", description = "Failed to clear cache")
+            @ApiResponse(responseCode = "200", description = "Cache cleared successfully"),
+            @ApiResponse(responseCode = "500", description = "Failed to clear cache")
     })
     @PostMapping("/compilation-cache/clear")
     public ResponseEntity<Map<String, String>> clearCompilationCache() {
@@ -169,7 +169,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get bundle health status",
-               description = "Get health status of all active rule bundles")
+            description = "Get health status of all active rule bundles")
     @GetMapping("/bundle-health")
     public ResponseEntity<BundlePreloadService.BundleHealthStatus> getBundleHealth() {
         logger.debug("Getting bundle health status");
@@ -185,10 +185,10 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Preload active rules",
-               description = "Manually trigger preloading of all active rules")
+            description = "Manually trigger preloading of all active rules")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Preload completed"),
-        @ApiResponse(responseCode = "500", description = "Preload failed")
+            @ApiResponse(responseCode = "200", description = "Preload completed"),
+            @ApiResponse(responseCode = "500", description = "Preload failed")
     })
     @PostMapping("/preload/active")
     public ResponseEntity<BundlePreloadService.PreloadResult> preloadActiveRules() {
@@ -205,7 +205,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Preload specific rules",
-               description = "Manually trigger preloading of specific rules")
+            description = "Manually trigger preloading of specific rules")
     @PostMapping("/preload/specific")
     public ResponseEntity<BundlePreloadService.PreloadResult> preloadSpecificRules(
             @RequestBody List<String> ruleIds) {
@@ -223,7 +223,7 @@ public class PerformanceMonitoringController {
     }
 
     @Operation(summary = "Get execution metrics",
-               description = "Get detailed rule execution performance metrics")
+            description = "Get detailed rule execution performance metrics")
     @GetMapping("/execution-metrics")
     public ResponseEntity<ExecutionMetricsService.ExecutionStats> getExecutionMetrics() {
         logger.debug("Getting execution metrics");
@@ -247,10 +247,10 @@ public class PerformanceMonitoringController {
         private final Instant timestamp;
 
         public PerformanceOverview(Map<String, Object> sessionPoolStats,
-                                 CompilationCacheService.CompilationCacheStats compilationCacheStats,
-                                 BundlePreloadService.BundleHealthStatus bundleHealth,
-                                 ExecutionMetricsService.ExecutionStats executionStats,
-                                 Instant timestamp) {
+                                   CompilationCacheService.CompilationCacheStats compilationCacheStats,
+                                   BundlePreloadService.BundleHealthStatus bundleHealth,
+                                   ExecutionMetricsService.ExecutionStats executionStats,
+                                   Instant timestamp) {
             this.sessionPoolStats = sessionPoolStats;
             this.compilationCacheStats = compilationCacheStats;
             this.bundleHealth = bundleHealth;
@@ -259,10 +259,24 @@ public class PerformanceMonitoringController {
         }
 
         // Getters
-        public Map<String, Object> getSessionPoolStats() { return sessionPoolStats; }
-        public CompilationCacheService.CompilationCacheStats getCompilationCacheStats() { return compilationCacheStats; }
-        public BundlePreloadService.BundleHealthStatus getBundleHealth() { return bundleHealth; }
-        public ExecutionMetricsService.ExecutionStats getExecutionStats() { return executionStats; }
-        public Instant getTimestamp() { return timestamp; }
+        public Map<String, Object> getSessionPoolStats() {
+            return sessionPoolStats;
+        }
+
+        public CompilationCacheService.CompilationCacheStats getCompilationCacheStats() {
+            return compilationCacheStats;
+        }
+
+        public BundlePreloadService.BundleHealthStatus getBundleHealth() {
+            return bundleHealth;
+        }
+
+        public ExecutionMetricsService.ExecutionStats getExecutionStats() {
+            return executionStats;
+        }
+
+        public Instant getTimestamp() {
+            return timestamp;
+        }
     }
 }

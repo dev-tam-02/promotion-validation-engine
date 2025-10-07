@@ -31,10 +31,10 @@ public class OperatorDiscoveryController {
     }
 
     @Operation(summary = "Get all supported operators",
-               description = "Returns a list of all operators supported by the validation engine with their metadata")
+            description = "Returns a list of all operators supported by the validation engine with their metadata")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved supported operators"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved supported operators"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/supported")
     public ResponseEntity<List<SupportedOperatorResponse>> getSupportedOperators() {
@@ -53,10 +53,10 @@ public class OperatorDiscoveryController {
     }
 
     @Operation(summary = "Get supported operator names",
-               description = "Returns a simple list of supported operator names for quick reference")
+            description = "Returns a simple list of supported operator names for quick reference")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved operator names"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved operator names"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/supported/names")
     public ResponseEntity<List<String>> getSupportedOperatorNames() {
@@ -75,25 +75,25 @@ public class OperatorDiscoveryController {
     }
 
     @Operation(summary = "Validate operators support",
-               description = "Validates if given operators are supported by the validation engine")
+            description = "Validates if given operators are supported by the validation engine")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Validation completed"),
-        @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Validation completed"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/validate")
     public ResponseEntity<ValidateOperatorsResponse> validateOperators(
             @Valid @RequestBody ValidateOperatorsRequest request) {
 
         logger.info("POST /v1/operators/validate - Validating {} operators",
-                   request.getOperators().size());
+                request.getOperators().size());
 
         try {
             ValidateOperatorsResponse response = translatorDiscoveryService.validateOperators(request);
 
             logger.info("Validation completed: {} supported, {} unsupported",
-                       response.getSupportedOperators().size(),
-                       response.getUnsupportedOperators().size());
+                    response.getSupportedOperators().size(),
+                    response.getUnsupportedOperators().size());
 
             return ResponseEntity.ok(response);
 
@@ -104,10 +104,10 @@ public class OperatorDiscoveryController {
     }
 
     @Operation(summary = "Check if specific operator is supported",
-               description = "Checks if a specific operator name and version is supported")
+            description = "Checks if a specific operator name and version is supported")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Check completed"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Check completed"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/supported/{operatorName}")
     public ResponseEntity<Boolean> isOperatorSupported(
@@ -115,13 +115,13 @@ public class OperatorDiscoveryController {
             @Parameter(description = "Operator version (optional)") @RequestParam(required = false) Integer version) {
 
         logger.info("GET /v1/operators/supported/{} - Checking operator support (version: {})",
-                   operatorName, version);
+                operatorName, version);
 
         try {
             boolean supported = translatorDiscoveryService.isOperatorSupported(operatorName, version);
 
             logger.info("Operator {} version {} is {}", operatorName, version,
-                       supported ? "supported" : "not supported");
+                    supported ? "supported" : "not supported");
 
             return ResponseEntity.ok(supported);
 

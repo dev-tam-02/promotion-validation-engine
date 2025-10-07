@@ -17,10 +17,11 @@ public interface EventPublisherPort {
         private Integer assignmentVersion;
         private String bundleHash;
 
-        public BundlePublishedEvent() {}
+        public BundlePublishedEvent() {
+        }
 
         public BundlePublishedEvent(String tenantId, String ruleId, Integer ruleVersion,
-                                   Integer assignmentVersion, String bundleHash) {
+                                    Integer assignmentVersion, String bundleHash) {
             this.tenantId = tenantId;
             this.ruleId = ruleId;
             this.ruleVersion = ruleVersion;
@@ -73,7 +74,8 @@ public interface EventPublisherPort {
         private String tenantId;
         private String bundleHash;
 
-        public WarmupRequestedEvent() {}
+        public WarmupRequestedEvent() {
+        }
 
         public WarmupRequestedEvent(String tenantId, String bundleHash) {
             this.tenantId = tenantId;

@@ -10,8 +10,8 @@ import java.util.List;
 
 @Document(collection = "compile_jobs")
 @CompoundIndexes({
-    @CompoundIndex(name = "byRuleTarget", def = "{'tenantId': 1, 'ruleId': 1, 'targetVersion': -1}", unique = true),
-    @CompoundIndex(name = "byStatusTime", def = "{'tenantId': 1, 'status': 1, 'requestedAt': -1}")
+        @CompoundIndex(name = "byRuleTarget", def = "{'tenantId': 1, 'ruleId': 1, 'targetVersion': -1}", unique = true),
+        @CompoundIndex(name = "byStatusTime", def = "{'tenantId': 1, 'status': 1, 'requestedAt': -1}")
 })
 public class CompileJob {
 
@@ -42,12 +42,13 @@ public class CompileJob {
 
     private List<String> errors;
 
-    public CompileJob() {}
+    public CompileJob() {
+    }
 
     public CompileJob(String id, String tenantId, String ruleId, Integer targetVersion,
-                     JobStatus status, String requestedBy, Instant requestedAt,
-                     Instant completedAt, String operatorsFingerprint, Engine engine,
-                     String bundleHash, List<LogEntry> logs, List<String> errors) {
+                      JobStatus status, String requestedBy, Instant requestedAt,
+                      Instant completedAt, String operatorsFingerprint, Engine engine,
+                      String bundleHash, List<LogEntry> logs, List<String> errors) {
         this.id = id;
         this.tenantId = tenantId;
         this.ruleId = ruleId;
@@ -179,7 +180,8 @@ public class CompileJob {
     public static class Engine {
         private String compilerId;
 
-        public Engine() {}
+        public Engine() {
+        }
 
         public Engine(String compilerId) {
             this.compilerId = compilerId;
@@ -199,7 +201,8 @@ public class CompileJob {
         private String msg;
         private Instant timestamp;
 
-        public LogEntry() {}
+        public LogEntry() {
+        }
 
         public LogEntry(String level, String msg, Instant timestamp) {
             this.level = level;

@@ -42,6 +42,15 @@ public class FastCheckResponse {
     @JsonProperty("metadata")
     private Map<String, Object> metadata;
 
+    // Constructors
+    public FastCheckResponse() {
+    }
+
+    public FastCheckResponse(String decision, boolean shouldContinue) {
+        this.decision = decision;
+        this.shouldContinue = shouldContinue;
+    }
+
     // Factory methods
     public static FastCheckResponse allow(String explanation) {
         FastCheckResponse response = new FastCheckResponse();
@@ -60,33 +69,60 @@ public class FastCheckResponse {
         return response;
     }
 
-    // Constructors
-    public FastCheckResponse() {}
+    // Getters and setters
+    public String getDecision() {
+        return decision;
+    }
 
-    public FastCheckResponse(String decision, boolean shouldContinue) {
+    public void setDecision(String decision) {
         this.decision = decision;
+    }
+
+    public boolean isShouldContinue() {
+        return shouldContinue;
+    }
+
+    public void setShouldContinue(boolean shouldContinue) {
         this.shouldContinue = shouldContinue;
     }
 
-    // Getters and setters
-    public String getDecision() { return decision; }
-    public void setDecision(String decision) { this.decision = decision; }
+    public String getReasonCode() {
+        return reasonCode;
+    }
 
-    public boolean isShouldContinue() { return shouldContinue; }
-    public void setShouldContinue(boolean shouldContinue) { this.shouldContinue = shouldContinue; }
+    public void setReasonCode(String reasonCode) {
+        this.reasonCode = reasonCode;
+    }
 
-    public String getReasonCode() { return reasonCode; }
-    public void setReasonCode(String reasonCode) { this.reasonCode = reasonCode; }
+    public String getExplanation() {
+        return explanation;
+    }
 
-    public String getExplanation() { return explanation; }
-    public void setExplanation(String explanation) { this.explanation = explanation; }
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
 
-    public List<String> getFailedChecks() { return failedChecks; }
-    public void setFailedChecks(List<String> failedChecks) { this.failedChecks = failedChecks; }
+    public List<String> getFailedChecks() {
+        return failedChecks;
+    }
 
-    public Long getLatencyMs() { return latencyMs; }
-    public void setLatencyMs(Long latencyMs) { this.latencyMs = latencyMs; }
+    public void setFailedChecks(List<String> failedChecks) {
+        this.failedChecks = failedChecks;
+    }
 
-    public Map<String, Object> getMetadata() { return metadata; }
-    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
+    public Long getLatencyMs() {
+        return latencyMs;
+    }
+
+    public void setLatencyMs(Long latencyMs) {
+        this.latencyMs = latencyMs;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
 }

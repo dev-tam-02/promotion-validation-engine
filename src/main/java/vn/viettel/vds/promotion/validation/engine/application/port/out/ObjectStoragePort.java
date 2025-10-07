@@ -17,7 +17,8 @@ public interface ObjectStoragePort {
         private Long size;
         private String etag;
 
-        public StorageMetadata() {}
+        public StorageMetadata() {
+        }
 
         public StorageMetadata(String key, Long size, String etag) {
             this.key = key;

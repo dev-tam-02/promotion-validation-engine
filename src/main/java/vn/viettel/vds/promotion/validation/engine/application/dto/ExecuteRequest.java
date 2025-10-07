@@ -20,7 +20,8 @@ public class ExecuteRequest {
 
     private ExecuteOptions options;
 
-    public ExecuteRequest() {}
+    public ExecuteRequest() {
+    }
 
     public ExecuteRequest(String tenantId, Bundle bundle, Map<String, Object> context, ExecuteOptions options) {
         this.tenantId = tenantId;
@@ -70,7 +71,8 @@ public class ExecuteRequest {
         private Integer ruleVersion;
         private Integer assignmentVersion;
 
-        public Bundle() {}
+        public Bundle() {
+        }
 
         public Bundle(String hash, Integer ruleVersion, Integer assignmentVersion) {
             this.hash = hash;
@@ -108,7 +110,8 @@ public class ExecuteRequest {
         private Integer timeoutMs;
         private Integer maxRulesFired;
 
-        public ExecuteOptions() {}
+        public ExecuteOptions() {
+        }
 
         public ExecuteOptions(String explain, Integer timeoutMs, Integer maxRulesFired) {
             this.explain = explain;

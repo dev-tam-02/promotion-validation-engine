@@ -34,7 +34,7 @@ public class OrderAmountGteOperatorTranslator implements OperatorTranslator {
         if (currency != null) {
             // If currency is specified, check both amount and currency
             sb.append("        $order: Order(totalAmount >= ").append(amount)
-              .append(" && currency == \"").append(currency).append("\")\n");
+                    .append(" && currency == \"").append(currency).append("\")\n");
         } else {
             // If currency not specified, only check amount
             sb.append("        $order: Order(totalAmount >= ").append(amount).append(")\n");
@@ -56,6 +56,6 @@ public class OrderAmountGteOperatorTranslator implements OperatorTranslator {
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "order.amount.gte".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

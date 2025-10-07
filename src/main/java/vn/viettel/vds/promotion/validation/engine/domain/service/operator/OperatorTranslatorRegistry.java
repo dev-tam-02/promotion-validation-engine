@@ -16,13 +16,13 @@ public class OperatorTranslatorRegistry {
 
     public Optional<OperatorTranslator> findTranslator(String operatorName, Integer version) {
         return translators.stream()
-            .filter(translator -> translator.supports(operatorName, version))
-            .findFirst();
+                .filter(translator -> translator.supports(operatorName, version))
+                .findFirst();
     }
 
     public OperatorTranslator getTranslator(String operatorName, Integer version) {
         return findTranslator(operatorName, version)
-            .orElseThrow(() -> new IllegalArgumentException(
-                String.format("No translator found for operator: %s version: %s", operatorName, version)));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("No translator found for operator: %s version: %s", operatorName, version)));
     }
 }

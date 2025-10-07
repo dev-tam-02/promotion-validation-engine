@@ -11,7 +11,7 @@ public class ActiveRuleInfo {
     private final Instant lastUpdated;
 
     public ActiveRuleInfo(String ruleId, String bundleHash, byte[] compiledBytes,
-                         String tenantId, Integer version, Instant lastUpdated) {
+                          String tenantId, Integer version, Instant lastUpdated) {
         this.ruleId = ruleId;
         this.bundleHash = bundleHash;
         this.compiledBytes = compiledBytes;
@@ -21,10 +21,27 @@ public class ActiveRuleInfo {
     }
 
     // Getters
-    public String getRuleId() { return ruleId; }
-    public String getBundleHash() { return bundleHash; }
-    public byte[] getCompiledBytes() { return compiledBytes; }
-    public String getTenantId() { return tenantId; }
-    public Integer getVersion() { return version; }
-    public Instant getLastUpdated() { return lastUpdated; }
+    public String getRuleId() {
+        return ruleId;
+    }
+
+    public String getBundleHash() {
+        return bundleHash;
+    }
+
+    public byte[] getCompiledBytes() {
+        return compiledBytes;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public Instant getLastUpdated() {
+        return lastUpdated;
+    }
 }

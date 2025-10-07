@@ -22,10 +22,10 @@ public class RuleConfiguration {
     // Time constraints
     public boolean hasTimeConstraints() {
         return config.getFastCheckRules() != null &&
-               (getBlackoutPeriods() != null && !getBlackoutPeriods().isEmpty()
-                || getBusinessHours() != null
-                || getAllowedDaysOfWeek() != null && !getAllowedDaysOfWeek().isEmpty()
-                || isExcludeHolidays());
+                (getBlackoutPeriods() != null && !getBlackoutPeriods().isEmpty()
+                        || getBusinessHours() != null
+                        || getAllowedDaysOfWeek() != null && !getAllowedDaysOfWeek().isEmpty()
+                        || isExcludeHolidays());
     }
 
     public List<FastCheckRule.BlackoutPeriod> getBlackoutPeriods() {
@@ -33,12 +33,12 @@ public class RuleConfiguration {
             return List.of();
         }
         return config.getFastCheckRules().getBlackoutPeriods().stream()
-            .map(period -> new FastCheckRule.BlackoutPeriod(
-                period.getName(),
-                period.getStartTime(),
-                period.getEndTime()
-            ))
-            .toList();
+                .map(period -> new FastCheckRule.BlackoutPeriod(
+                        period.getName(),
+                        period.getStartTime(),
+                        period.getEndTime()
+                ))
+                .toList();
     }
 
     public FastCheckRule.BusinessHours getBusinessHours() {
@@ -54,8 +54,8 @@ public class RuleConfiguration {
             return Set.of();
         }
         return config.getFastCheckRules().getAllowedDaysOfWeek() != null
-            ? config.getFastCheckRules().getAllowedDaysOfWeek()
-            : Set.of();
+                ? config.getFastCheckRules().getAllowedDaysOfWeek()
+                : Set.of();
     }
 
     public boolean isExcludeHolidays() {
@@ -65,9 +65,9 @@ public class RuleConfiguration {
     // Order constraints
     public boolean hasOrderConstraints() {
         return config.getFastCheckRules() != null &&
-               (getMinOrderValue() > 0 || getMaxOrderValue() > 0
-                || getAllowedCurrencies() != null && !getAllowedCurrencies().isEmpty()
-                || getMinItems() > 0 || getMaxItems() > 0);
+                (getMinOrderValue() > 0 || getMaxOrderValue() > 0
+                        || getAllowedCurrencies() != null && !getAllowedCurrencies().isEmpty()
+                        || getMinItems() > 0 || getMaxItems() > 0);
     }
 
     public long getMinOrderValue() {
@@ -89,8 +89,8 @@ public class RuleConfiguration {
             return Set.of("VND"); // Default currency
         }
         return config.getFastCheckRules().getAllowedCurrencies() != null
-            ? config.getFastCheckRules().getAllowedCurrencies()
-            : Set.of("VND");
+                ? config.getFastCheckRules().getAllowedCurrencies()
+                : Set.of("VND");
     }
 
     public int getMinItems() {
@@ -115,7 +115,7 @@ public class RuleConfiguration {
 
     public boolean hasRateLimiting() {
         return config.getFastCheckRules() != null &&
-               (getMaxPerHour() > 0 || getMaxPerDay() > 0);
+                (getMaxPerHour() > 0 || getMaxPerDay() > 0);
     }
 
     public int getMaxPerHour() {

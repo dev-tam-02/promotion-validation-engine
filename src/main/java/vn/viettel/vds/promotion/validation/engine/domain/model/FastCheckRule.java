@@ -18,7 +18,8 @@ public class FastCheckRule {
         private LocalDateTime end;
         private String reason;
 
-        public BlackoutPeriod() {}
+        public BlackoutPeriod() {
+        }
 
         public BlackoutPeriod(String name, LocalDateTime start, LocalDateTime end) {
             this.name = name;
@@ -27,17 +28,37 @@ public class FastCheckRule {
         }
 
         // Getters and setters
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+        public String getName() {
+            return name;
+        }
 
-        public LocalDateTime getStart() { return start; }
-        public void setStart(LocalDateTime start) { this.start = start; }
+        public void setName(String name) {
+            this.name = name;
+        }
 
-        public LocalDateTime getEnd() { return end; }
-        public void setEnd(LocalDateTime end) { this.end = end; }
+        public LocalDateTime getStart() {
+            return start;
+        }
 
-        public String getReason() { return reason; }
-        public void setReason(String reason) { this.reason = reason; }
+        public void setStart(LocalDateTime start) {
+            this.start = start;
+        }
+
+        public LocalDateTime getEnd() {
+            return end;
+        }
+
+        public void setEnd(LocalDateTime end) {
+            this.end = end;
+        }
+
+        public String getReason() {
+            return reason;
+        }
+
+        public void setReason(String reason) {
+            this.reason = reason;
+        }
     }
 
     /**
@@ -48,7 +69,8 @@ public class FastCheckRule {
         private LocalTime end;
         private String timezone;
 
-        public BusinessHours() {}
+        public BusinessHours() {
+        }
 
         public BusinessHours(LocalTime start, LocalTime end) {
             this.start = start;
@@ -57,13 +79,28 @@ public class FastCheckRule {
         }
 
         // Getters and setters
-        public LocalTime getStart() { return start; }
-        public void setStart(LocalTime start) { this.start = start; }
+        public LocalTime getStart() {
+            return start;
+        }
 
-        public LocalTime getEnd() { return end; }
-        public void setEnd(LocalTime end) { this.end = end; }
+        public void setStart(LocalTime start) {
+            this.start = start;
+        }
 
-        public String getTimezone() { return timezone; }
-        public void setTimezone(String timezone) { this.timezone = timezone; }
+        public LocalTime getEnd() {
+            return end;
+        }
+
+        public void setEnd(LocalTime end) {
+            this.end = end;
+        }
+
+        public String getTimezone() {
+            return timezone;
+        }
+
+        public void setTimezone(String timezone) {
+            this.timezone = timezone;
+        }
     }
 }

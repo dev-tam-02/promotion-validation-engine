@@ -48,9 +48,9 @@ public class ValidationDomainService {
         }
 
         return order.getId() != null &&
-               !order.getId().trim().isEmpty() &&
-               order.getTotalAmount() > 0 &&
-               order.getItems() != null &&
-               !order.getItems().isEmpty();
+                !order.getId().trim().isEmpty() &&
+                order.getTotalAmount() > 0 &&
+                order.getItems() != null &&
+                !order.getItems().isEmpty();
     }
 }

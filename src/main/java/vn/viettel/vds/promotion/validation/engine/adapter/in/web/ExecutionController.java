@@ -37,15 +37,15 @@ public class ExecutionController {
 
     @Operation(summary = "Execute rule", description = "Execute rule against provided context")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Rule executed successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "500", description = "Execution failed")
+            @ApiResponse(responseCode = "200", description = "Rule executed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Execution failed")
     })
     @PostMapping
     public ResponseEntity<ExecuteResponse> executeRule(@Valid @RequestBody ExecuteRequest request) {
 
         logger.debug("Executing rule: bundleHash={}, customerId={}",
-                    request.getBundleHash(), request.getCustomer().id());
+                request.getBundleHash(), request.getCustomer().id());
 
         try {
             // Convert DTO to domain input
@@ -63,7 +63,7 @@ public class ExecutionController {
 
         } catch (Exception e) {
             logger.error("Rule execution failed: bundleHash={}, error={}",
-                        request.getBundleHash(), e.getMessage(), e);
+                    request.getBundleHash(), e.getMessage(), e);
 
             ExecuteResponse errorResponse = new ExecuteResponse();
             errorResponse.setOk(false);
@@ -76,9 +76,9 @@ public class ExecutionController {
 
     @Operation(summary = "Execute rules in batch")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Batch executed successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "500", description = "Batch execution failed")
+            @ApiResponse(responseCode = "200", description = "Batch executed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Batch execution failed")
     })
     @PostMapping("/batch")
     public ResponseEntity<List<ExecuteResponse>> executeBatch(
@@ -108,7 +108,7 @@ public class ExecutionController {
 
         } catch (Exception e) {
             logger.error("Batch execution failed: batchSize={}, error={}",
-                        requests.size(), e.getMessage(), e);
+                    requests.size(), e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -122,10 +122,10 @@ public class ExecutionController {
         context.put("executionContext", request.getExecutionContext());
 
         return new RuleEnginePort.ExecuteInput(
-            request.getExecutionContext().getTenantId(),
-            request.getBundleHash(),
-            context,
-            new RuleEnginePort.ExecuteOptions("NONE", 30000, 1000)
+                request.getExecutionContext().getTenantId(),
+                request.getBundleHash(),
+                context,
+                new RuleEnginePort.ExecuteOptions("NONE", 30000, 1000)
         );
     }
 

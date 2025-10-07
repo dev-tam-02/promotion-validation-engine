@@ -11,10 +11,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "compile_jobs",
-    indexes = {
-        @Index(name = "idx_rule_target", columnList = "tenant_id, rule_id, target_version", unique = true),
-        @Index(name = "idx_status_time", columnList = "tenant_id, status, requested_at")
-    }
+        indexes = {
+                @Index(name = "idx_rule_target", columnList = "tenant_id, rule_id, target_version", unique = true),
+                @Index(name = "idx_status_time", columnList = "tenant_id, status, requested_at")
+        }
 )
 @Getter
 @Setter

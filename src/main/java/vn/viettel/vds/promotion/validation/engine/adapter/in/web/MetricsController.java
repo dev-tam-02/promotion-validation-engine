@@ -26,15 +26,15 @@ public class MetricsController {
     private final KieSessionManager sessionManager;
 
     public MetricsController(ExecutionMetricsService metricsService,
-                           KieSessionManager sessionManager) {
+                             KieSessionManager sessionManager) {
         this.metricsService = metricsService;
         this.sessionManager = sessionManager;
     }
 
     @Operation(summary = "Get execution metrics summary",
-               description = "Get overall rule execution metrics summary")
+            description = "Get overall rule execution metrics summary")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Metrics retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Metrics retrieved successfully")
     })
     @GetMapping("/summary")
     public ResponseEntity<ExecutionMetricsService.ExecutionSummary> getExecutionSummary() {
@@ -45,10 +45,10 @@ public class MetricsController {
     }
 
     @Operation(summary = "Get bundle-specific metrics",
-               description = "Get execution metrics for a specific bundle")
+            description = "Get execution metrics for a specific bundle")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Bundle metrics retrieved successfully"),
-        @ApiResponse(responseCode = "404", description = "Bundle not found")
+            @ApiResponse(responseCode = "200", description = "Bundle metrics retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Bundle not found")
     })
     @GetMapping("/bundle/{bundleHash}")
     public ResponseEntity<Map<String, Object>> getBundleMetrics(
@@ -76,9 +76,9 @@ public class MetricsController {
     }
 
     @Operation(summary = "Get all bundle metrics",
-               description = "Get execution metrics for all bundles")
+            description = "Get execution metrics for all bundles")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "All bundle metrics retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "All bundle metrics retrieved successfully")
     })
     @GetMapping("/bundles")
     public ResponseEntity<Map<String, Object>> getAllBundleMetrics() {
@@ -100,9 +100,9 @@ public class MetricsController {
     }
 
     @Operation(summary = "Get cache statistics",
-               description = "Get KIE container cache statistics")
+            description = "Get KIE container cache statistics")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Cache statistics retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Cache statistics retrieved successfully")
     })
     @GetMapping("/cache")
     public ResponseEntity<Map<String, Object>> getCacheStatistics() {
@@ -116,10 +116,10 @@ public class MetricsController {
     }
 
     @Operation(summary = "Clear bundle metrics",
-               description = "Clear execution metrics for a specific bundle")
+            description = "Clear execution metrics for a specific bundle")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Bundle metrics cleared successfully"),
-        @ApiResponse(responseCode = "404", description = "Bundle not found")
+            @ApiResponse(responseCode = "200", description = "Bundle metrics cleared successfully"),
+            @ApiResponse(responseCode = "404", description = "Bundle not found")
     })
     @DeleteMapping("/bundle/{bundleHash}")
     public ResponseEntity<Void> clearBundleMetrics(
@@ -137,10 +137,10 @@ public class MetricsController {
     }
 
     @Operation(summary = "Evict bundle from cache",
-               description = "Evict a specific bundle from the KIE container cache")
+            description = "Evict a specific bundle from the KIE container cache")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Bundle evicted successfully"),
-        @ApiResponse(responseCode = "404", description = "Bundle not cached")
+            @ApiResponse(responseCode = "200", description = "Bundle evicted successfully"),
+            @ApiResponse(responseCode = "404", description = "Bundle not cached")
     })
     @DeleteMapping("/cache/{bundleHash}")
     public ResponseEntity<Void> evictBundleFromCache(
@@ -157,9 +157,9 @@ public class MetricsController {
     }
 
     @Operation(summary = "Clear all cache",
-               description = "Clear the entire KIE container cache")
+            description = "Clear the entire KIE container cache")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Cache cleared successfully")
+            @ApiResponse(responseCode = "200", description = "Cache cleared successfully")
     })
     @DeleteMapping("/cache")
     public ResponseEntity<Void> clearAllCache() {
@@ -170,9 +170,9 @@ public class MetricsController {
     }
 
     @Operation(summary = "Get health status",
-               description = "Get health status of the rule execution engine")
+            description = "Get health status of the rule execution engine")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Health status retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Health status retrieved successfully")
     })
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> getHealthStatus() {

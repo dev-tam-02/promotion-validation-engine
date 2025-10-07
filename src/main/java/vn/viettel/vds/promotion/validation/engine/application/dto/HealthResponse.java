@@ -11,10 +11,11 @@ public class HealthResponse {
     private ObjectStorageHealth objectStorage;
     private EngineHealth engine;
 
-    public HealthResponse() {}
+    public HealthResponse() {
+    }
 
     public HealthResponse(String status, CacheHealth cache, JvmHealth jvm, DatabaseHealth database,
-                         ObjectStorageHealth objectStorage, EngineHealth engine) {
+                          ObjectStorageHealth objectStorage, EngineHealth engine) {
         this.status = status;
         this.cache = cache;
         this.jvm = jvm;
@@ -79,7 +80,8 @@ public class HealthResponse {
         private Long size;
         private Long evictions;
 
-        public CacheHealth() {}
+        public CacheHealth() {
+        }
 
         public CacheHealth(String status, Double hitRate, Long size, Long evictions) {
             this.status = status;
@@ -128,7 +130,8 @@ public class HealthResponse {
         private Long nonHeapUsed;
         private Map<String, Object> gc;
 
-        public JvmHealth() {}
+        public JvmHealth() {
+        }
 
         public JvmHealth(String status, Long heapUsed, Long heapMax, Long nonHeapUsed, Map<String, Object> gc) {
             this.status = status;
@@ -185,7 +188,8 @@ public class HealthResponse {
         private Integer connections;
         private Long responseTimeMs;
 
-        public DatabaseHealth() {}
+        public DatabaseHealth() {
+        }
 
         public DatabaseHealth(String status, Boolean connected, Integer connections, Long responseTimeMs) {
             this.status = status;
@@ -232,7 +236,8 @@ public class HealthResponse {
         private Boolean connected;
         private Long responseTimeMs;
 
-        public ObjectStorageHealth() {}
+        public ObjectStorageHealth() {
+        }
 
         public ObjectStorageHealth(String status, Boolean connected, Long responseTimeMs) {
             this.status = status;
@@ -271,7 +276,8 @@ public class HealthResponse {
         private Long bundlesCached;
         private String droolsVersion;
 
-        public EngineHealth() {}
+        public EngineHealth() {
+        }
 
         public EngineHealth(String status, Integer sessionsActive, Long bundlesCached, String droolsVersion) {
             this.status = status;

@@ -29,10 +29,10 @@ public class RuleExecutionOrchestrator {
     private final SessionPoolConfig poolConfig;
 
     public RuleExecutionOrchestrator(KieSessionManager sessionManager,
-                                   FactPreparationService factPreparationService,
-                                   ExecutionTracingService tracingService,
-                                   ExecutionMetricsService metricsService,
-                                   SessionPoolConfig poolConfig) {
+                                     FactPreparationService factPreparationService,
+                                     ExecutionTracingService tracingService,
+                                     ExecutionMetricsService metricsService,
+                                     SessionPoolConfig poolConfig) {
         this.sessionManager = sessionManager;
         this.factPreparationService = factPreparationService;
         this.tracingService = tracingService;
@@ -44,7 +44,7 @@ public class RuleExecutionOrchestrator {
     public ExecuteResponse executeSingle(RuleEnginePort.ExecuteInput input, KieContainer container) {
         String executionId = generateExecutionId();
         logger.info("Starting single rule execution: executionId={}, bundleHash={}",
-                   executionId, input.getBundleHash());
+                executionId, input.getBundleHash());
 
         long startTime = System.currentTimeMillis();
         ExecuteResponse response = new ExecuteResponse();
@@ -84,7 +84,7 @@ public class RuleExecutionOrchestrator {
             // Record metrics
             boolean success = response.getOk() != null ? response.getOk() : false;
             metricsService.recordExecution(input.getBundleHash(),
-                Duration.ofMillis(response.getEngine().getLatencyMs()), success);
+                    Duration.ofMillis(response.getEngine().getLatencyMs()), success);
 
             if (sessionManager.isContainerCached(input.getBundleHash())) {
                 metricsService.recordCacheHit(input.getBundleHash());
@@ -93,7 +93,7 @@ public class RuleExecutionOrchestrator {
             }
 
             logger.info("Single rule execution completed: executionId={}, decision={}, latency={}ms",
-                       executionId, response.getDecision(), response.getEngine().getLatencyMs());
+                    executionId, response.getDecision(), response.getEngine().getLatencyMs());
 
         } catch (Exception e) {
             logger.error("Single rule execution failed: executionId={}, error={}", executionId, e.getMessage(), e);
@@ -104,7 +104,7 @@ public class RuleExecutionOrchestrator {
     }
 
     public List<ExecuteResponse> executeBatch(List<RuleEnginePort.ExecuteInput> inputs,
-                                            Map<String, KieContainer> containersByBundle) {
+                                              Map<String, KieContainer> containersByBundle) {
         logger.info("Starting batch rule execution with {} inputs", inputs.size());
         long batchStartTime = System.currentTimeMillis();
 
@@ -114,25 +114,25 @@ public class RuleExecutionOrchestrator {
             KieContainer container = containersByBundle.get(input.getBundleHash());
             if (container == null) {
                 futures.add(CompletableFuture.completedFuture(
-                    buildBundleNotFoundResponse(input.getBundleHash())
+                        buildBundleNotFoundResponse(input.getBundleHash())
                 ));
             } else {
                 CompletableFuture<ExecuteResponse> future = CompletableFuture
-                    .supplyAsync(() -> executeSingle(input, container), executionExecutor);
+                        .supplyAsync(() -> executeSingle(input, container), executionExecutor);
                 futures.add(future);
             }
         }
 
         // Wait for all executions to complete
         CompletableFuture<Void> allOf = CompletableFuture.allOf(
-            futures.toArray(new CompletableFuture[0])
+                futures.toArray(new CompletableFuture[0])
         );
 
         try {
             allOf.join();
             List<ExecuteResponse> responses = futures.stream()
-                .map(CompletableFuture::join)
-                .toList();
+                    .map(CompletableFuture::join)
+                    .toList();
 
             // Record batch metrics
             long batchDuration = System.currentTimeMillis() - batchStartTime;
@@ -145,19 +145,19 @@ public class RuleExecutionOrchestrator {
             logger.error("Batch rule execution failed", e);
             // Return error responses for any failed executions
             return futures.stream()
-                .map(future -> {
-                    try {
-                        return future.join();
-                    } catch (Exception ex) {
-                        return buildErrorResponse(System.currentTimeMillis(), ex);
-                    }
-                })
-                .toList();
+                    .map(future -> {
+                        try {
+                            return future.join();
+                        } catch (Exception ex) {
+                            return buildErrorResponse(System.currentTimeMillis(), ex);
+                        }
+                    })
+                    .toList();
         }
     }
 
     public List<ExecuteResponse> executeOptimizedBatch(List<RuleEnginePort.ExecuteInput> inputs,
-                                                      Map<String, KieContainer> containersByBundle) {
+                                                       Map<String, KieContainer> containersByBundle) {
         logger.info("Starting optimized batch rule execution with {} inputs", inputs.size());
 
         // Group inputs by bundle hash for optimized execution
@@ -198,7 +198,7 @@ public class RuleExecutionOrchestrator {
     }
 
     private List<ExecuteResponse> executeBundleOptimized(List<RuleEnginePort.ExecuteInput> inputs,
-                                                        KieContainer container) {
+                                                         KieContainer container) {
         String executionId = generateExecutionId();
         logger.debug("Executing optimized bundle batch: executionId={}, inputs={}", executionId, inputs.size());
 
@@ -231,8 +231,8 @@ public class RuleExecutionOrchestrator {
     }
 
     private ExecuteResponse executeSingleInSession(RuleEnginePort.ExecuteInput input,
-                                                  StatelessKieSession session,
-                                                  String executionId) {
+                                                   StatelessKieSession session,
+                                                   String executionId) {
         long startTime = System.currentTimeMillis();
 
         // Set up tracing
@@ -267,16 +267,16 @@ public class RuleExecutionOrchestrator {
     }
 
     private ExecuteResponse buildSuccessResponse(ValidationResult result,
-                                               List<String> reasonCodes,
-                                               long startTime,
-                                               ExecutionTracingService.TracingAgendaEventListener tracingListener,
-                                               RuleEnginePort.ExecuteInput input) {
+                                                 List<String> reasonCodes,
+                                                 long startTime,
+                                                 ExecutionTracingService.TracingAgendaEventListener tracingListener,
+                                                 RuleEnginePort.ExecuteInput input) {
         ExecuteResponse response = new ExecuteResponse();
 
         response.setOk(result.getOk() != null ? result.getOk() : false);
         response.setDecision(result.getDecision() != null ? result.getDecision() : "DENY");
         response.setReasonCodes(reasonCodes.isEmpty() ?
-            (result.getReasonCodes() != null ? result.getReasonCodes() : List.of()) : reasonCodes);
+                (result.getReasonCodes() != null ? result.getReasonCodes() : List.of()) : reasonCodes);
 
         // Set explain entries
         if (tracingListener != null) {
@@ -302,7 +302,7 @@ public class RuleExecutionOrchestrator {
         response.setDecision("DENY");
         response.setReasonCodes(List.of("EXECUTION_ERROR"));
         response.setExplain(List.of(
-            new ExecuteResponse.ExplainEntry("error", "exception", false)
+                new ExecuteResponse.ExplainEntry("error", "exception", false)
         ));
 
         ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
@@ -320,7 +320,7 @@ public class RuleExecutionOrchestrator {
         response.setDecision("DENY");
         response.setReasonCodes(List.of("BUNDLE_NOT_FOUND"));
         response.setExplain(List.of(
-            new ExecuteResponse.ExplainEntry("bundle", "not_found", false)
+                new ExecuteResponse.ExplainEntry("bundle", "not_found", false)
         ));
 
         ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
@@ -334,8 +334,8 @@ public class RuleExecutionOrchestrator {
 
     private boolean shouldEnableExplain(RuleEnginePort.ExecuteOptions options) {
         return options != null &&
-               options.getExplain() != null &&
-               !"NONE".equalsIgnoreCase(options.getExplain());
+                options.getExplain() != null &&
+                !"NONE".equalsIgnoreCase(options.getExplain());
     }
 
     private String generateExecutionId() {

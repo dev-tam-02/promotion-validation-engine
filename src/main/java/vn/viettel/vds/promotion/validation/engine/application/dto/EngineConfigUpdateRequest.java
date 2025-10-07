@@ -7,7 +7,8 @@ public class EngineConfigUpdateRequest {
     private ExecuteConfig execute;
     private CompileConfig compile;
 
-    public EngineConfigUpdateRequest() {}
+    public EngineConfigUpdateRequest() {
+    }
 
     public EngineConfigUpdateRequest(ExecuteConfig execute, CompileConfig compile) {
         this.execute = execute;
@@ -38,10 +39,11 @@ public class EngineConfigUpdateRequest {
         private Integer maxFacts;
         private Map<String, Double> explainSampling;
 
-        public ExecuteConfig() {}
+        public ExecuteConfig() {
+        }
 
         public ExecuteConfig(Integer timeoutMs, Integer maxRulesFired, Integer maxFacts,
-                           Map<String, Double> explainSampling) {
+                             Map<String, Double> explainSampling) {
             this.timeoutMs = timeoutMs;
             this.maxRulesFired = maxRulesFired;
             this.maxFacts = maxFacts;
@@ -85,7 +87,8 @@ public class EngineConfigUpdateRequest {
         private Integer maxNodes;
         private Integer maxDepth;
 
-        public CompileConfig() {}
+        public CompileConfig() {
+        }
 
         public CompileConfig(Integer maxNodes, Integer maxDepth) {
             this.maxNodes = maxNodes;

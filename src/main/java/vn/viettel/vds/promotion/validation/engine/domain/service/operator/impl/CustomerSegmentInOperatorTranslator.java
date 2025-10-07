@@ -40,13 +40,13 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
         } else {
             // Multiple segments - check if any customer segment is in the target list
             String segmentList = segments.stream()
-                .map(s -> "\"" + s + "\"")
-                .collect(Collectors.joining(", "));
+                    .map(s -> "\"" + s + "\"")
+                    .collect(Collectors.joining(", "));
 
             sb.append("        $customer: Customer(\n");
             sb.append("            segments != null && segments.size() > 0 &&\n");
             sb.append("            eval(segments.stream().anyMatch(seg -> java.util.Arrays.asList(")
-              .append(segmentList).append(").contains(seg)))\n");
+                    .append(segmentList).append(").contains(seg)))\n");
             sb.append("        )\n");
         }
 
@@ -66,6 +66,6 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "customer.segment.in".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

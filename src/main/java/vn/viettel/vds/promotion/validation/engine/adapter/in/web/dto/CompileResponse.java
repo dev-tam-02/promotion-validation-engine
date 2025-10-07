@@ -39,31 +39,67 @@ public class CompileResponse {
     private List<String> errors;
 
     // Constructors
-    public CompileResponse() {}
+    public CompileResponse() {
+    }
 
     public CompileResponse(boolean ok) {
         this.ok = ok;
     }
 
     // Getters and setters
-    public boolean isOk() { return ok; }
-    public void setOk(boolean ok) { this.ok = ok; }
+    public boolean isOk() {
+        return ok;
+    }
 
-    public String getBundleHash() { return bundleHash; }
-    public void setBundleHash(String bundleHash) { this.bundleHash = bundleHash; }
+    public void setOk(boolean ok) {
+        this.ok = ok;
+    }
 
-    public byte[] getArtifactBytes() { return artifactBytes; }
-    public void setArtifactBytes(byte[] artifactBytes) { this.artifactBytes = artifactBytes; }
+    public String getBundleHash() {
+        return bundleHash;
+    }
 
-    public Long getArtifactSize() { return artifactSize; }
-    public void setArtifactSize(Long artifactSize) { this.artifactSize = artifactSize; }
+    public void setBundleHash(String bundleHash) {
+        this.bundleHash = bundleHash;
+    }
 
-    public List<String> getLogs() { return logs; }
-    public void setLogs(List<String> logs) { this.logs = logs; }
+    public byte[] getArtifactBytes() {
+        return artifactBytes;
+    }
 
-    public String getEngineVersion() { return engineVersion; }
-    public void setEngineVersion(String engineVersion) { this.engineVersion = engineVersion; }
+    public void setArtifactBytes(byte[] artifactBytes) {
+        this.artifactBytes = artifactBytes;
+    }
 
-    public List<String> getErrors() { return errors; }
-    public void setErrors(List<String> errors) { this.errors = errors; }
+    public Long getArtifactSize() {
+        return artifactSize;
+    }
+
+    public void setArtifactSize(Long artifactSize) {
+        this.artifactSize = artifactSize;
+    }
+
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    public void setLogs(List<String> logs) {
+        this.logs = logs;
+    }
+
+    public String getEngineVersion() {
+        return engineVersion;
+    }
+
+    public void setEngineVersion(String engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(List<String> errors) {
+        this.errors = errors;
+    }
 }

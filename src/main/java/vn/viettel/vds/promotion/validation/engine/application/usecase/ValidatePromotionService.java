@@ -31,9 +31,9 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
     private final SessionLockPort sessionLockPort;
 
     public ValidatePromotionService(ValidationDomainService validationDomainService,
-                                  @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
-                                  RulesServicePort rulesServicePort,
-                                  SessionLockPort sessionLockPort) {
+                                    @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
+                                    RulesServicePort rulesServicePort,
+                                    SessionLockPort sessionLockPort) {
         this.validationDomainService = validationDomainService;
         this.ruleEnginePort = ruleEnginePort;
         this.rulesServicePort = rulesServicePort;
@@ -47,7 +47,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         // Early validation checks that can fail fast
         if (!isValidRequest(request)) {
             Decision errorDecision = createInvalidDecision(null,
-                List.of(new ReasonCode("INVALID_REQUEST", Map.of("message", "Invalid request structure"))));
+                    List.of(new ReasonCode("INVALID_REQUEST", Map.of("message", "Invalid request structure"))));
             return new ValidationResponse(List.of(errorDecision));
         }
 
@@ -64,7 +64,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
             // Optional: Early exit if critical validation fails
             if (isCriticalFailure(decision)) {
                 logger.warn("Critical validation failure for candidate: {}, stopping further validation",
-                    candidate.getCode());
+                        candidate.getCode());
                 break;
             }
         }
@@ -74,10 +74,10 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
     private boolean isValidRequest(ValidationRequest request) {
         return request != null &&
-               request.customer() != null &&
-               request.order() != null &&
-               request.candidates() != null &&
-               !request.candidates().isEmpty();
+                request.customer() != null &&
+                request.order() != null &&
+                request.candidates() != null &&
+                !request.candidates().isEmpty();
     }
 
     private boolean shouldShortCircuit(ValidationRequest request) {
@@ -86,15 +86,15 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         // Check minimum order amount
         if (request.order().getTotalAmount() < 10000) { // 10k minimum
             logger.info("Short-circuiting validation: order amount {} below minimum",
-                request.order().getTotalAmount());
+                    request.order().getTotalAmount());
             return true;
         }
 
         // Check customer status (if customer has blocked status)
         if (request.customer().getSegments() != null &&
-            request.customer().getSegments().contains("BLOCKED")) {
+                request.customer().getSegments().contains("BLOCKED")) {
             logger.info("Short-circuiting validation: customer {} is blocked",
-                request.customer().getId());
+                    request.customer().getId());
             return true;
         }
 
@@ -109,11 +109,11 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
             if (request.order().getTotalAmount() < 10000) {
                 reasons.add(new ReasonCode("ORDER_AMOUNT_TOO_LOW",
-                    Map.of("minimum", 10000, "actual", request.order().getTotalAmount())));
+                        Map.of("minimum", 10000, "actual", request.order().getTotalAmount())));
             }
 
             if (request.customer().getSegments() != null &&
-                request.customer().getSegments().contains("BLOCKED")) {
+                    request.customer().getSegments().contains("BLOCKED")) {
                 reasons.add(new ReasonCode("CUSTOMER_BLOCKED"));
             }
 
@@ -128,7 +128,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         if (decision.getReasons() != null) {
             for (ReasonCode reason : decision.getReasons()) {
                 if ("VALIDATION_ERROR".equals(reason.getCode()) ||
-                    "RULE_BUNDLE_NOT_FOUND".equals(reason.getCode())) {
+                        "RULE_BUNDLE_NOT_FOUND".equals(reason.getCode())) {
                     return true;
                 }
             }
@@ -150,10 +150,10 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
             lockAcquired = sessionLockPort.acquireValidationLock(candidate, customerId, 120); // 2 minutes TTL
             if (!lockAcquired) {
                 logger.info("Validation session locked for candidate: {} and customer: {}",
-                    candidate.getCode(), customerId);
+                        candidate.getCode(), customerId);
                 return createInvalidDecision(candidate,
-                    List.of(new ReasonCode("VALIDATION_SESSION_LOCKED",
-                        Map.of("message", "Another validation is in progress for this candidate"))));
+                        List.of(new ReasonCode("VALIDATION_SESSION_LOCKED",
+                                Map.of("message", "Another validation is in progress for this candidate"))));
             }
 
             // 2. Get rule bundle from rules repository
@@ -169,7 +169,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
             // 4. Execute Drools rules
             ValidationResult ruleResult = ruleEnginePort.executeRules(
-                request.customer(), request.order(), candidate, ruleBundle.getBundleHash());
+                    request.customer(), request.order(), candidate, ruleBundle.getBundleHash());
 
             // 5. Compose final decision based only on rule execution
             boolean finalValid = ruleResult.isMatched();
@@ -187,17 +187,17 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
         } catch (Exception e) {
             return createInvalidDecision(candidate,
-                List.of(new ReasonCode("VALIDATION_ERROR", Map.of("error", e.getMessage()))));
+                    List.of(new ReasonCode("VALIDATION_ERROR", Map.of("error", e.getMessage()))));
         } finally {
             // Always release the session lock
             if (lockAcquired) {
                 boolean released = sessionLockPort.releaseValidationLock(candidate, customerId);
                 if (released) {
                     logger.debug("Released validation session lock for candidate: {} and customer: {}",
-                        candidate.getCode(), customerId);
+                            candidate.getCode(), customerId);
                 } else {
                     logger.warn("Failed to release validation session lock for candidate: {} and customer: {}",
-                        candidate.getCode(), customerId);
+                            candidate.getCode(), customerId);
                 }
             }
         }
@@ -205,8 +205,8 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
     private boolean isValidCandidate(Candidate candidate) {
         return candidate != null &&
-               candidate.getType() != null &&
-               (candidate.getCode() != null || candidate.getId() != null);
+                candidate.getType() != null &&
+                (candidate.getCode() != null || candidate.getId() != null);
     }
 
 

@@ -17,12 +17,13 @@ public class CompileJobResponse {
     private List<LogEntry> logs;
     private List<String> errors;
 
-    public CompileJobResponse() {}
+    public CompileJobResponse() {
+    }
 
     public CompileJobResponse(String id, String tenantId, String ruleId, Integer targetVersion,
-                             String status, String requestedBy, Instant requestedAt,
-                             Instant completedAt, String bundleHash, List<LogEntry> logs,
-                             List<String> errors) {
+                              String status, String requestedBy, Instant requestedAt,
+                              Instant completedAt, String bundleHash, List<LogEntry> logs,
+                              List<String> errors) {
         this.id = id;
         this.tenantId = tenantId;
         this.ruleId = ruleId;
@@ -131,7 +132,8 @@ public class CompileJobResponse {
         private String msg;
         private Instant timestamp;
 
-        public LogEntry() {}
+        public LogEntry() {
+        }
 
         public LogEntry(String level, String msg, Instant timestamp) {
             this.level = level;

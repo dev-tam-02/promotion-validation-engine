@@ -23,7 +23,7 @@ public class TranslatorDiscoveryService {
     private final List<OperatorTranslator> allTranslators;
 
     public TranslatorDiscoveryService(OperatorTranslatorRegistry translatorRegistry,
-                                    List<OperatorTranslator> allTranslators) {
+                                      List<OperatorTranslator> allTranslators) {
         this.translatorRegistry = translatorRegistry;
         this.allTranslators = allTranslators;
     }
@@ -44,7 +44,7 @@ public class TranslatorDiscoveryService {
             String translatorClass = translator.getClass().getSimpleName();
 
             SupportedOperatorResponse response = new SupportedOperatorResponse(
-                operatorName, version, description, context, translatorClass
+                    operatorName, version, description, context, translatorClass
             );
             supportedOperators.add(response);
         }
@@ -74,27 +74,27 @@ public class TranslatorDiscoveryService {
                     logger.debug("Operator {} version {} is supported", operatorName, version);
                 } else {
                     String reason = "No translator found for operator: " + operatorName +
-                                  (version != null ? " version: " + version : "");
+                            (version != null ? " version: " + version : "");
                     unsupportedOperators.add(new ValidateOperatorsResponse.UnsupportedOperator(
-                        operatorName, version, reason));
+                            operatorName, version, reason));
                     logger.warn("Operator {} version {} is not supported", operatorName, version);
                 }
             } catch (Exception e) {
                 String reason = "Error validating operator: " + e.getMessage();
                 unsupportedOperators.add(new ValidateOperatorsResponse.UnsupportedOperator(
-                    operatorName, version, reason));
+                        operatorName, version, reason));
                 logger.error("Error validating operator {} version {}: {}", operatorName, version, e.getMessage());
             }
         }
 
         boolean valid = unsupportedOperators.isEmpty();
         String message = valid ?
-            "All operators are supported" :
-            String.format("%d out of %d operators are not supported",
-                         unsupportedOperators.size(), request.getOperators().size());
+                "All operators are supported" :
+                String.format("%d out of %d operators are not supported",
+                        unsupportedOperators.size(), request.getOperators().size());
 
         logger.info("Validation result: {} supported, {} unsupported",
-                   supportedOperators.size(), unsupportedOperators.size());
+                supportedOperators.size(), unsupportedOperators.size());
 
         return new ValidateOperatorsResponse(valid, supportedOperators, unsupportedOperators, message);
     }
@@ -111,10 +111,10 @@ public class TranslatorDiscoveryService {
      */
     public List<String> getSupportedOperatorNames() {
         return allTranslators.stream()
-            .map(OperatorTranslator::getOperatorName)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+                .map(OperatorTranslator::getOperatorName)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     private String extractContext(String operatorName) {

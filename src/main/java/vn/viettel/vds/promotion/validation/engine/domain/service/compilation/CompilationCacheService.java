@@ -40,7 +40,7 @@ public class CompilationCacheService {
                 .build();
 
         logger.info("Compilation cache initialized: maxSize={}, ttlMinutes={}",
-                   config.getMaxSize(), config.getTtlMinutes());
+                config.getMaxSize(), config.getTtlMinutes());
     }
 
     public CachedCompilation getOrCompile(String cacheKey, CompilationSupplier supplier) {
@@ -85,8 +85,8 @@ public class CompilationCacheService {
         logger.debug("Invalidating compilation cache entries by pattern: {}", pattern);
 
         compilationCache.asMap().keySet().stream()
-            .filter(key -> key.matches(pattern))
-            .forEach(this::invalidate);
+                .filter(key -> key.matches(pattern))
+                .forEach(this::invalidate);
     }
 
     public void clear() {
@@ -98,13 +98,13 @@ public class CompilationCacheService {
         com.github.benmanes.caffeine.cache.stats.CacheStats stats = compilationCache.stats();
 
         return new CompilationCacheStats(
-            compilationCache.estimatedSize(),
-            cacheHits.get(),
-            cacheMisses.get(),
-            stats.hitRate(),
-            compilationTime.get(),
-            stats.averageLoadPenalty() / 1_000_000, // Convert to milliseconds
-            stats.evictionCount()
+                compilationCache.estimatedSize(),
+                cacheHits.get(),
+                cacheMisses.get(),
+                stats.hitRate(),
+                compilationTime.get(),
+                stats.averageLoadPenalty() / 1_000_000, // Convert to milliseconds
+                stats.evictionCount()
         );
     }
 
@@ -114,6 +114,11 @@ public class CompilationCacheService {
 
     public String generateCacheKey(String ruleId, String operatorsFingerprint, String nodeStructureHash) {
         return String.format("%s:%s:%s", ruleId, operatorsFingerprint, nodeStructureHash);
+    }
+
+    @FunctionalInterface
+    public interface CompilationSupplier {
+        CompilationResult compile() throws Exception;
     }
 
     // Inner classes
@@ -161,7 +166,7 @@ public class CompilationCacheService {
         private final long compilationTimeMs;
 
         private CompilationResult(boolean success, String bundleHash, byte[] compiledBytes,
-                                String drlContent, String errorMessage, long compilationTimeMs) {
+                                  String drlContent, String errorMessage, long compilationTimeMs) {
             this.success = success;
             this.bundleHash = bundleHash;
             this.compiledBytes = compiledBytes;
@@ -178,12 +183,29 @@ public class CompilationCacheService {
             return new CompilationResult(false, null, null, null, errorMessage, compilationTimeMs);
         }
 
-        public boolean isSuccess() { return success; }
-        public String getBundleHash() { return bundleHash; }
-        public byte[] getCompiledBytes() { return compiledBytes; }
-        public String getDrlContent() { return drlContent; }
-        public String getErrorMessage() { return errorMessage; }
-        public long getCompilationTimeMs() { return compilationTimeMs; }
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public byte[] getCompiledBytes() {
+            return compiledBytes;
+        }
+
+        public String getDrlContent() {
+            return drlContent;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public long getCompilationTimeMs() {
+            return compilationTimeMs;
+        }
 
         public void cleanup() {
             // Cleanup resources if needed
@@ -200,7 +222,7 @@ public class CompilationCacheService {
         private final long evictions;
 
         public CompilationCacheStats(long size, long hits, long misses, double hitRate,
-                                   long totalCompilationTimeMs, double averageCompilationTimeMs, long evictions) {
+                                     long totalCompilationTimeMs, double averageCompilationTimeMs, long evictions) {
             this.size = size;
             this.hits = hits;
             this.misses = misses;
@@ -211,17 +233,32 @@ public class CompilationCacheService {
         }
 
         // Getters
-        public long getSize() { return size; }
-        public long getHits() { return hits; }
-        public long getMisses() { return misses; }
-        public double getHitRate() { return hitRate; }
-        public long getTotalCompilationTimeMs() { return totalCompilationTimeMs; }
-        public double getAverageCompilationTimeMs() { return averageCompilationTimeMs; }
-        public long getEvictions() { return evictions; }
-    }
+        public long getSize() {
+            return size;
+        }
 
-    @FunctionalInterface
-    public interface CompilationSupplier {
-        CompilationResult compile() throws Exception;
+        public long getHits() {
+            return hits;
+        }
+
+        public long getMisses() {
+            return misses;
+        }
+
+        public double getHitRate() {
+            return hitRate;
+        }
+
+        public long getTotalCompilationTimeMs() {
+            return totalCompilationTimeMs;
+        }
+
+        public double getAverageCompilationTimeMs() {
+            return averageCompilationTimeMs;
+        }
+
+        public long getEvictions() {
+            return evictions;
+        }
     }
 }

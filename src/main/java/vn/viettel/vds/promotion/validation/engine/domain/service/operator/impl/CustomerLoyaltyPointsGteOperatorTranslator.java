@@ -49,6 +49,6 @@ public class CustomerLoyaltyPointsGteOperatorTranslator implements OperatorTrans
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "customer.loyalty.points.gte".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

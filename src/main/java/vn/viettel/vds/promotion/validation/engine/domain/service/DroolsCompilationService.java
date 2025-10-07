@@ -35,9 +35,9 @@ public class DroolsCompilationService {
             List<String> logs = new ArrayList<>();
 
             ReleaseId releaseId = kieServices.newReleaseId(
-                tenantId,
-                ruleId,
-                version != null ? version.toString() : "1.0.0"
+                    tenantId,
+                    ruleId,
+                    version != null ? version.toString() : "1.0.0"
             );
 
             KieFileSystem kfs = kieServices.newKieFileSystem();
@@ -75,14 +75,14 @@ public class DroolsCompilationService {
             String bundleHash = generateBundleHash(artifactBytes);
 
             logger.info("DRL compilation successful: bundleHash={}, size={} bytes",
-                       bundleHash, artifactBytes.length);
+                    bundleHash, artifactBytes.length);
 
             return new CompilationResult(
-                bundleHash,
-                artifactBytes,
-                (long) artifactBytes.length,
-                logs,
-                KieServices.Factory.get().getClass().getPackage().getImplementationVersion()
+                    bundleHash,
+                    artifactBytes,
+                    (long) artifactBytes.length,
+                    logs,
+                    KieServices.Factory.get().getClass().getPackage().getImplementationVersion()
             );
 
         } catch (Exception e) {
@@ -96,7 +96,7 @@ public class DroolsCompilationService {
             logger.debug("Creating KIE container from artifact bytes: {} bytes", artifactBytes.length);
 
             Resource resource = kieServices.getResources()
-                .newInputStreamResource(new ByteArrayInputStream(artifactBytes));
+                    .newInputStreamResource(new ByteArrayInputStream(artifactBytes));
 
             KieRepository repository = kieServices.getRepository();
             KieModule kieModule = repository.addKieModule(resource);
@@ -150,7 +150,7 @@ public class DroolsCompilationService {
         private final String droolsVersion;
 
         public CompilationResult(String bundleHash, byte[] artifactBytes, Long size,
-                               List<String> logs, String droolsVersion) {
+                                 List<String> logs, String droolsVersion) {
             this.bundleHash = bundleHash;
             this.artifactBytes = artifactBytes;
             this.size = size;
@@ -158,11 +158,25 @@ public class DroolsCompilationService {
             this.droolsVersion = droolsVersion;
         }
 
-        public String getBundleHash() { return bundleHash; }
-        public byte[] getArtifactBytes() { return artifactBytes; }
-        public Long getSize() { return size; }
-        public List<String> getLogs() { return logs; }
-        public String getDroolsVersion() { return droolsVersion; }
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public byte[] getArtifactBytes() {
+            return artifactBytes;
+        }
+
+        public Long getSize() {
+            return size;
+        }
+
+        public List<String> getLogs() {
+            return logs;
+        }
+
+        public String getDroolsVersion() {
+            return droolsVersion;
+        }
     }
 
     public static class CompilationException extends RuntimeException {
@@ -178,6 +192,8 @@ public class DroolsCompilationService {
             this.logs = new ArrayList<>();
         }
 
-        public List<String> getLogs() { return logs; }
+        public List<String> getLogs() {
+            return logs;
+        }
     }
 }

@@ -6,7 +6,8 @@ public interface SessionLockPort {
 
     /**
      * Attempts to acquire a validation session lock for a candidate and customer
-     * @param candidate the candidate being validated
+     *
+     * @param candidate  the candidate being validated
      * @param customerId the customer ID
      * @param ttlSeconds time-to-live for the lock in seconds
      * @return true if lock was acquired, false if already locked
@@ -15,7 +16,8 @@ public interface SessionLockPort {
 
     /**
      * Releases a validation session lock
-     * @param candidate the candidate
+     *
+     * @param candidate  the candidate
      * @param customerId the customer ID
      * @return true if lock was released, false if lock didn't exist
      */
@@ -23,7 +25,8 @@ public interface SessionLockPort {
 
     /**
      * Checks if a validation session lock exists
-     * @param candidate the candidate
+     *
+     * @param candidate  the candidate
      * @param customerId the customer ID
      * @return true if lock exists, false otherwise
      */
@@ -31,7 +34,8 @@ public interface SessionLockPort {
 
     /**
      * Extends the TTL of an existing lock
-     * @param candidate the candidate
+     *
+     * @param candidate  the candidate
      * @param customerId the customer ID
      * @param ttlSeconds new TTL in seconds
      * @return true if lock was extended, false if lock doesn't exist

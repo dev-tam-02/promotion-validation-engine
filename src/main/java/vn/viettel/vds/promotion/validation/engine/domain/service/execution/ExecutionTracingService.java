@@ -40,9 +40,9 @@ public class ExecutionTracingService {
             logger.debug("Rule match created: {} for execution: {}", ruleName, executionId);
 
             explainEntries.add(new ExecuteResponse.ExplainEntry(
-                ruleName,
-                "match_created",
-                true
+                    ruleName,
+                    "match_created",
+                    true
             ));
         }
 
@@ -52,9 +52,9 @@ public class ExecutionTracingService {
             logger.debug("Rule match cancelled: {} for execution: {}", ruleName, executionId);
 
             explainEntries.add(new ExecuteResponse.ExplainEntry(
-                ruleName,
-                "match_cancelled",
-                false
+                    ruleName,
+                    "match_cancelled",
+                    false
             ));
         }
 
@@ -84,46 +84,46 @@ public class ExecutionTracingService {
             ruleFireCounts.merge(ruleName, 1, Integer::sum);
 
             explainEntries.add(new ExecuteResponse.ExplainEntry(
-                ruleName,
-                "rule_fired",
-                true
+                    ruleName,
+                    "rule_fired",
+                    true
             ));
         }
 
         @Override
         public void agendaGroupPopped(AgendaGroupPoppedEvent event) {
             logger.debug("Agenda group popped: {} for execution: {}",
-                        event.getAgendaGroup().getName(), executionId);
+                    event.getAgendaGroup().getName(), executionId);
         }
 
         @Override
         public void agendaGroupPushed(AgendaGroupPushedEvent event) {
             logger.debug("Agenda group pushed: {} for execution: {}",
-                        event.getAgendaGroup().getName(), executionId);
+                    event.getAgendaGroup().getName(), executionId);
         }
 
         @Override
         public void beforeRuleFlowGroupActivated(RuleFlowGroupActivatedEvent event) {
             logger.debug("Before rule flow group activated: {} for execution: {}",
-                        event.getRuleFlowGroup().getName(), executionId);
+                    event.getRuleFlowGroup().getName(), executionId);
         }
 
         @Override
         public void afterRuleFlowGroupActivated(RuleFlowGroupActivatedEvent event) {
             logger.debug("After rule flow group activated: {} for execution: {}",
-                        event.getRuleFlowGroup().getName(), executionId);
+                    event.getRuleFlowGroup().getName(), executionId);
         }
 
         @Override
         public void beforeRuleFlowGroupDeactivated(RuleFlowGroupDeactivatedEvent event) {
             logger.debug("Before rule flow group deactivated: {} for execution: {}",
-                        event.getRuleFlowGroup().getName(), executionId);
+                    event.getRuleFlowGroup().getName(), executionId);
         }
 
         @Override
         public void afterRuleFlowGroupDeactivated(RuleFlowGroupDeactivatedEvent event) {
             logger.debug("After rule flow group deactivated: {} for execution: {}",
-                        event.getRuleFlowGroup().getName(), executionId);
+                    event.getRuleFlowGroup().getName(), executionId);
         }
 
         public List<ExecuteResponse.ExplainEntry> getExplainEntries() {
@@ -144,9 +144,9 @@ public class ExecutionTracingService {
 
         public long getTotalExecutionTime() {
             return ruleExecutionTimes.entrySet().stream()
-                .filter(entry -> entry.getKey().endsWith("_duration"))
-                .mapToLong(entry -> entry.getValue())
-                .sum();
+                    .filter(entry -> entry.getKey().endsWith("_duration"))
+                    .mapToLong(entry -> entry.getValue())
+                    .sum();
         }
     }
 
@@ -167,11 +167,28 @@ public class ExecutionTracingService {
             this.totalExecutionTime = listener.getTotalExecutionTime();
         }
 
-        public String getExecutionId() { return executionId; }
-        public List<ExecuteResponse.ExplainEntry> getExplainEntries() { return explainEntries; }
-        public ConcurrentMap<String, Integer> getRuleFireCounts() { return ruleFireCounts; }
-        public ConcurrentMap<String, Long> getRuleExecutionTimes() { return ruleExecutionTimes; }
-        public int getTotalRulesFired() { return totalRulesFired; }
-        public long getTotalExecutionTime() { return totalExecutionTime; }
+        public String getExecutionId() {
+            return executionId;
+        }
+
+        public List<ExecuteResponse.ExplainEntry> getExplainEntries() {
+            return explainEntries;
+        }
+
+        public ConcurrentMap<String, Integer> getRuleFireCounts() {
+            return ruleFireCounts;
+        }
+
+        public ConcurrentMap<String, Long> getRuleExecutionTimes() {
+            return ruleExecutionTimes;
+        }
+
+        public int getTotalRulesFired() {
+            return totalRulesFired;
+        }
+
+        public long getTotalExecutionTime() {
+            return totalExecutionTime;
+        }
     }
 }

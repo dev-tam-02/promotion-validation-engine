@@ -67,7 +67,8 @@ public class FastCheckRequest {
     private String timezone;
 
     // Constructors
-    public FastCheckRequest() {}
+    public FastCheckRequest() {
+    }
 
     public FastCheckRequest(String tenantId, String campaignId, String customerId, Long orderTotal, String currency) {
         this.tenantId = tenantId;
@@ -78,36 +79,91 @@ public class FastCheckRequest {
     }
 
     // Getters and setters
-    public String getTenantId() { return tenantId; }
-    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() {
+        return tenantId;
+    }
 
-    public String getCampaignId() { return campaignId; }
-    public void setCampaignId(String campaignId) { this.campaignId = campaignId; }
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
 
-    public String getCustomerId() { return customerId; }
-    public void setCustomerId(String customerId) { this.customerId = customerId; }
+    public String getCampaignId() {
+        return campaignId;
+    }
 
-    public List<String> getCustomerSegments() { return customerSegments; }
-    public void setCustomerSegments(List<String> customerSegments) { this.customerSegments = customerSegments; }
+    public void setCampaignId(String campaignId) {
+        this.campaignId = campaignId;
+    }
 
-    public String getCustomerRegion() { return customerRegion; }
-    public void setCustomerRegion(String customerRegion) { this.customerRegion = customerRegion; }
+    public String getCustomerId() {
+        return customerId;
+    }
 
-    public Long getOrderTotal() { return orderTotal; }
-    public void setOrderTotal(Long orderTotal) { this.orderTotal = orderTotal; }
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
 
-    public String getCurrency() { return currency; }
-    public void setCurrency(String currency) { this.currency = currency; }
+    public List<String> getCustomerSegments() {
+        return customerSegments;
+    }
 
-    public Integer getItemCount() { return itemCount; }
-    public void setItemCount(Integer itemCount) { this.itemCount = itemCount; }
+    public void setCustomerSegments(List<String> customerSegments) {
+        this.customerSegments = customerSegments;
+    }
 
-    public List<String> getOrderCategories() { return orderCategories; }
-    public void setOrderCategories(List<String> orderCategories) { this.orderCategories = orderCategories; }
+    public String getCustomerRegion() {
+        return customerRegion;
+    }
 
-    public LocalDateTime getEvaluationTime() { return evaluationTime; }
-    public void setEvaluationTime(LocalDateTime evaluationTime) { this.evaluationTime = evaluationTime; }
+    public void setCustomerRegion(String customerRegion) {
+        this.customerRegion = customerRegion;
+    }
 
-    public String getTimezone() { return timezone; }
-    public void setTimezone(String timezone) { this.timezone = timezone; }
+    public Long getOrderTotal() {
+        return orderTotal;
+    }
+
+    public void setOrderTotal(Long orderTotal) {
+        this.orderTotal = orderTotal;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public Integer getItemCount() {
+        return itemCount;
+    }
+
+    public void setItemCount(Integer itemCount) {
+        this.itemCount = itemCount;
+    }
+
+    public List<String> getOrderCategories() {
+        return orderCategories;
+    }
+
+    public void setOrderCategories(List<String> orderCategories) {
+        this.orderCategories = orderCategories;
+    }
+
+    public LocalDateTime getEvaluationTime() {
+        return evaluationTime;
+    }
+
+    public void setEvaluationTime(LocalDateTime evaluationTime) {
+        this.evaluationTime = evaluationTime;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
 }

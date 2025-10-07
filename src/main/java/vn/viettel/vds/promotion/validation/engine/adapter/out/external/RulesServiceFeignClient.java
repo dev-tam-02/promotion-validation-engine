@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.config.FeignConfiguration;
 
 @FeignClient(
-    name = "rules-service",
-    url = "${validation.external-services.rules-service.base-url:http://rules-service}",
-    configuration = FeignConfiguration.class
+        name = "rules-service",
+        url = "${validation.external-services.rules-service.base-url:http://rules-service}",
+        configuration = FeignConfiguration.class
 )
 public interface RulesServiceFeignClient {
 
@@ -22,7 +22,8 @@ public interface RulesServiceFeignClient {
         private String ruleVersion;
         private String assignmentVersion;
 
-        public RuleBundleResponse() {}
+        public RuleBundleResponse() {
+        }
 
         public RuleBundleResponse(String bundleHash, byte[] kieModuleBytes, String dslVersion, String ruleVersion, String assignmentVersion) {
             this.bundleHash = bundleHash;

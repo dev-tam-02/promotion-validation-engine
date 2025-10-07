@@ -32,11 +32,11 @@ public class RulesServiceAdapter implements RulesServicePort {
             byte[] mockKieModuleBytes = createMockKieModule(candidate);
 
             return new RuleBundle(
-                mockBundleHash,
-                mockKieModuleBytes,
-                "1.0.0",
-                "1.0.0",
-                "1.0.0"
+                    mockBundleHash,
+                    mockKieModuleBytes,
+                    "1.0.0",
+                    "1.0.0",
+                    "1.0.0"
             );
 
             // TODO: Uncomment when rules-service is available
@@ -75,37 +75,37 @@ public class RulesServiceAdapter implements RulesServicePort {
 
     private byte[] createMockKieModule(Candidate candidate) {
         String mockDrlContent = String.format("""
-            package vn.viettel.validation.rules.%s
-
-            import vn.viettel.vds.promotion.validation.engine.domain.model.*
-
-            global Candidate candidate
-
-            rule "Validate %s %s"
-            when
-                $customer : Customer()
-                $order : Order(totalAmount >= 100000)
-                $result : ValidationResult()
-            then
-                $result.setMatched(true);
-                $result.setMessage("Validation passed for %s %s");
-            end
-
-            rule "Reject Low Order Value for %s %s"
-            when
-                $customer : Customer()
-                $order : Order(totalAmount < 100000)
-                $result : ValidationResult()
-            then
-                $result.setMatched(false);
-                $result.setMessage("Order total too low for %s %s");
-            end
-            """,
-            candidate.getType(),
-            candidate.getType(), candidate.getCode(),
-            candidate.getType(), candidate.getCode(),
-            candidate.getType(), candidate.getCode(),
-            candidate.getType(), candidate.getCode()
+                        package vn.viettel.validation.rules.%s
+                        
+                        import vn.viettel.vds.promotion.validation.engine.domain.model.*
+                        
+                        global Candidate candidate
+                        
+                        rule "Validate %s %s"
+                        when
+                            $customer : Customer()
+                            $order : Order(totalAmount >= 100000)
+                            $result : ValidationResult()
+                        then
+                            $result.setMatched(true);
+                            $result.setMessage("Validation passed for %s %s");
+                        end
+                        
+                        rule "Reject Low Order Value for %s %s"
+                        when
+                            $customer : Customer()
+                            $order : Order(totalAmount < 100000)
+                            $result : ValidationResult()
+                        then
+                            $result.setMatched(false);
+                            $result.setMessage("Order total too low for %s %s");
+                        end
+                        """,
+                candidate.getType(),
+                candidate.getType(), candidate.getCode(),
+                candidate.getType(), candidate.getCode(),
+                candidate.getType(), candidate.getCode(),
+                candidate.getType(), candidate.getCode()
         );
 
         return mockDrlContent.getBytes();

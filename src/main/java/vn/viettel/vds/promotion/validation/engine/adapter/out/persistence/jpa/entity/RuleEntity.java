@@ -1,16 +1,19 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
 import com.promix.platform.jpa.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Table(name = "validation_rules",
-    indexes = {
-        @Index(name = "idx_rule_name_unique", columnList = "name", unique = true),
-        @Index(name = "idx_enabled", columnList = "enabled")
-    }
+        indexes = {
+                @Index(name = "idx_rule_name_unique", columnList = "name", unique = true),
+                @Index(name = "idx_enabled", columnList = "enabled")
+        }
 )
 @Getter
 @Setter

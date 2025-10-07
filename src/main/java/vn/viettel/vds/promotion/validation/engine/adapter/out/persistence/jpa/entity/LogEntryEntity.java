@@ -1,7 +1,9 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
 import com.promix.platform.jpa.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 

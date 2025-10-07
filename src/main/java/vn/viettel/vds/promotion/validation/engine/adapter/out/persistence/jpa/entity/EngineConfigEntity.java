@@ -10,9 +10,9 @@ import java.util.Map;
 
 @Entity
 @Table(name = "engine_configs",
-    indexes = {
-        @Index(name = "idx_tenant_unique", columnList = "tenant_id", unique = true)
-    }
+        indexes = {
+                @Index(name = "idx_tenant_unique", columnList = "tenant_id", unique = true)
+        }
 )
 @Getter
 @Setter

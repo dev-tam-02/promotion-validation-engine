@@ -17,7 +17,8 @@ public interface ExecutionUseCase {
         private ExecuteRequest.Bundle bundle;
         private List<TestCase> cases;
 
-        public BatchExecuteRequest() {}
+        public BatchExecuteRequest() {
+        }
 
         public BatchExecuteRequest(String tenantId, ExecuteRequest.Bundle bundle, List<TestCase> cases) {
             this.tenantId = tenantId;
@@ -53,7 +54,8 @@ public interface ExecutionUseCase {
             private String name;
             private Map<String, Object> context;
 
-            public TestCase() {}
+            public TestCase() {
+            }
 
             public TestCase(String name, Map<String, Object> context) {
                 this.name = name;
@@ -82,7 +84,8 @@ public interface ExecutionUseCase {
         private List<TestResult> results;
         private Stats stats;
 
-        public BatchExecuteResponse() {}
+        public BatchExecuteResponse() {
+        }
 
         public BatchExecuteResponse(List<TestResult> results, Stats stats) {
             this.results = results;
@@ -109,7 +112,8 @@ public interface ExecutionUseCase {
             private String name;
             private ExecuteResponse response;
 
-            public TestResult() {}
+            public TestResult() {
+            }
 
             public TestResult(String name, ExecuteResponse response) {
                 this.name = name;
@@ -138,7 +142,8 @@ public interface ExecutionUseCase {
             private Integer fail;
             private Long totalTimeMs;
 
-            public Stats() {}
+            public Stats() {
+            }
 
             public Stats(Integer pass, Integer fail, Long totalTimeMs) {
                 this.pass = pass;

@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Fast check service implementation using simple if-else logic.
  * NO Drools engine invocation - pure Java conditions for speed.
- *
+ * <p>
  * These checks are:
  * 1. Deterministic - same input always produces same output
  * 2. Simple - no complex business logic
@@ -31,21 +31,20 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class FastCheckService implements FastCheckUseCase {
 
-    private final RuleConfigurationPort ruleConfigurationPort;
-    private final RedisTemplate<String, Object> redisTemplate;
-
     // Redis key patterns
     private static final String BLACKLIST_KEY = "fast:blacklist:%s:%s"; // tenant:customerId
     private static final String RATE_LIMIT_KEY = "fast:rate:%s:%s:%s"; // tenant:customerId:window
     private static final String HOLIDAY_KEY = "fast:holiday:%s:%s"; // tenant:date
+    private final RuleConfigurationPort ruleConfigurationPort;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public FastCheckResponse performFastCheck(FastCheckRequest request) {
 
         // Load fast check rules for the campaign/bundle
         RuleConfiguration config = ruleConfigurationPort.getConfiguration(
-            request.getTenantId(),
-            request.getCampaignId()
+                request.getTenantId(),
+                request.getCampaignId()
         );
 
         if (config == null || !config.hasFastCheckRules()) {
@@ -106,10 +105,10 @@ public class FastCheckService implements FastCheckUseCase {
     private TimeCheckResult checkTimeConstraints(RuleConfiguration config, FastCheckRequest request) {
 
         LocalDateTime now = request.getEvaluationTime() != null ?
-            request.getEvaluationTime() : LocalDateTime.now();
+                request.getEvaluationTime() : LocalDateTime.now();
 
         String timezone = request.getTimezone() != null ?
-            request.getTimezone() : "Asia/Ho_Chi_Minh";
+                request.getTimezone() : "Asia/Ho_Chi_Minh";
 
         ZonedDateTime zonedTime = now.atZone(ZoneId.of(timezone));
 
@@ -117,7 +116,7 @@ public class FastCheckService implements FastCheckUseCase {
         for (FastCheckRule.BlackoutPeriod blackout : config.getBlackoutPeriods()) {
             if (isInBlackoutPeriod(zonedTime, blackout)) {
                 return new TimeCheckResult(false, "BLACKOUT_PERIOD",
-                    String.format("Currently in blackout period: %s", blackout.getName()));
+                        String.format("Currently in blackout period: %s", blackout.getName()));
             }
         }
 
@@ -125,9 +124,9 @@ public class FastCheckService implements FastCheckUseCase {
         if (config.getBusinessHours() != null) {
             if (!isInBusinessHours(zonedTime, config.getBusinessHours())) {
                 return new TimeCheckResult(false, "OUTSIDE_BUSINESS_HOURS",
-                    String.format("Outside business hours: %s-%s",
-                        config.getBusinessHours().getStart(),
-                        config.getBusinessHours().getEnd()));
+                        String.format("Outside business hours: %s-%s",
+                                config.getBusinessHours().getStart(),
+                                config.getBusinessHours().getEnd()));
             }
         }
 
@@ -136,14 +135,14 @@ public class FastCheckService implements FastCheckUseCase {
             String currentDay = zonedTime.getDayOfWeek().name();
             if (!config.getAllowedDaysOfWeek().contains(currentDay)) {
                 return new TimeCheckResult(false, "DAY_NOT_ALLOWED",
-                    String.format("Current day %s not in allowed days", currentDay));
+                        String.format("Current day %s not in allowed days", currentDay));
             }
         }
 
         // Check if holiday (from Redis)
         if (config.isExcludeHolidays() && isHoliday(request.getTenantId(), zonedTime.toLocalDate())) {
             return new TimeCheckResult(false, "HOLIDAY_EXCLUSION",
-                "Promotions not available on holidays");
+                    "Promotions not available on holidays");
         }
 
         return new TimeCheckResult(true, null, null);
@@ -162,32 +161,32 @@ public class FastCheckService implements FastCheckUseCase {
         // Minimum order value
         if (config.getMinOrderValue() > 0 && orderTotal < config.getMinOrderValue()) {
             return new OrderCheckResult(false, "ORDER_VALUE_TOO_LOW",
-                String.format("Order value %d below minimum %d", orderTotal, config.getMinOrderValue()));
+                    String.format("Order value %d below minimum %d", orderTotal, config.getMinOrderValue()));
         }
 
         // Maximum order value
         if (config.getMaxOrderValue() > 0 && orderTotal > config.getMaxOrderValue()) {
             return new OrderCheckResult(false, "ORDER_VALUE_TOO_HIGH",
-                String.format("Order value %d exceeds maximum %d", orderTotal, config.getMaxOrderValue()));
+                    String.format("Order value %d exceeds maximum %d", orderTotal, config.getMaxOrderValue()));
         }
 
         // Currency check
         String currency = request.getCurrency() != null ? request.getCurrency() : "VND";
         if (!config.getAllowedCurrencies().contains(currency)) {
             return new OrderCheckResult(false, "CURRENCY_NOT_ALLOWED",
-                String.format("Currency %s not allowed", currency));
+                    String.format("Currency %s not allowed", currency));
         }
 
         // Item count check
         int itemCount = request.getItemCount() != null ? request.getItemCount() : 0;
         if (config.getMinItems() > 0 && itemCount < config.getMinItems()) {
             return new OrderCheckResult(false, "TOO_FEW_ITEMS",
-                String.format("Item count %d below minimum %d", itemCount, config.getMinItems()));
+                    String.format("Item count %d below minimum %d", itemCount, config.getMinItems()));
         }
 
         if (config.getMaxItems() > 0 && itemCount > config.getMaxItems()) {
             return new OrderCheckResult(false, "TOO_MANY_ITEMS",
-                String.format("Item count %d exceeds maximum %d", itemCount, config.getMaxItems()));
+                    String.format("Item count %d exceeds maximum %d", itemCount, config.getMaxItems()));
         }
 
         return new OrderCheckResult(true, null, null);
@@ -204,7 +203,7 @@ public class FastCheckService implements FastCheckUseCase {
 
             if (Boolean.TRUE.equals(isBlacklisted)) {
                 return new BlacklistCheckResult(false, "CUSTOMER_BLACKLISTED",
-                    "Customer is blacklisted");
+                        "Customer is blacklisted");
             }
 
             // Check global blacklist set
@@ -215,7 +214,7 @@ public class FastCheckService implements FastCheckUseCase {
                 // Cache for faster future checks
                 redisTemplate.opsForValue().set(customerKey, true, 1, TimeUnit.HOURS);
                 return new BlacklistCheckResult(false, "CUSTOMER_BLACKLISTED_GLOBAL",
-                    "Customer is in global blacklist");
+                        "Customer is in global blacklist");
             }
 
             return new BlacklistCheckResult(true, null, null);
@@ -246,7 +245,7 @@ public class FastCheckService implements FastCheckUseCase {
 
                 if (count > config.getMaxPerHour()) {
                     return new RateLimitResult(false, "RATE_LIMIT_HOUR",
-                        String.format("Exceeded hourly limit of %d", config.getMaxPerHour()));
+                            String.format("Exceeded hourly limit of %d", config.getMaxPerHour()));
                 }
             }
 
@@ -261,7 +260,7 @@ public class FastCheckService implements FastCheckUseCase {
 
                 if (count > config.getMaxPerDay()) {
                     return new RateLimitResult(false, "RATE_LIMIT_DAY",
-                        String.format("Exceeded daily limit of %d", config.getMaxPerDay()));
+                            String.format("Exceeded daily limit of %d", config.getMaxPerDay()));
                 }
             }
 
@@ -296,8 +295,15 @@ public class FastCheckService implements FastCheckUseCase {
     }
 
     // Result records
-    private record TimeCheckResult(boolean passed, String failureCode, String explanation) {}
-    private record OrderCheckResult(boolean passed, String failureCode, String explanation) {}
-    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) {}
-    private record RateLimitResult(boolean passed, String failureCode, String explanation) {}
+    private record TimeCheckResult(boolean passed, String failureCode, String explanation) {
+    }
+
+    private record OrderCheckResult(boolean passed, String failureCode, String explanation) {
+    }
+
+    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) {
+    }
+
+    private record RateLimitResult(boolean passed, String failureCode, String explanation) {
+    }
 }

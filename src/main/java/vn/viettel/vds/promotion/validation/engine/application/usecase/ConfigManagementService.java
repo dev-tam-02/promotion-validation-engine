@@ -60,8 +60,8 @@ public class ConfigManagementService implements ConfigManagementUseCase {
         executeConfig.setMaxRulesFired(500);
         executeConfig.setMaxFacts(500);
         executeConfig.setExplainSampling(Map.of(
-            "FULL", 0.01,
-            "FAIL_ONLY", 1.0
+                "FULL", 0.01,
+                "FAIL_ONLY", 1.0
         ));
         response.setExecute(executeConfig);
 

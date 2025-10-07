@@ -12,11 +12,12 @@ public class BundleMetadataResponse {
     private List<TimeLink> timeLinks;
     private Engine engine;
 
-    public BundleMetadataResponse() {}
+    public BundleMetadataResponse() {
+    }
 
     public BundleMetadataResponse(String tenantId, String ruleId, Integer ruleVersion,
-                                 String operatorsFingerprint, Limits limits, List<TimeLink> timeLinks,
-                                 Engine engine) {
+                                  String operatorsFingerprint, Limits limits, List<TimeLink> timeLinks,
+                                  Engine engine) {
         this.tenantId = tenantId;
         this.ruleId = ruleId;
         this.ruleVersion = ruleVersion;
@@ -88,7 +89,8 @@ public class BundleMetadataResponse {
         private Integer perCustomer;
         private Integer perDay;
 
-        public Limits() {}
+        public Limits() {
+        }
 
         public Limits(Integer perCustomer, Integer perDay) {
             this.perCustomer = perCustomer;
@@ -116,7 +118,8 @@ public class BundleMetadataResponse {
         private String policyId;
         private String mode;
 
-        public TimeLink() {}
+        public TimeLink() {
+        }
 
         public TimeLink(String policyId, String mode) {
             this.policyId = policyId;
@@ -145,7 +148,8 @@ public class BundleMetadataResponse {
         private String compilerId;
         private String droolsVersion;
 
-        public Engine() {}
+        public Engine() {
+        }
 
         public Engine(String type, String compilerId, String droolsVersion) {
             this.type = type;

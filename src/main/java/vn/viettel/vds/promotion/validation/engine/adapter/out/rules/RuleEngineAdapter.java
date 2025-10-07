@@ -32,12 +32,11 @@ public class RuleEngineAdapter implements RuleEnginePort {
     private static final Logger logger = LoggerFactory.getLogger(RuleEngineAdapter.class);
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private volatile KieContainer defaultKieContainer;
     private final RuleRepositoryPort ruleRepositoryPort;
-
     // Cache for KieBase by bundleHash
     private final Cache<String, KieBase> kieBaseCache;
     private final ConcurrentHashMap<String, KieContainer> kieContainerCache = new ConcurrentHashMap<>();
+    private volatile KieContainer defaultKieContainer;
 
     public RuleEngineAdapter(RuleRepositoryPort ruleRepositoryPort) {
         this.ruleRepositoryPort = ruleRepositoryPort;
@@ -45,6 +44,10 @@ public class RuleEngineAdapter implements RuleEnginePort {
                 .maximumSize(100)
                 .recordStats()
                 .build();
+    }
+
+    private static String sanitizeFileName(String input) {
+        return (input == null || input.isBlank()) ? "unnamed" : input.replaceAll("[^a-zA-Z0-9-_]", "_");
     }
 
     @PostConstruct
@@ -98,7 +101,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
             List<Candidate> bundleCandidates = entry.getValue();
 
             List<ValidationResult> bundleResults = executeBulkRulesForBundle(
-                customer, order, bundleCandidates, bundleHash);
+                    customer, order, bundleCandidates, bundleHash);
             results.addAll(bundleResults);
         }
 
@@ -106,7 +109,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
     }
 
     private List<ValidationResult> executeBulkRulesForBundle(Customer customer, Order order,
-                                                           List<Candidate> candidates, String bundleHash) {
+                                                             List<Candidate> candidates, String bundleHash) {
         List<ValidationResult> results = new ArrayList<>();
 
         try {
@@ -187,9 +190,9 @@ public class RuleEngineAdapter implements RuleEnginePort {
             if (drlContent.contains("package") && drlContent.contains("rule")) {
                 String sourcePath = "rules/" + bundleHash + ".drl";
                 kfs.write(sourcePath,
-                    ks.getResources()
-                      .newByteArrayResource(kieModuleBytes)
-                      .setSourcePath(sourcePath));
+                        ks.getResources()
+                                .newByteArrayResource(kieModuleBytes)
+                                .setSourcePath(sourcePath));
             } else {
                 // Try to load as actual KieModule bytes
                 throw new IllegalArgumentException("Expected DRL content but received binary data");
@@ -247,10 +250,10 @@ public class RuleEngineAdapter implements RuleEnginePort {
                 if (r.getDrlText() == null || r.getDrlText().isBlank()) continue;
                 String sourcePath = "rules/db/" + sanitizeFileName(r.getName()) + "-" + sanitizeFileName(r.getVersion()) + ".drl";
                 kfs.write(
-                    sourcePath,
-                    ks.getResources()
-                      .newByteArrayResource(r.getDrlText().getBytes())
-                      .setSourcePath(sourcePath)
+                        sourcePath,
+                        ks.getResources()
+                                .newByteArrayResource(r.getDrlText().getBytes())
+                                .setSourcePath(sourcePath)
                 );
             }
         } catch (Exception e) {
@@ -280,31 +283,27 @@ public class RuleEngineAdapter implements RuleEnginePort {
 
     private void loadDefaultRules(KieServices ks, KieFileSystem kfs) {
         String defaultRule = """
-            package vn.viettel.validation.rules
-
-            import vn.viettel.vds.promotion.validation.engine.domain.model.*
-
-            global Candidate candidate
-
-            rule "Default Validation Rule"
-            when
-                $customer : Customer()
-                $order : Order()
-                $result : ValidationResult()
-            then
-                $result.setMatched(true);
-                $result.setMessage("Default validation passed");
-            end
-            """;
+                package vn.viettel.validation.rules
+                
+                import vn.viettel.vds.promotion.validation.engine.domain.model.*
+                
+                global Candidate candidate
+                
+                rule "Default Validation Rule"
+                when
+                    $customer : Customer()
+                    $order : Order()
+                    $result : ValidationResult()
+                then
+                    $result.setMatched(true);
+                    $result.setMessage("Default validation passed");
+                end
+                """;
 
         kfs.write("rules/default.drl",
-            ks.getResources()
-              .newByteArrayResource(defaultRule.getBytes())
-              .setSourcePath("rules/default.drl"));
-    }
-
-    private static String sanitizeFileName(String input) {
-        return (input == null || input.isBlank()) ? "unnamed" : input.replaceAll("[^a-zA-Z0-9-_]", "_");
+                ks.getResources()
+                        .newByteArrayResource(defaultRule.getBytes())
+                        .setSourcePath("rules/default.drl"));
     }
 
     // Additional methods required by RuleEnginePort interface

@@ -34,6 +34,6 @@ public class OrderTotalGteOperatorTranslator implements OperatorTranslator {
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "order.total.gte".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

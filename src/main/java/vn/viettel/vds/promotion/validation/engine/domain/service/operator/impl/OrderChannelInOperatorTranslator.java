@@ -39,11 +39,11 @@ public class OrderChannelInOperatorTranslator implements OperatorTranslator {
         } else {
             // Multiple channels - check if order channel is in the target list
             String channelList = channels.stream()
-                .map(c -> "\"" + c + "\"")
-                .collect(Collectors.joining(", "));
+                    .map(c -> "\"" + c + "\"")
+                    .collect(Collectors.joining(", "));
 
             sb.append("        $order: Order(channel != null && eval(java.util.Arrays.asList(")
-              .append(channelList).append(").contains(channel)))\n");
+                    .append(channelList).append(").contains(channel)))\n");
         }
 
         return sb.toString();
@@ -62,6 +62,6 @@ public class OrderChannelInOperatorTranslator implements OperatorTranslator {
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "order.channel.in".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

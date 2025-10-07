@@ -10,10 +10,11 @@ public class ExecuteResponse {
     private List<ExplainEntry> explain;
     private Engine engine;
 
-    public ExecuteResponse() {}
+    public ExecuteResponse() {
+    }
 
     public ExecuteResponse(Boolean ok, String decision, List<String> reasonCodes,
-                          List<ExplainEntry> explain, Engine engine) {
+                           List<ExplainEntry> explain, Engine engine) {
         this.ok = ok;
         this.decision = decision;
         this.reasonCodes = reasonCodes;
@@ -68,7 +69,8 @@ public class ExecuteResponse {
         private String operator;
         private Boolean result;
 
-        public ExplainEntry() {}
+        public ExplainEntry() {
+        }
 
         public ExplainEntry(String node, String operator, Boolean result) {
             this.node = node;
@@ -106,7 +108,8 @@ public class ExecuteResponse {
         private Integer latencyMs;
         private Boolean cacheHit;
 
-        public Engine() {}
+        public Engine() {
+        }
 
         public Engine(String version, Integer latencyMs, Boolean cacheHit) {
             this.version = version;

@@ -37,11 +37,12 @@ public class CompileRequest {
     @Valid
     private Source source;
 
-    public CompileRequest() {}
+    public CompileRequest() {
+    }
 
     public CompileRequest(String tenantId, String ruleId, Integer version, List<Map<String, Object>> nodes,
-                         Limits limits, List<TimeLink> timeLinks, String operatorsFingerprint,
-                         String compilerId, Source source) {
+                          Limits limits, List<TimeLink> timeLinks, String operatorsFingerprint,
+                          String compilerId, Source source) {
         this.tenantId = tenantId;
         this.ruleId = ruleId;
         this.version = version;
@@ -131,7 +132,8 @@ public class CompileRequest {
         private Integer perCustomer;
         private Integer perDay;
 
-        public Limits() {}
+        public Limits() {
+        }
 
         public Limits(Integer perCustomer, Integer perDay) {
             this.perCustomer = perCustomer;
@@ -162,7 +164,8 @@ public class CompileRequest {
         @NotBlank
         private String mode;
 
-        public TimeLink() {}
+        public TimeLink() {
+        }
 
         public TimeLink(String policyId, String mode) {
             this.policyId = policyId;
@@ -193,7 +196,8 @@ public class CompileRequest {
         @NotBlank
         private String snapshotHash;
 
-        public Source() {}
+        public Source() {
+        }
 
         public Source(String ruleVersionId, String snapshotHash) {
             this.ruleVersionId = ruleVersionId;

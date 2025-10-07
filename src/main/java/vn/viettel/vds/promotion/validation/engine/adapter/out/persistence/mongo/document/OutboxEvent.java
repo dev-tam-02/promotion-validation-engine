@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Document(collection = "outbox_events")
 @CompoundIndexes({
-    @CompoundIndex(name = "dispatch_queue", def = "{'tenantId': 1, 'status': 1, 'createdAt': 1}")
+        @CompoundIndex(name = "dispatch_queue", def = "{'tenantId': 1, 'status': 1, 'createdAt': 1}")
 })
 public class OutboxEvent {
 
@@ -31,10 +31,11 @@ public class OutboxEvent {
 
     private Instant lastTriedAt;
 
-    public OutboxEvent() {}
+    public OutboxEvent() {
+    }
 
     public OutboxEvent(String id, String tenantId, EventType type, Map<String, Object> payload,
-                      EventStatus status, Integer attempts, Instant createdAt, Instant lastTriedAt) {
+                       EventStatus status, Integer attempts, Instant createdAt, Instant lastTriedAt) {
         this.id = id;
         this.tenantId = tenantId;
         this.type = type;

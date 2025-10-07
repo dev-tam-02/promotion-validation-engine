@@ -9,7 +9,7 @@ import java.time.Instant;
 
 @Document(collection = "bundle_warmups")
 @CompoundIndexes({
-    @CompoundIndex(name = "byTenantState", def = "{'tenantId': 1, 'state': 1, 'createdAt': 1}")
+        @CompoundIndex(name = "byTenantState", def = "{'tenantId': 1, 'state': 1, 'createdAt': 1}")
 })
 public class BundleWarmup {
 
@@ -28,10 +28,11 @@ public class BundleWarmup {
 
     private Instant updatedAt;
 
-    public BundleWarmup() {}
+    public BundleWarmup() {
+    }
 
     public BundleWarmup(String id, String tenantId, String bundleHash, WarmupState state,
-                       Integer attempts, Instant createdAt, Instant updatedAt) {
+                        Integer attempts, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.tenantId = tenantId;
         this.bundleHash = bundleHash;

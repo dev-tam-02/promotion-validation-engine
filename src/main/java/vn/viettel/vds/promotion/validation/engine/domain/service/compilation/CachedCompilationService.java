@@ -19,16 +19,16 @@ public class CachedCompilationService {
     private final CompilationCacheConfig cacheConfig;
 
     public CachedCompilationService(DroolsCompilationService compilationService,
-                                   CompilationCacheService cacheService,
-                                   CompilationCacheConfig cacheConfig) {
+                                    CompilationCacheService cacheService,
+                                    CompilationCacheConfig cacheConfig) {
         this.compilationService = compilationService;
         this.cacheService = cacheService;
         this.cacheConfig = cacheConfig;
     }
 
     public DroolsCompilationService.CompilationResult compileDrl(String tenantId, String ruleId,
-                                                               Integer version, String drlContent,
-                                                               String operatorsFingerprint) {
+                                                                 Integer version, String drlContent,
+                                                                 String operatorsFingerprint) {
         logger.debug("Compiling DRL with caching for rule: {}", ruleId);
 
         // Check cache if enabled
@@ -96,10 +96,10 @@ public class CachedCompilationService {
     private String normalizeDrlForHashing(String drlContent) {
         // Remove comments and normalize whitespace for consistent hashing
         return drlContent
-            .replaceAll("//.*", "")           // Remove single-line comments
-            .replaceAll("/\\*.*?\\*/", "")    // Remove multi-line comments
-            .replaceAll("\\s+", " ")          // Normalize whitespace
-            .trim();
+                .replaceAll("//.*", "")           // Remove single-line comments
+                .replaceAll("/\\*.*?\\*/", "")    // Remove multi-line comments
+                .replaceAll("\\s+", " ")          // Normalize whitespace
+                .trim();
     }
 
     private CompilationCacheService.CompilationResult convertToCompilationResult(
@@ -107,10 +107,10 @@ public class CachedCompilationService {
 
         long compilationTime = 0; // We don't have timing info from original
         return CompilationCacheService.CompilationResult.success(
-            original.getBundleHash(),
-            original.getArtifactBytes(),
-            drlContent,
-            compilationTime
+                original.getBundleHash(),
+                original.getArtifactBytes(),
+                drlContent,
+                compilationTime
         );
     }
 
@@ -120,11 +120,11 @@ public class CachedCompilationService {
         CompilationCacheService.CompilationResult result = cached.getResult();
 
         return new DroolsCompilationService.CompilationResult(
-            result.getBundleHash(),
-            result.getCompiledBytes(),
-            (long) result.getCompiledBytes().length,
-            java.util.List.of("Served from compilation cache"),
-            "cached"
+                result.getBundleHash(),
+                result.getCompiledBytes(),
+                (long) result.getCompiledBytes().length,
+                java.util.List.of("Served from compilation cache"),
+                "cached"
         );
     }
 }

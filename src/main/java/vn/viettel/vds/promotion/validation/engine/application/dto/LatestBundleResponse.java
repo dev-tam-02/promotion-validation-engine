@@ -11,10 +11,11 @@ public class LatestBundleResponse {
     private Limits limits;
     private List<TimeLink> timeLinks;
 
-    public LatestBundleResponse() {}
+    public LatestBundleResponse() {
+    }
 
     public LatestBundleResponse(String ruleId, Integer ruleVersion, Integer assignmentVersion,
-                               String bundleHash, Limits limits, List<TimeLink> timeLinks) {
+                                String bundleHash, Limits limits, List<TimeLink> timeLinks) {
         this.ruleId = ruleId;
         this.ruleVersion = ruleVersion;
         this.assignmentVersion = assignmentVersion;
@@ -77,7 +78,8 @@ public class LatestBundleResponse {
         private Integer perCustomer;
         private Integer perDay;
 
-        public Limits() {}
+        public Limits() {
+        }
 
         public Limits(Integer perCustomer, Integer perDay) {
             this.perCustomer = perCustomer;
@@ -105,7 +107,8 @@ public class LatestBundleResponse {
         private String policyId;
         private String mode;
 
-        public TimeLink() {}
+        public TimeLink() {
+        }
 
         public TimeLink(String policyId, String mode) {
             this.policyId = policyId;

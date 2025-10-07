@@ -34,6 +34,6 @@ public class CustomerTierEqualsOperatorTranslator implements OperatorTranslator 
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "customer.tier.equals".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

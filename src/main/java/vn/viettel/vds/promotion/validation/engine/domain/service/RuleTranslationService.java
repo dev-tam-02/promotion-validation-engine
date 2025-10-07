@@ -20,13 +20,13 @@ public class RuleTranslationService {
     }
 
     public String translateToDrl(String tenantId, String ruleId, Integer version,
-                                List<Map<String, Object>> nodes) {
+                                 List<Map<String, Object>> nodes) {
 
         Map<String, Map<String, Object>> nodeMap = nodes.stream()
-            .collect(Collectors.toMap(
-                node -> (String) node.get("id"),
-                node -> node
-            ));
+                .collect(Collectors.toMap(
+                        node -> (String) node.get("id"),
+                        node -> node
+                ));
 
         Map<String, Object> rootNode = findRootNode(nodeMap);
         if (rootNode == null) {
@@ -61,7 +61,7 @@ public class RuleTranslationService {
     }
 
     private void generateRule(StringBuilder drl, String ruleId, Map<String, Object> rootNode,
-                             Map<String, Map<String, Object>> nodeMap) {
+                              Map<String, Map<String, Object>> nodeMap) {
 
         drl.append("rule \"").append(ruleId).append("\"\n");
         drl.append("    when\n");
@@ -77,7 +77,7 @@ public class RuleTranslationService {
     }
 
     private void generateConditions(StringBuilder drl, Map<String, Object> node,
-                                   Map<String, Map<String, Object>> nodeMap, int indent) {
+                                    Map<String, Map<String, Object>> nodeMap, int indent) {
 
         String type = (String) node.get("type");
 
@@ -89,7 +89,7 @@ public class RuleTranslationService {
     }
 
     private void generateGroupConditions(StringBuilder drl, Map<String, Object> groupNode,
-                                        Map<String, Map<String, Object>> nodeMap, int indent) {
+                                         Map<String, Map<String, Object>> nodeMap, int indent) {
 
         String groupLogic = (String) groupNode.get("groupLogic");
         List<String> children = (List<String>) groupNode.get("children");
@@ -156,7 +156,7 @@ public class RuleTranslationService {
     }
 
     private void generateFailureRule(StringBuilder drl, String ruleId, Map<String, Object> rootNode,
-                                    Map<String, Map<String, Object>> nodeMap) {
+                                     Map<String, Map<String, Object>> nodeMap) {
 
         Set<String> allReasonCodes = collectReasonCodes(rootNode, nodeMap);
 
@@ -171,8 +171,8 @@ public class RuleTranslationService {
         if (!allReasonCodes.isEmpty()) {
             drl.append("        reasonCodes.addAll(java.util.Arrays.asList(");
             String codes = allReasonCodes.stream()
-                .map(code -> "\"" + code + "\"")
-                .collect(Collectors.joining(", "));
+                    .map(code -> "\"" + code + "\"")
+                    .collect(Collectors.joining(", "));
             drl.append(codes);
             drl.append("));\n");
         }
@@ -188,7 +188,7 @@ public class RuleTranslationService {
     }
 
     private void collectReasonCodesRecursive(Map<String, Object> node, Map<String, Map<String, Object>> nodeMap,
-                                           Set<String> reasonCodes) {
+                                             Set<String> reasonCodes) {
         String type = (String) node.get("type");
 
         if ("COND".equals(type)) {
@@ -220,9 +220,9 @@ public class RuleTranslationService {
         }
 
         return nodeMap.values().stream()
-            .filter(node -> !childIds.contains(node.get("id")))
-            .findFirst()
-            .orElse(null);
+                .filter(node -> !childIds.contains(node.get("id")))
+                .findFirst()
+                .orElse(null);
     }
 
     private String sanitizePackageName(String tenantId) {
@@ -247,13 +247,13 @@ public class RuleTranslationService {
     private boolean isReservedKeyword(String word) {
         // Java reserved keywords
         String[] keywords = {"abstract", "assert", "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue", "default",
-            "do", "double", "else", "enum", "extends", "final", "finally",
-            "float", "for", "goto", "if", "implements", "import", "instanceof",
-            "int", "interface", "long", "native", "new", "package", "private",
-            "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws",
-            "transient", "try", "void", "volatile", "while"};
+                "case", "catch", "char", "class", "const", "continue", "default",
+                "do", "double", "else", "enum", "extends", "final", "finally",
+                "float", "for", "goto", "if", "implements", "import", "instanceof",
+                "int", "interface", "long", "native", "new", "package", "private",
+                "protected", "public", "return", "short", "static", "strictfp",
+                "super", "switch", "synchronized", "this", "throw", "throws",
+                "transient", "try", "void", "volatile", "while"};
 
         for (String keyword : keywords) {
             if (keyword.equals(word)) {

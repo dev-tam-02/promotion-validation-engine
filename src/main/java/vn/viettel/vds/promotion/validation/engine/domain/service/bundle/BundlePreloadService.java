@@ -30,9 +30,9 @@ public class BundlePreloadService {
     private final ExecutorService preloadExecutor;
 
     public BundlePreloadService(BundleRepository bundleRepository,
-                               DroolsCompilationService compilationService,
-                               KieSessionManager sessionManager,
-                               BundlePreloadConfig config) {
+                                DroolsCompilationService compilationService,
+                                KieSessionManager sessionManager,
+                                BundlePreloadConfig config) {
         this.bundleRepository = bundleRepository;
         this.compilationService = compilationService;
         this.sessionManager = sessionManager;
@@ -69,18 +69,18 @@ public class BundlePreloadService {
         AtomicInteger skipped = new AtomicInteger(0);
 
         List<CompletableFuture<Void>> futures = activeRules.stream()
-            .map(rule -> CompletableFuture.runAsync(() -> preloadSingleRule(rule, successful, failed, skipped), preloadExecutor))
-            .toList();
+                .map(rule -> CompletableFuture.runAsync(() -> preloadSingleRule(rule, successful, failed, skipped), preloadExecutor))
+                .toList();
 
         // Wait for all preloads to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-            .orTimeout(config.getPreloadTimeoutMinutes(), TimeUnit.MINUTES)
-            .join();
+                .orTimeout(config.getPreloadTimeoutMinutes(), TimeUnit.MINUTES)
+                .join();
 
         long totalTime = System.currentTimeMillis() - startTime;
 
         logger.info("Bundle preload completed: successful={}, failed={}, skipped={}, totalTime={}ms",
-                   successful.get(), failed.get(), skipped.get(), totalTime);
+                successful.get(), failed.get(), skipped.get(), totalTime);
 
         return new PreloadResult(successful.get(), failed.get(), skipped.get(), totalTime);
     }
@@ -94,25 +94,25 @@ public class BundlePreloadService {
         AtomicInteger skipped = new AtomicInteger(0);
 
         List<CompletableFuture<Void>> futures = ruleIds.stream()
-            .map(ruleId -> CompletableFuture.runAsync(() -> {
-                ActiveRuleInfo rule = bundleRepository.findActiveRule(ruleId);
-                if (rule != null) {
-                    preloadSingleRule(rule, successful, failed, skipped);
-                } else {
-                    logger.warn("Rule not found or not active: {}", ruleId);
-                    skipped.incrementAndGet();
-                }
-            }, preloadExecutor))
-            .toList();
+                .map(ruleId -> CompletableFuture.runAsync(() -> {
+                    ActiveRuleInfo rule = bundleRepository.findActiveRule(ruleId);
+                    if (rule != null) {
+                        preloadSingleRule(rule, successful, failed, skipped);
+                    } else {
+                        logger.warn("Rule not found or not active: {}", ruleId);
+                        skipped.incrementAndGet();
+                    }
+                }, preloadExecutor))
+                .toList();
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-            .orTimeout(config.getPreloadTimeoutMinutes(), TimeUnit.MINUTES)
-            .join();
+                .orTimeout(config.getPreloadTimeoutMinutes(), TimeUnit.MINUTES)
+                .join();
 
         long totalTime = System.currentTimeMillis() - startTime;
 
         logger.info("Specific rule preload completed: successful={}, failed={}, skipped={}, totalTime={}ms",
-                   successful.get(), failed.get(), skipped.get(), totalTime);
+                successful.get(), failed.get(), skipped.get(), totalTime);
 
         return new PreloadResult(successful.get(), failed.get(), skipped.get(), totalTime);
     }
@@ -203,11 +203,11 @@ public class BundlePreloadService {
         long checkTime = System.currentTimeMillis() - startTime;
 
         BundleHealthStatus status = new BundleHealthStatus(
-            totalRules, loadedRules, healthyRules, checkTime, Instant.now()
+                totalRules, loadedRules, healthyRules, checkTime, Instant.now()
         );
 
         logger.debug("Bundle health check completed: total={}, loaded={}, healthy={}, time={}ms",
-                    totalRules, loadedRules, healthyRules, checkTime);
+                totalRules, loadedRules, healthyRules, checkTime);
 
         return status;
     }
@@ -226,11 +226,26 @@ public class BundlePreloadService {
             this.totalTimeMs = totalTimeMs;
         }
 
-        public int getSuccessful() { return successful; }
-        public int getFailed() { return failed; }
-        public int getSkipped() { return skipped; }
-        public long getTotalTimeMs() { return totalTimeMs; }
-        public int getTotal() { return successful + failed + skipped; }
+        public int getSuccessful() {
+            return successful;
+        }
+
+        public int getFailed() {
+            return failed;
+        }
+
+        public int getSkipped() {
+            return skipped;
+        }
+
+        public long getTotalTimeMs() {
+            return totalTimeMs;
+        }
+
+        public int getTotal() {
+            return successful + failed + skipped;
+        }
+
         public double getSuccessRate() {
             int total = getTotal();
             return total > 0 ? (double) successful / total : 0.0;
@@ -245,7 +260,7 @@ public class BundlePreloadService {
         private final Instant checkedAt;
 
         public BundleHealthStatus(int totalRules, int loadedRules, int healthyRules,
-                                 long checkTimeMs, Instant checkedAt) {
+                                  long checkTimeMs, Instant checkedAt) {
             this.totalRules = totalRules;
             this.loadedRules = loadedRules;
             this.healthyRules = healthyRules;
@@ -253,14 +268,30 @@ public class BundlePreloadService {
             this.checkedAt = checkedAt;
         }
 
-        public int getTotalRules() { return totalRules; }
-        public int getLoadedRules() { return loadedRules; }
-        public int getHealthyRules() { return healthyRules; }
-        public long getCheckTimeMs() { return checkTimeMs; }
-        public Instant getCheckedAt() { return checkedAt; }
+        public int getTotalRules() {
+            return totalRules;
+        }
+
+        public int getLoadedRules() {
+            return loadedRules;
+        }
+
+        public int getHealthyRules() {
+            return healthyRules;
+        }
+
+        public long getCheckTimeMs() {
+            return checkTimeMs;
+        }
+
+        public Instant getCheckedAt() {
+            return checkedAt;
+        }
+
         public double getLoadedRatio() {
             return totalRules > 0 ? (double) loadedRules / totalRules : 0.0;
         }
+
         public double getHealthyRatio() {
             return loadedRules > 0 ? (double) healthyRules / loadedRules : 0.0;
         }

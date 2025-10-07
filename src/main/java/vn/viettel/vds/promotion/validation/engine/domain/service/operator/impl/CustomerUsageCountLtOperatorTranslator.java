@@ -41,7 +41,7 @@ public class CustomerUsageCountLtOperatorTranslator implements OperatorTranslato
         // This operator checks usage count for specific voucher code using a service call
         // Assumes there's a global usageService available in Drools session
         sb.append("        eval(usageService.getUsageCount($customer.getId(), \"")
-          .append(voucherCode).append("\") < ").append(maxUsage).append(")\n");
+                .append(voucherCode).append("\") < ").append(maxUsage).append(")\n");
 
         return sb.toString();
     }
@@ -59,6 +59,6 @@ public class CustomerUsageCountLtOperatorTranslator implements OperatorTranslato
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "customer.usage.count.lt".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

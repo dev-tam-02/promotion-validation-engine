@@ -46,7 +46,8 @@ public class CompileRequest {
     private String operatorsFingerprint;
 
     // Constructors
-    public CompileRequest() {}
+    public CompileRequest() {
+    }
 
     public CompileRequest(String tenantId, String ruleId, Integer version, String logic, List<RuleNodeDto> nodes) {
         this.tenantId = tenantId;
@@ -57,21 +58,51 @@ public class CompileRequest {
     }
 
     // Getters and setters
-    public String getTenantId() { return tenantId; }
-    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() {
+        return tenantId;
+    }
 
-    public String getRuleId() { return ruleId; }
-    public void setRuleId(String ruleId) { this.ruleId = ruleId; }
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
 
-    public Integer getVersion() { return version; }
-    public void setVersion(Integer version) { this.version = version; }
+    public String getRuleId() {
+        return ruleId;
+    }
 
-    public String getLogic() { return logic; }
-    public void setLogic(String logic) { this.logic = logic; }
+    public void setRuleId(String ruleId) {
+        this.ruleId = ruleId;
+    }
 
-    public List<RuleNodeDto> getNodes() { return nodes; }
-    public void setNodes(List<RuleNodeDto> nodes) { this.nodes = nodes; }
+    public Integer getVersion() {
+        return version;
+    }
 
-    public String getOperatorsFingerprint() { return operatorsFingerprint; }
-    public void setOperatorsFingerprint(String operatorsFingerprint) { this.operatorsFingerprint = operatorsFingerprint; }
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public String getLogic() {
+        return logic;
+    }
+
+    public void setLogic(String logic) {
+        this.logic = logic;
+    }
+
+    public List<RuleNodeDto> getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(List<RuleNodeDto> nodes) {
+        this.nodes = nodes;
+    }
+
+    public String getOperatorsFingerprint() {
+        return operatorsFingerprint;
+    }
+
+    public void setOperatorsFingerprint(String operatorsFingerprint) {
+        this.operatorsFingerprint = operatorsFingerprint;
+    }
 }

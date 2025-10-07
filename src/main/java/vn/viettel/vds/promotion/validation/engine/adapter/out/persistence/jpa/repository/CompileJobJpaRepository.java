@@ -13,22 +13,22 @@ import java.util.Optional;
 public interface CompileJobJpaRepository extends JpaRepository<CompileJobEntity, String> {
 
     Optional<CompileJobEntity> findByTenantIdAndRuleIdAndTargetVersion(
-        String tenantId, String ruleId, Integer targetVersion);
+            String tenantId, String ruleId, Integer targetVersion);
 
     List<CompileJobEntity> findByTenantIdAndStatus(
-        String tenantId, CompileJobEntity.JobStatus status);
+            String tenantId, CompileJobEntity.JobStatus status);
 
     @Query("SELECT c FROM CompileJobEntity c WHERE c.tenantId = :tenantId " +
-           "AND c.status = :status ORDER BY c.requestedAt DESC")
+            "AND c.status = :status ORDER BY c.requestedAt DESC")
     List<CompileJobEntity> findByTenantIdAndStatusOrderByRequestedAtDesc(
-        @Param("tenantId") String tenantId,
-        @Param("status") CompileJobEntity.JobStatus status);
+            @Param("tenantId") String tenantId,
+            @Param("status") CompileJobEntity.JobStatus status);
 
     List<CompileJobEntity> findByTenantIdAndRuleId(String tenantId, String ruleId);
 
     @Query("SELECT c FROM CompileJobEntity c WHERE c.tenantId = :tenantId " +
-           "AND c.ruleId = :ruleId ORDER BY c.targetVersion DESC")
+            "AND c.ruleId = :ruleId ORDER BY c.targetVersion DESC")
     List<CompileJobEntity> findLatestByTenantIdAndRuleId(
-        @Param("tenantId") String tenantId,
-        @Param("ruleId") String ruleId);
+            @Param("tenantId") String tenantId,
+            @Param("ruleId") String ruleId);
 }

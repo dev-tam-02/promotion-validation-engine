@@ -129,7 +129,7 @@ public class ExecutionService implements ExecutionUseCase {
     }
 
     private ExecuteRequest.ExecuteOptions mergeOptions(ExecuteRequest.ExecuteOptions requestOptions,
-                                                      EngineConfig config) {
+                                                       EngineConfig config) {
         ExecuteRequest.ExecuteOptions merged = new ExecuteRequest.ExecuteOptions();
 
         if (requestOptions != null) {

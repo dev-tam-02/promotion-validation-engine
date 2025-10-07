@@ -42,6 +42,6 @@ public class TimeWindowActiveOperatorTranslator implements OperatorTranslator {
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "time.window.active".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

@@ -99,7 +99,7 @@ public class SessionLockAdapter implements SessionLockPort {
         try {
             String lockValue = String.valueOf(System.currentTimeMillis());
             Boolean acquired = redisTemplate.opsForValue()
-                .setIfAbsent(lockKey, lockValue, Duration.ofSeconds(ttlSeconds));
+                    .setIfAbsent(lockKey, lockValue, Duration.ofSeconds(ttlSeconds));
 
             boolean result = acquired != null && acquired;
             if (result) {

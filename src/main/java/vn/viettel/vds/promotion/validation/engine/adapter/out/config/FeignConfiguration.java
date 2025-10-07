@@ -27,9 +27,9 @@ public class FeignConfiguration {
     @Bean
     public feign.Request.Options feignOptions() {
         return new feign.Request.Options(
-            5000,   // connectTimeoutMillis
-            10000,  // readTimeoutMillis
-            true    // followRedirects
+                5000,   // connectTimeoutMillis
+                10000,  // readTimeoutMillis
+                true    // followRedirects
         );
     }
 

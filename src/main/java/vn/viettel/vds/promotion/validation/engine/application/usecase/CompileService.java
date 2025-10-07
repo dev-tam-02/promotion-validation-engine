@@ -123,7 +123,7 @@ public class CompileService implements CompileUseCase {
 
     @Override
     public List<CompileJobResponse> getCompileJobs(String tenantId, String ruleId, String status,
-                                                  String from, String to, int page, int size) {
+                                                   String from, String to, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<CompileJob> jobs;
 

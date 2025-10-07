@@ -11,7 +11,7 @@ public interface CompileUseCase {
     CompileResponse compile(CompileRequest request);
 
     List<CompileJobResponse> getCompileJobs(String tenantId, String ruleId, String status,
-                                           String from, String to, int page, int size);
+                                            String from, String to, int page, int size);
 
     CompileJobResponse getCompileJob(String jobId);
 }

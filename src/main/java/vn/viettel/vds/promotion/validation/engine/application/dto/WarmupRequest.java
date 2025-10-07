@@ -13,7 +13,8 @@ public class WarmupRequest {
     @NotEmpty
     private List<String> bundleHashes;
 
-    public WarmupRequest() {}
+    public WarmupRequest() {
+    }
 
     public WarmupRequest(String tenantId, List<String> bundleHashes) {
         this.tenantId = tenantId;

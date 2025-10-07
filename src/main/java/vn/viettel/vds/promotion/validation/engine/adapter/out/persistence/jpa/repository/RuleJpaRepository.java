@@ -20,7 +20,7 @@ public interface RuleJpaRepository extends JpaRepository<RuleEntity, String> {
     List<RuleEntity> findAllEnabledRules();
 
     @Query("SELECT r FROM RuleEntity r WHERE r.name LIKE %:keyword% " +
-           "OR r.drlText LIKE %:keyword%")
+            "OR r.drlText LIKE %:keyword%")
     List<RuleEntity> searchByKeyword(@Param("keyword") String keyword);
 
     boolean existsByName(String name);

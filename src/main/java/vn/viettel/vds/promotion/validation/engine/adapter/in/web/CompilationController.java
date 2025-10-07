@@ -33,17 +33,17 @@ public class CompilationController {
     }
 
     @Operation(summary = "Compile rule to Drools artifact",
-               description = "Compile rule nodes into executable Drools bundle")
+            description = "Compile rule nodes into executable Drools bundle")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Rule compiled successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "500", description = "Compilation failed")
+            @ApiResponse(responseCode = "200", description = "Rule compiled successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Compilation failed")
     })
     @PostMapping
     public ResponseEntity<CompileResponse> compileRule(@Valid @RequestBody CompileRequest request) {
 
         logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
-                   request.getTenantId(), request.getRuleId(), request.getVersion());
+                request.getTenantId(), request.getRuleId(), request.getVersion());
 
         try {
             // Convert DTO to domain input
@@ -56,13 +56,13 @@ public class CompilationController {
             CompileResponse response = mapToCompileResponse(result);
 
             logger.info("Rule compilation completed: bundleHash={}, ok={}",
-                       response.getBundleHash(), response.isOk());
+                    response.getBundleHash(), response.isOk());
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Rule compilation failed: tenantId={}, ruleId={}, error={}",
-                        request.getTenantId(), request.getRuleId(), e.getMessage(), e);
+                    request.getTenantId(), request.getRuleId(), e.getMessage(), e);
 
             CompileResponse errorResponse = new CompileResponse();
             errorResponse.setOk(false);
@@ -74,8 +74,8 @@ public class CompilationController {
 
     @Operation(summary = "Warm up compiled bundle")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Bundle warmed up successfully"),
-        @ApiResponse(responseCode = "500", description = "Warmup failed")
+            @ApiResponse(responseCode = "200", description = "Bundle warmed up successfully"),
+            @ApiResponse(responseCode = "500", description = "Warmup failed")
     })
     @PostMapping("/warmup")
     public ResponseEntity<Void> warmupBundle(@Valid @RequestBody WarmupRequest request) {
@@ -91,16 +91,16 @@ public class CompilationController {
 
         } catch (Exception e) {
             logger.error("Bundle warmup failed: bundleHash={}, error={}",
-                        request.getBundleHash(), e.getMessage(), e);
+                    request.getBundleHash(), e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
     @Operation(summary = "Get bundle status")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Bundle status retrieved"),
-        @ApiResponse(responseCode = "404", description = "Bundle not found"),
-        @ApiResponse(responseCode = "500", description = "Status check failed")
+            @ApiResponse(responseCode = "200", description = "Bundle status retrieved"),
+            @ApiResponse(responseCode = "404", description = "Bundle not found"),
+            @ApiResponse(responseCode = "500", description = "Status check failed")
     })
     @GetMapping("/bundle/{bundleHash}/status")
     public ResponseEntity<BundleStatusResponse> getBundleStatus(
@@ -120,7 +120,7 @@ public class CompilationController {
 
         } catch (Exception e) {
             logger.error("Bundle status check failed: bundleHash={}, error={}",
-                        bundleHash, e.getMessage(), e);
+                    bundleHash, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -145,12 +145,12 @@ public class CompilationController {
         }
 
         return new RuleEnginePort.CompileInput(
-            request.getTenantId(),
-            request.getRuleId(),
-            request.getVersion(),
-            nodesMaps,
-            request.getOperatorsFingerprint(),
-            "default-compiler"
+                request.getTenantId(),
+                request.getRuleId(),
+                request.getVersion(),
+                nodesMaps,
+                request.getOperatorsFingerprint(),
+                "default-compiler"
         );
     }
 

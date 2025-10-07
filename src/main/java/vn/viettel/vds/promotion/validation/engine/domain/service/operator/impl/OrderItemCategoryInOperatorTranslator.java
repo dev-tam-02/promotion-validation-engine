@@ -19,8 +19,8 @@ public class OrderItemCategoryInOperatorTranslator implements OperatorTranslator
 
         List<?> categoryList = (List<?>) categories;
         String categoriesStr = categoryList.stream()
-            .map(cat -> "\"" + cat + "\"")
-            .collect(Collectors.joining(", "));
+                .map(cat -> "\"" + cat + "\"")
+                .collect(Collectors.joining(", "));
 
         StringBuilder sb = new StringBuilder();
         sb.append("        exists OrderItem(category in (").append(categoriesStr).append("))\n");
@@ -41,6 +41,6 @@ public class OrderItemCategoryInOperatorTranslator implements OperatorTranslator
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "order.item.category.in".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

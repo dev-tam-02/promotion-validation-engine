@@ -11,8 +11,8 @@ import java.util.List;
 
 @Document(collection = "bundles")
 @CompoundIndexes({
-    @CompoundIndex(name = "byRuleVersion", def = "{'tenantId': 1, 'ruleId': 1, 'ruleVersion': -1}"),
-    @CompoundIndex(name = "byHash", def = "{'_id': 1}", unique = true)
+        @CompoundIndex(name = "byRuleVersion", def = "{'tenantId': 1, 'ruleId': 1, 'ruleVersion': -1}"),
+        @CompoundIndex(name = "byHash", def = "{'_id': 1}", unique = true)
 })
 public class Bundle {
 
@@ -40,11 +40,12 @@ public class Bundle {
 
     private Source source;
 
-    public Bundle() {}
+    public Bundle() {
+    }
 
     public Bundle(String id, String tenantId, String ruleId, Integer ruleVersion,
-                 String operatorsFingerprint, Engine engine, List<TimeLink> timeLinks,
-                 Limits limits, Artifact artifact, Instant createdAt, Source source) {
+                  String operatorsFingerprint, Engine engine, List<TimeLink> timeLinks,
+                  Limits limits, Artifact artifact, Instant createdAt, Source source) {
         this.id = id;
         this.tenantId = tenantId;
         this.ruleId = ruleId;
@@ -153,7 +154,8 @@ public class Bundle {
         private String compilerId;
         private String droolsVersion;
 
-        public Engine() {}
+        public Engine() {
+        }
 
         public Engine(String type, String compilerId, String droolsVersion) {
             this.type = type;
@@ -190,7 +192,8 @@ public class Bundle {
         private String policyId;
         private String mode;
 
-        public TimeLink() {}
+        public TimeLink() {
+        }
 
         public TimeLink(String policyId, String mode) {
             this.policyId = policyId;
@@ -218,7 +221,8 @@ public class Bundle {
         private Integer perCustomer;
         private Integer perDay;
 
-        public Limits() {}
+        public Limits() {
+        }
 
         public Limits(Integer perCustomer, Integer perDay) {
             this.perCustomer = perCustomer;
@@ -247,7 +251,8 @@ public class Bundle {
         private String key;
         private Long size;
 
-        public Artifact() {}
+        public Artifact() {
+        }
 
         public Artifact(String store, String key, Long size) {
             this.store = store;
@@ -284,7 +289,8 @@ public class Bundle {
         private String validationRuleVersionId;
         private String snapshotHash;
 
-        public Source() {}
+        public Source() {
+        }
 
         public Source(String validationRuleVersionId, String snapshotHash) {
             this.validationRuleVersionId = validationRuleVersionId;

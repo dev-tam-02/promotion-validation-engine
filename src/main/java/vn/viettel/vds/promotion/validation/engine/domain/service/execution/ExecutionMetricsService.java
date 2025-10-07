@@ -41,29 +41,29 @@ public class ExecutionMetricsService {
 
         // Initialize counters
         this.totalExecutionsCounter = Counter.builder("drools.executions.total")
-            .description("Total number of rule executions")
-            .register(meterRegistry);
+                .description("Total number of rule executions")
+                .register(meterRegistry);
 
         this.successfulExecutionsCounter = Counter.builder("drools.executions.successful")
-            .description("Number of successful rule executions")
-            .register(meterRegistry);
+                .description("Number of successful rule executions")
+                .register(meterRegistry);
 
         this.failedExecutionsCounter = Counter.builder("drools.executions.failed")
-            .description("Number of failed rule executions")
-            .register(meterRegistry);
+                .description("Number of failed rule executions")
+                .register(meterRegistry);
 
         this.batchExecutionsCounter = Counter.builder("drools.executions.batch")
-            .description("Number of batch rule executions")
-            .register(meterRegistry);
+                .description("Number of batch rule executions")
+                .register(meterRegistry);
 
         // Initialize timers
         this.executionTimer = Timer.builder("drools.execution.duration")
-            .description("Rule execution duration")
-            .register(meterRegistry);
+                .description("Rule execution duration")
+                .register(meterRegistry);
 
         this.compilationTimer = Timer.builder("drools.compilation.duration")
-            .description("Rule compilation duration")
-            .register(meterRegistry);
+                .description("Rule compilation duration")
+                .register(meterRegistry);
     }
 
     public void recordExecution(String bundleHash, Duration duration, boolean success) {
@@ -80,10 +80,10 @@ public class ExecutionMetricsService {
         // Record bundle-specific metrics
         bundleExecutionCounts.computeIfAbsent(bundleHash, k -> new AtomicLong(0)).incrementAndGet();
         bundleExecutionTimes.computeIfAbsent(bundleHash, k -> new AtomicLong(0))
-            .addAndGet(duration.toMillis());
+                .addAndGet(duration.toMillis());
 
         logger.debug("Recorded execution metrics: bundle={}, duration={}ms, success={}",
-                    bundleHash, duration.toMillis(), success);
+                bundleHash, duration.toMillis(), success);
     }
 
     public void recordBatchExecution(int batchSize, Duration totalDuration, int successCount) {
@@ -103,7 +103,7 @@ public class ExecutionMetricsService {
         executionTimer.record(totalDuration);
 
         logger.info("Recorded batch execution metrics: size={}, duration={}ms, success={}, failed={}",
-                   batchSize, totalDuration.toMillis(), successCount, failedCount);
+                batchSize, totalDuration.toMillis(), successCount, failedCount);
     }
 
     public void recordCompilation(Duration duration, boolean success) {
@@ -116,7 +116,7 @@ public class ExecutionMetricsService {
         }
 
         logger.debug("Recorded compilation metrics: duration={}ms, success={}",
-                    duration.toMillis(), success);
+                duration.toMillis(), success);
     }
 
     public void recordCacheHit(String bundleHash) {
@@ -188,12 +188,12 @@ public class ExecutionMetricsService {
 
     public ExecutionSummary getExecutionSummary() {
         return new ExecutionSummary(
-            getTotalExecutions(),
-            getSuccessfulExecutions(),
-            getFailedExecutions(),
-            getBatchExecutions(),
-            getAverageExecutionTime(),
-            getMaxExecutionTime()
+                getTotalExecutions(),
+                getSuccessfulExecutions(),
+                getFailedExecutions(),
+                getBatchExecutions(),
+                getAverageExecutionTime(),
+                getMaxExecutionTime()
         );
     }
 
@@ -202,21 +202,21 @@ public class ExecutionMetricsService {
         for (Map.Entry<String, AtomicLong> entry : bundleExecutionCounts.entrySet()) {
             String bundleHash = entry.getKey();
             bundleStats.put(bundleHash, Map.of(
-                "executionCount", entry.getValue().get(),
-                "totalTime", getBundleExecutionTime(bundleHash),
-                "averageTime", getBundleAverageExecutionTime(bundleHash)
+                    "executionCount", entry.getValue().get(),
+                    "totalTime", getBundleExecutionTime(bundleHash),
+                    "averageTime", getBundleAverageExecutionTime(bundleHash)
             ));
         }
 
         return new ExecutionStats(
-            getTotalExecutions(),
-            getSuccessfulExecutions(),
-            getFailedExecutions(),
-            getBatchExecutions(),
-            getAverageExecutionTime(),
-            getMaxExecutionTime(),
-            bundleStats,
-            Instant.now()
+                getTotalExecutions(),
+                getSuccessfulExecutions(),
+                getFailedExecutions(),
+                getBatchExecutions(),
+                getAverageExecutionTime(),
+                getMaxExecutionTime(),
+                bundleStats,
+                Instant.now()
         );
     }
 
@@ -229,7 +229,7 @@ public class ExecutionMetricsService {
         private final double maxExecutionTime;
 
         public ExecutionSummary(long totalExecutions, long successfulExecutions, long failedExecutions,
-                               long batchExecutions, double averageExecutionTime, double maxExecutionTime) {
+                                long batchExecutions, double averageExecutionTime, double maxExecutionTime) {
             this.totalExecutions = totalExecutions;
             this.successfulExecutions = successfulExecutions;
             this.failedExecutions = failedExecutions;
@@ -239,12 +239,30 @@ public class ExecutionMetricsService {
         }
 
         // Getters
-        public long getTotalExecutions() { return totalExecutions; }
-        public long getSuccessfulExecutions() { return successfulExecutions; }
-        public long getFailedExecutions() { return failedExecutions; }
-        public long getBatchExecutions() { return batchExecutions; }
-        public double getAverageExecutionTime() { return averageExecutionTime; }
-        public double getMaxExecutionTime() { return maxExecutionTime; }
+        public long getTotalExecutions() {
+            return totalExecutions;
+        }
+
+        public long getSuccessfulExecutions() {
+            return successfulExecutions;
+        }
+
+        public long getFailedExecutions() {
+            return failedExecutions;
+        }
+
+        public long getBatchExecutions() {
+            return batchExecutions;
+        }
+
+        public double getAverageExecutionTime() {
+            return averageExecutionTime;
+        }
+
+        public double getMaxExecutionTime() {
+            return maxExecutionTime;
+        }
+
         public double getSuccessRate() {
             return totalExecutions > 0 ? (double) successfulExecutions / totalExecutions * 100 : 0.0;
         }
@@ -261,8 +279,8 @@ public class ExecutionMetricsService {
         private final Instant timestamp;
 
         public ExecutionStats(long totalExecutions, long successfulExecutions, long failedExecutions,
-                             long batchExecutions, double averageExecutionTime, double maxExecutionTime,
-                             Map<String, Object> bundleStats, Instant timestamp) {
+                              long batchExecutions, double averageExecutionTime, double maxExecutionTime,
+                              Map<String, Object> bundleStats, Instant timestamp) {
             this.totalExecutions = totalExecutions;
             this.successfulExecutions = successfulExecutions;
             this.failedExecutions = failedExecutions;
@@ -274,14 +292,38 @@ public class ExecutionMetricsService {
         }
 
         // Getters
-        public long getTotalExecutions() { return totalExecutions; }
-        public long getSuccessfulExecutions() { return successfulExecutions; }
-        public long getFailedExecutions() { return failedExecutions; }
-        public long getBatchExecutions() { return batchExecutions; }
-        public double getAverageExecutionTime() { return averageExecutionTime; }
-        public double getMaxExecutionTime() { return maxExecutionTime; }
-        public Map<String, Object> getBundleStats() { return bundleStats; }
-        public Instant getTimestamp() { return timestamp; }
+        public long getTotalExecutions() {
+            return totalExecutions;
+        }
+
+        public long getSuccessfulExecutions() {
+            return successfulExecutions;
+        }
+
+        public long getFailedExecutions() {
+            return failedExecutions;
+        }
+
+        public long getBatchExecutions() {
+            return batchExecutions;
+        }
+
+        public double getAverageExecutionTime() {
+            return averageExecutionTime;
+        }
+
+        public double getMaxExecutionTime() {
+            return maxExecutionTime;
+        }
+
+        public Map<String, Object> getBundleStats() {
+            return bundleStats;
+        }
+
+        public Instant getTimestamp() {
+            return timestamp;
+        }
+
         public double getSuccessRate() {
             return totalExecutions > 0 ? (double) successfulExecutions / totalExecutions * 100 : 0.0;
         }

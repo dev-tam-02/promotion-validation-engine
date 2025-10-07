@@ -27,7 +27,7 @@ public class KieSessionPool {
 
     public PooledKieSession borrowSession(String bundleHash) {
         BundleSessionPool pool = pools.computeIfAbsent(bundleHash,
-            hash -> new BundleSessionPool(hash, sessionFactory, config));
+                hash -> new BundleSessionPool(hash, sessionFactory, config));
 
         return pool.borrowSession();
     }
@@ -105,9 +105,9 @@ public class KieSessionPool {
                 } else {
                     // Pool exhausted, wait or throw exception
                     throw new SessionPoolExhaustedException(
-                        "Session pool exhausted for bundle: " + bundleHash +
-                        ", active: " + activeCount.get() +
-                        ", max: " + config.getMaxPoolSize());
+                            "Session pool exhausted for bundle: " + bundleHash +
+                                    ", active: " + activeCount.get() +
+                                    ", max: " + config.getMaxPoolSize());
                 }
             }
 
@@ -185,13 +185,13 @@ public class KieSessionPool {
 
         public PoolStatistics getStatistics() {
             return new PoolStatistics(
-                bundleHash,
-                activeCount.get(),
-                availableSessions.size(),
-                totalCreated.get(),
-                totalBorrowed.get(),
-                totalReturned.get(),
-                lastAccessTime
+                    bundleHash,
+                    activeCount.get(),
+                    availableSessions.size(),
+                    totalCreated.get(),
+                    totalBorrowed.get(),
+                    totalReturned.get(),
+                    lastAccessTime
             );
         }
     }
@@ -275,8 +275,8 @@ public class KieSessionPool {
         private final Instant lastAccessTime;
 
         public PoolStatistics(String bundleHash, int activeCount, int availableCount,
-                            int totalCreated, int totalBorrowed, int totalReturned,
-                            Instant lastAccessTime) {
+                              int totalCreated, int totalBorrowed, int totalReturned,
+                              Instant lastAccessTime) {
             this.bundleHash = bundleHash;
             this.activeCount = activeCount;
             this.availableCount = availableCount;
@@ -287,15 +287,36 @@ public class KieSessionPool {
         }
 
         // Getters
-        public String getBundleHash() { return bundleHash; }
-        public int getActiveCount() { return activeCount; }
-        public int getAvailableCount() { return availableCount; }
-        public int getTotalCreated() { return totalCreated; }
-        public int getTotalBorrowed() { return totalBorrowed; }
-        public int getTotalReturned() { return totalReturned; }
-        public Instant getLastAccessTime() { return lastAccessTime; }
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public int getActiveCount() {
+            return activeCount;
+        }
+
+        public int getAvailableCount() {
+            return availableCount;
+        }
+
+        public int getTotalCreated() {
+            return totalCreated;
+        }
+
+        public int getTotalBorrowed() {
+            return totalBorrowed;
+        }
+
+        public int getTotalReturned() {
+            return totalReturned;
+        }
+
+        public Instant getLastAccessTime() {
+            return lastAccessTime;
+        }
+
         public double getHitRatio() {
-            return totalBorrowed > 0 ? (double)(totalBorrowed - totalCreated) / totalBorrowed : 0.0;
+            return totalBorrowed > 0 ? (double) (totalBorrowed - totalCreated) / totalBorrowed : 0.0;
         }
     }
 

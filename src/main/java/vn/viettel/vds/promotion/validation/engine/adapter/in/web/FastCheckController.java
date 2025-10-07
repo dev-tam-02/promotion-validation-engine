@@ -19,13 +19,13 @@ import java.util.List;
 /**
  * Fast check controller for simple rule evaluation without Drools.
  * These are deterministic checks that can be evaluated with simple if-else logic.
- *
+ * <p>
  * Use this endpoint when you need:
  * - Time-based checks (business hours, blackout periods)
  * - Simple value comparisons (min/max order value)
  * - Blacklist/whitelist checks
  * - Rate limiting checks
- *
+ * <p>
  * Performance target: < 5ms response time
  */
 @RestController
@@ -38,14 +38,14 @@ public class FastCheckController {
     private final FastCheckUseCase fastCheckUseCase;
 
     @Operation(
-        summary = "Fast rule check",
-        description = "Performs quick rule evaluation for simple conditions without invoking Drools engine"
+            summary = "Fast rule check",
+            description = "Performs quick rule evaluation for simple conditions without invoking Drools engine"
     )
     @PostMapping
     public ResponseEntity<FastCheckResponse> fastCheck(@Valid @RequestBody FastCheckRequest request) {
 
         log.debug("Fast check request for customer={}, order={}",
-            request.getCustomerId(), request.getOrderTotal());
+                request.getCustomerId(), request.getOrderTotal());
 
         long startTime = System.currentTimeMillis();
 
@@ -65,15 +65,15 @@ public class FastCheckController {
 
             // Return DENY on error (fail closed for security)
             return ResponseEntity.ok(FastCheckResponse.deny(
-                "FAST_CHECK_ERROR",
-                "Fast check evaluation failed: " + e.getMessage()
+                    "FAST_CHECK_ERROR",
+                    "Fast check evaluation failed: " + e.getMessage()
             ));
         }
     }
 
     @Operation(
-        summary = "Batch fast check",
-        description = "Performs fast check for multiple requests in parallel"
+            summary = "Batch fast check",
+            description = "Performs fast check for multiple requests in parallel"
     )
     @PostMapping("/batch")
     public ResponseEntity<List<FastCheckResponse>> batchFastCheck(
@@ -82,15 +82,15 @@ public class FastCheckController {
         log.info("Batch fast check for {} requests", requests.size());
 
         List<FastCheckResponse> responses = requests.parallelStream()
-            .map(request -> {
-                try {
-                    return fastCheckUseCase.performFastCheck(request);
-                } catch (Exception e) {
-                    log.error("Fast check failed for request: {}", e.getMessage());
-                    return FastCheckResponse.deny("BATCH_ERROR", e.getMessage());
-                }
-            })
-            .toList();
+                .map(request -> {
+                    try {
+                        return fastCheckUseCase.performFastCheck(request);
+                    } catch (Exception e) {
+                        log.error("Fast check failed for request: {}", e.getMessage());
+                        return FastCheckResponse.deny("BATCH_ERROR", e.getMessage());
+                    }
+                })
+                .toList();
 
         return ResponseEntity.ok(responses);
     }

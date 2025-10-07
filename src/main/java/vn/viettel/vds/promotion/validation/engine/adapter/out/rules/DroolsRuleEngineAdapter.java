@@ -39,10 +39,10 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     private final ConcurrentHashMap<String, byte[]> bundleArtifacts = new ConcurrentHashMap<>();
 
     public DroolsRuleEngineAdapter(RuleTranslationService ruleTranslationService,
-                                  DroolsCompilationService compilationService,
-                                  KieSessionManager sessionManager,
-                                  RuleExecutionOrchestrator executionOrchestrator,
-                                  ExecutionMetricsService metricsService) {
+                                   DroolsCompilationService compilationService,
+                                   KieSessionManager sessionManager,
+                                   RuleExecutionOrchestrator executionOrchestrator,
+                                   ExecutionMetricsService metricsService) {
         this.ruleTranslationService = ruleTranslationService;
         this.compilationService = compilationService;
         this.sessionManager = sessionManager;
@@ -53,26 +53,26 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     @Override
     public CompileResult compile(CompileInput input) {
         logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
-                   input.getTenantId(), input.getRuleId(), input.getVersion());
+                input.getTenantId(), input.getRuleId(), input.getVersion());
 
         long startTime = System.currentTimeMillis();
         boolean success = false;
 
         try {
             String drlContent = ruleTranslationService.translateToDrl(
-                input.getTenantId(),
-                input.getRuleId(),
-                input.getVersion(),
-                input.getNodes()
+                    input.getTenantId(),
+                    input.getRuleId(),
+                    input.getVersion(),
+                    input.getNodes()
             );
 
             logger.debug("Generated DRL content:\n{}", drlContent);
 
             DroolsCompilationService.CompilationResult result = compilationService.compileDrl(
-                input.getTenantId(),
-                input.getRuleId(),
-                input.getVersion(),
-                drlContent
+                    input.getTenantId(),
+                    input.getRuleId(),
+                    input.getVersion(),
+                    drlContent
             );
 
             bundleArtifacts.put(result.getBundleHash(), result.getArtifactBytes());
@@ -82,16 +82,16 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), true);
 
             return new CompileResult(
-                result.getBundleHash(),
-                result.getArtifactBytes(),
-                result.getSize(),
-                result.getLogs(),
-                result.getDroolsVersion()
+                    result.getBundleHash(),
+                    result.getArtifactBytes(),
+                    result.getSize(),
+                    result.getLogs(),
+                    result.getDroolsVersion()
             );
 
         } catch (Exception e) {
             logger.error("Compilation failed: tenantId={}, ruleId={}, error={}",
-                        input.getTenantId(), input.getRuleId(), e.getMessage(), e);
+                    input.getTenantId(), input.getRuleId(), e.getMessage(), e);
 
             // Record compilation failure metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), false);
@@ -103,21 +103,21 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     @Override
     public ExecuteResponse execute(ExecuteInput input) {
         logger.debug("Executing rule: bundleHash={}, tenantId={}",
-                    input.getBundleHash(), input.getTenantId());
+                input.getBundleHash(), input.getTenantId());
 
         try {
             KieContainer container = getOrCreateContainer(input.getBundleHash());
             return executionOrchestrator.executeSingle(input, container);
         } catch (Exception e) {
             logger.error("Rule execution failed: bundleHash={}, error={}",
-                        input.getBundleHash(), e.getMessage(), e);
+                    input.getBundleHash(), e.getMessage(), e);
 
             ExecuteResponse response = new ExecuteResponse();
             response.setOk(false);
             response.setDecision("DENY");
             response.setReasonCodes(List.of("EXECUTION_ERROR"));
             response.setExplain(List.of(
-                new ExecuteResponse.ExplainEntry("error", "exception", false)
+                    new ExecuteResponse.ExplainEntry("error", "exception", false)
             ));
 
             ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
@@ -165,7 +165,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                 response.setDecision("DENY");
                 response.setReasonCodes(List.of("BATCH_EXECUTION_ERROR"));
                 response.setExplain(List.of(
-                    new ExecuteResponse.ExplainEntry("batch", "error", false)
+                        new ExecuteResponse.ExplainEntry("batch", "error", false)
                 ));
 
                 ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
@@ -192,7 +192,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             logger.info("Bundle warmup completed: bundleHash={}", bundleHash);
         } catch (Exception e) {
             logger.error("Bundle warmup failed: bundleHash={}, error={}",
-                        bundleHash, e.getMessage(), e);
+                    bundleHash, e.getMessage(), e);
             throw new RuntimeException("Bundle warmup failed: " + e.getMessage(), e);
         }
     }
@@ -216,7 +216,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         byte[] artifactBytes = bundleArtifacts.get(bundleHash);
         if (artifactBytes == null) {
             throw new IllegalStateException("Bundle not found: " + bundleHash +
-                ". Make sure to warm up the bundle before execution.");
+                    ". Make sure to warm up the bundle before execution.");
         }
 
         container = compilationService.createKieContainer(artifactBytes);
@@ -234,10 +234,10 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         context.put("candidate", candidate);
 
         ExecuteInput input = new ExecuteInput(
-            "default",
-            bundleHash,
-            context,
-            new ExecuteOptions("NONE", 30000, 1000)
+                "default",
+                bundleHash,
+                context,
+                new ExecuteOptions("NONE", 30000, 1000)
         );
 
         ExecuteResponse response = execute(input);
@@ -247,8 +247,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         result.setDecision(response.getDecision());
         result.setReasonCodes(response.getReasonCodes());
         List<String> explainStrings = response.getExplain().stream()
-            .map(entry -> entry.getNode() + ": " + entry.getOperator() + " = " + entry.getResult())
-            .toList();
+                .map(entry -> entry.getNode() + ": " + entry.getOperator() + " = " + entry.getResult())
+                .toList();
         result.setMessage(String.join("; ", explainStrings));
 
         return result;

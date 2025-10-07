@@ -9,10 +9,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "bundles",
-    indexes = {
-        @Index(name = "idx_rule_version", columnList = "tenant_id, rule_id, rule_version"),
-        @Index(name = "idx_tenant", columnList = "tenant_id")
-    }
+        indexes = {
+                @Index(name = "idx_rule_version", columnList = "tenant_id, rule_id, rule_version"),
+                @Index(name = "idx_tenant", columnList = "tenant_id")
+        }
 )
 @Getter
 @Setter

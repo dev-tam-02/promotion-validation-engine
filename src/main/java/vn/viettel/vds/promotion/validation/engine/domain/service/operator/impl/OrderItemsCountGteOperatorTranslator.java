@@ -50,6 +50,6 @@ public class OrderItemsCountGteOperatorTranslator implements OperatorTranslator 
     @Override
     public boolean supports(String operatorName, Integer version) {
         return "order.items.count.gte".equals(operatorName) &&
-               (version == null || version.equals(getVersion()));
+                (version == null || version.equals(getVersion()));
     }
 }

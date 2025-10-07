@@ -36,10 +36,11 @@ public interface RuleEnginePort {
         private String operatorsFingerprint;
         private String compilerId;
 
-        public CompileInput() {}
+        public CompileInput() {
+        }
 
         public CompileInput(String tenantId, String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
-                           String operatorsFingerprint, String compilerId) {
+                            String operatorsFingerprint, String compilerId) {
             this.tenantId = tenantId;
             this.ruleId = ruleId;
             this.version = version;
@@ -48,18 +49,53 @@ public interface RuleEnginePort {
             this.compilerId = compilerId;
         }
 
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getRuleId() { return ruleId; }
-        public void setRuleId(String ruleId) { this.ruleId = ruleId; }
-        public Integer getVersion() { return version; }
-        public void setVersion(Integer version) { this.version = version; }
-        public List<java.util.Map<String, Object>> getNodes() { return nodes; }
-        public void setNodes(List<java.util.Map<String, Object>> nodes) { this.nodes = nodes; }
-        public String getOperatorsFingerprint() { return operatorsFingerprint; }
-        public void setOperatorsFingerprint(String operatorsFingerprint) { this.operatorsFingerprint = operatorsFingerprint; }
-        public String getCompilerId() { return compilerId; }
-        public void setCompilerId(String compilerId) { this.compilerId = compilerId; }
+        public String getTenantId() {
+            return tenantId;
+        }
+
+        public void setTenantId(String tenantId) {
+            this.tenantId = tenantId;
+        }
+
+        public String getRuleId() {
+            return ruleId;
+        }
+
+        public void setRuleId(String ruleId) {
+            this.ruleId = ruleId;
+        }
+
+        public Integer getVersion() {
+            return version;
+        }
+
+        public void setVersion(Integer version) {
+            this.version = version;
+        }
+
+        public List<java.util.Map<String, Object>> getNodes() {
+            return nodes;
+        }
+
+        public void setNodes(List<java.util.Map<String, Object>> nodes) {
+            this.nodes = nodes;
+        }
+
+        public String getOperatorsFingerprint() {
+            return operatorsFingerprint;
+        }
+
+        public void setOperatorsFingerprint(String operatorsFingerprint) {
+            this.operatorsFingerprint = operatorsFingerprint;
+        }
+
+        public String getCompilerId() {
+            return compilerId;
+        }
+
+        public void setCompilerId(String compilerId) {
+            this.compilerId = compilerId;
+        }
     }
 
     class CompileResult {
@@ -77,11 +113,25 @@ public interface RuleEnginePort {
             this.droolsVersion = droolsVersion;
         }
 
-        public String getBundleHash() { return bundleHash; }
-        public byte[] getArtifactBytes() { return artifactBytes; }
-        public Long getSize() { return size; }
-        public List<String> getLogs() { return logs; }
-        public String getDroolsVersion() { return droolsVersion; }
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public byte[] getArtifactBytes() {
+            return artifactBytes;
+        }
+
+        public Long getSize() {
+            return size;
+        }
+
+        public List<String> getLogs() {
+            return logs;
+        }
+
+        public String getDroolsVersion() {
+            return droolsVersion;
+        }
     }
 
     class ExecuteInput {
@@ -90,7 +140,8 @@ public interface RuleEnginePort {
         private java.util.Map<String, Object> context;
         private ExecuteOptions options;
 
-        public ExecuteInput() {}
+        public ExecuteInput() {
+        }
 
         public ExecuteInput(String tenantId, String bundleHash, java.util.Map<String, Object> context, ExecuteOptions options) {
             this.tenantId = tenantId;
@@ -99,14 +150,37 @@ public interface RuleEnginePort {
             this.options = options;
         }
 
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getBundleHash() { return bundleHash; }
-        public void setBundleHash(String bundleHash) { this.bundleHash = bundleHash; }
-        public java.util.Map<String, Object> getContext() { return context; }
-        public void setContext(java.util.Map<String, Object> context) { this.context = context; }
-        public ExecuteOptions getOptions() { return options; }
-        public void setOptions(ExecuteOptions options) { this.options = options; }
+        public String getTenantId() {
+            return tenantId;
+        }
+
+        public void setTenantId(String tenantId) {
+            this.tenantId = tenantId;
+        }
+
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public void setBundleHash(String bundleHash) {
+            this.bundleHash = bundleHash;
+        }
+
+        public java.util.Map<String, Object> getContext() {
+            return context;
+        }
+
+        public void setContext(java.util.Map<String, Object> context) {
+            this.context = context;
+        }
+
+        public ExecuteOptions getOptions() {
+            return options;
+        }
+
+        public void setOptions(ExecuteOptions options) {
+            this.options = options;
+        }
     }
 
     class ExecuteOptions {
@@ -114,7 +188,8 @@ public interface RuleEnginePort {
         private Integer timeoutMs;
         private Integer maxRulesFired;
 
-        public ExecuteOptions() {}
+        public ExecuteOptions() {
+        }
 
         public ExecuteOptions(String explain, Integer timeoutMs, Integer maxRulesFired) {
             this.explain = explain;
@@ -122,11 +197,28 @@ public interface RuleEnginePort {
             this.maxRulesFired = maxRulesFired;
         }
 
-        public String getExplain() { return explain; }
-        public void setExplain(String explain) { this.explain = explain; }
-        public Integer getTimeoutMs() { return timeoutMs; }
-        public void setTimeoutMs(Integer timeoutMs) { this.timeoutMs = timeoutMs; }
-        public Integer getMaxRulesFired() { return maxRulesFired; }
-        public void setMaxRulesFired(Integer maxRulesFired) { this.maxRulesFired = maxRulesFired; }
+        public String getExplain() {
+            return explain;
+        }
+
+        public void setExplain(String explain) {
+            this.explain = explain;
+        }
+
+        public Integer getTimeoutMs() {
+            return timeoutMs;
+        }
+
+        public void setTimeoutMs(Integer timeoutMs) {
+            this.timeoutMs = timeoutMs;
+        }
+
+        public Integer getMaxRulesFired() {
+            return maxRulesFired;
+        }
+
+        public void setMaxRulesFired(Integer maxRulesFired) {
+            this.maxRulesFired = maxRulesFired;
+        }
     }
 }

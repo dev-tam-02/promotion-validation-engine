@@ -11,10 +11,11 @@ public class EngineConfigResponse {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public EngineConfigResponse() {}
+    public EngineConfigResponse() {
+    }
 
     public EngineConfigResponse(String tenantId, ExecuteConfig execute, CompileConfig compile,
-                               Instant createdAt, Instant updatedAt) {
+                                Instant createdAt, Instant updatedAt) {
         this.tenantId = tenantId;
         this.execute = execute;
         this.compile = compile;
@@ -70,10 +71,11 @@ public class EngineConfigResponse {
         private Integer maxFacts;
         private Map<String, Double> explainSampling;
 
-        public ExecuteConfig() {}
+        public ExecuteConfig() {
+        }
 
         public ExecuteConfig(Integer timeoutMs, Integer maxRulesFired, Integer maxFacts,
-                           Map<String, Double> explainSampling) {
+                             Map<String, Double> explainSampling) {
             this.timeoutMs = timeoutMs;
             this.maxRulesFired = maxRulesFired;
             this.maxFacts = maxFacts;
@@ -117,7 +119,8 @@ public class EngineConfigResponse {
         private Integer maxNodes;
         private Integer maxDepth;
 
-        public CompileConfig() {}
+        public CompileConfig() {
+        }
 
         public CompileConfig(Integer maxNodes, Integer maxDepth) {
             this.maxNodes = maxNodes;
