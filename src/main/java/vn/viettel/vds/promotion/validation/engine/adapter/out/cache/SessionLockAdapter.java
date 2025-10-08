@@ -1,14 +1,15 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.cache;
 
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.SessionLockPort;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;
 
-import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class SessionLockAdapter implements SessionLockPort {
@@ -16,12 +17,12 @@ public class SessionLockAdapter implements SessionLockPort {
     private static final Logger logger = LoggerFactory.getLogger(SessionLockAdapter.class);
     private static final String LOCK_PREFIX = "validation:lock:";
 
-    private final RedisTemplate<String, String> redisTemplate;
-    // Fallback in-memory locks for development when Redis is not available
+    private final RedissonClient redissonClient;
+    // Fallback in-memory locks for development when Redisson is not available
     private final ConcurrentHashMap<String, Long> inMemoryLocks = new ConcurrentHashMap<>();
 
-    public SessionLockAdapter(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public SessionLockAdapter(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
     }
 
     @Override
@@ -29,14 +30,14 @@ public class SessionLockAdapter implements SessionLockPort {
         String lockKey = generateLockKey(candidate, customerId);
 
         try {
-            // Try Redis first
-            if (redisTemplate != null) {
-                return acquireRedisLock(lockKey, ttlSeconds);
+            // Try Redisson first
+            if (redissonClient != null) {
+                return acquireRedissonLock(lockKey, ttlSeconds);
             } else {
                 return acquireInMemoryLock(lockKey, ttlSeconds);
             }
         } catch (Exception e) {
-            logger.warn("Failed to acquire Redis lock for {}, falling back to in-memory", lockKey, e);
+            logger.warn("Failed to acquire Redisson lock for {}, falling back to in-memory", lockKey, e);
             return acquireInMemoryLock(lockKey, ttlSeconds);
         }
     }
@@ -46,13 +47,13 @@ public class SessionLockAdapter implements SessionLockPort {
         String lockKey = generateLockKey(candidate, customerId);
 
         try {
-            if (redisTemplate != null) {
-                return releaseRedisLock(lockKey);
+            if (redissonClient != null) {
+                return releaseRedissonLock(lockKey);
             } else {
                 return releaseInMemoryLock(lockKey);
             }
         } catch (Exception e) {
-            logger.warn("Failed to release Redis lock for {}, falling back to in-memory", lockKey, e);
+            logger.warn("Failed to release Redisson lock for {}, falling back to in-memory", lockKey, e);
             return releaseInMemoryLock(lockKey);
         }
     }
@@ -62,13 +63,13 @@ public class SessionLockAdapter implements SessionLockPort {
         String lockKey = generateLockKey(candidate, customerId);
 
         try {
-            if (redisTemplate != null) {
-                return checkRedisLock(lockKey);
+            if (redissonClient != null) {
+                return checkRedissonLock(lockKey);
             } else {
                 return checkInMemoryLock(lockKey);
             }
         } catch (Exception e) {
-            logger.warn("Failed to check Redis lock for {}, falling back to in-memory", lockKey, e);
+            logger.warn("Failed to check Redisson lock for {}, falling back to in-memory", lockKey, e);
             return checkInMemoryLock(lockKey);
         }
     }
@@ -78,13 +79,13 @@ public class SessionLockAdapter implements SessionLockPort {
         String lockKey = generateLockKey(candidate, customerId);
 
         try {
-            if (redisTemplate != null) {
-                return extendRedisLock(lockKey, ttlSeconds);
+            if (redissonClient != null) {
+                return extendRedissonLock(lockKey, ttlSeconds);
             } else {
                 return extendInMemoryLock(lockKey, ttlSeconds);
             }
         } catch (Exception e) {
-            logger.warn("Failed to extend Redis lock for {}, falling back to in-memory", lockKey, e);
+            logger.warn("Failed to extend Redisson lock for {}, falling back to in-memory", lockKey, e);
             return extendInMemoryLock(lockKey, ttlSeconds);
         }
     }
@@ -94,60 +95,64 @@ public class SessionLockAdapter implements SessionLockPort {
         return LOCK_PREFIX + candidate.getType() + ":" + candidateId + ":" + customerId;
     }
 
-    // Redis lock operations
-    private boolean acquireRedisLock(String lockKey, int ttlSeconds) {
+    // Redisson lock operations using RLock
+    private boolean acquireRedissonLock(String lockKey, int ttlSeconds) {
         try {
-            String lockValue = String.valueOf(System.currentTimeMillis());
-            Boolean acquired = redisTemplate.opsForValue()
-                    .setIfAbsent(lockKey, lockValue, Duration.ofSeconds(ttlSeconds));
+            RLock lock = redissonClient.getLock(lockKey);
+            boolean acquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
 
-            boolean result = acquired != null && acquired;
-            if (result) {
-                logger.debug("Acquired Redis lock: {}", lockKey);
+            if (acquired) {
+                logger.debug("Acquired Redisson lock: {}", lockKey);
             } else {
-                logger.debug("Failed to acquire Redis lock: {}", lockKey);
+                logger.debug("Failed to acquire Redisson lock: {}", lockKey);
             }
-            return result;
+            return acquired;
         } catch (Exception e) {
-            logger.error("Error acquiring Redis lock: {}", lockKey, e);
+            logger.error("Error acquiring Redisson lock: {}", lockKey, e);
             return false;
         }
     }
 
-    private boolean releaseRedisLock(String lockKey) {
+    private boolean releaseRedissonLock(String lockKey) {
         try {
-            Boolean deleted = redisTemplate.delete(lockKey);
-            boolean result = deleted != null && deleted;
-            if (result) {
-                logger.debug("Released Redis lock: {}", lockKey);
+            RLock lock = redissonClient.getLock(lockKey);
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                logger.debug("Released Redisson lock: {}", lockKey);
+                return true;
             }
-            return result;
+            return false;
         } catch (Exception e) {
-            logger.error("Error releasing Redis lock: {}", lockKey, e);
+            logger.error("Error releasing Redisson lock: {}", lockKey, e);
             return false;
         }
     }
 
-    private boolean checkRedisLock(String lockKey) {
+    private boolean checkRedissonLock(String lockKey) {
         try {
-            Boolean exists = redisTemplate.hasKey(lockKey);
-            return exists != null && exists;
+            RLock lock = redissonClient.getLock(lockKey);
+            return lock.isLocked();
         } catch (Exception e) {
-            logger.error("Error checking Redis lock: {}", lockKey, e);
+            logger.error("Error checking Redisson lock: {}", lockKey, e);
             return false;
         }
     }
 
-    private boolean extendRedisLock(String lockKey, int ttlSeconds) {
+    private boolean extendRedissonLock(String lockKey, int ttlSeconds) {
         try {
-            Boolean extended = redisTemplate.expire(lockKey, Duration.ofSeconds(ttlSeconds));
-            boolean result = extended != null && extended;
-            if (result) {
-                logger.debug("Extended Redis lock: {}", lockKey);
+            RLock lock = redissonClient.getLock(lockKey);
+            // Redisson doesn't have direct extend - we need to re-acquire with new TTL
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                boolean reacquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
+                if (reacquired) {
+                    logger.debug("Extended Redisson lock: {}", lockKey);
+                }
+                return reacquired;
             }
-            return result;
+            return false;
         } catch (Exception e) {
-            logger.error("Error extending Redis lock: {}", lockKey, e);
+            logger.error("Error extending Redisson lock: {}", lockKey, e);
             return false;
         }
     }

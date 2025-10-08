@@ -2,7 +2,10 @@ package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
+import org.redisson.api.RSet;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.FastCheckRequest;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.FastCheckResponse;
@@ -36,7 +39,7 @@ public class FastCheckService implements FastCheckUseCase {
     private static final String RATE_LIMIT_KEY = "fast:rate:%s:%s:%s"; // tenant:customerId:window
     private static final String HOLIDAY_KEY = "fast:holiday:%s:%s"; // tenant:date
     private final RuleConfigurationPort ruleConfigurationPort;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedissonClient redissonClient;
 
     @Override
     public FastCheckResponse performFastCheck(FastCheckRequest request) {
@@ -193,26 +196,28 @@ public class FastCheckService implements FastCheckUseCase {
     }
 
     /**
-     * Blacklist check using Redis
+     * Blacklist check using Redisson
      */
     private BlacklistCheckResult checkBlacklist(FastCheckRequest request) {
         try {
-            // Check customer-specific blacklist
+            // Check customer-specific blacklist using RBucket
             String customerKey = String.format(BLACKLIST_KEY, request.getTenantId(), request.getCustomerId());
-            Boolean isBlacklisted = (Boolean) redisTemplate.opsForValue().get(customerKey);
+            RBucket<Boolean> bucket = redissonClient.getBucket(customerKey);
+            Boolean isBlacklisted = bucket.get();
 
             if (Boolean.TRUE.equals(isBlacklisted)) {
                 return new BlacklistCheckResult(false, "CUSTOMER_BLACKLISTED",
                         "Customer is blacklisted");
             }
 
-            // Check global blacklist set
+            // Check global blacklist set using RSet
             String globalKey = String.format("fast:blacklist:global:%s", request.getTenantId());
-            Boolean isMember = redisTemplate.opsForSet().isMember(globalKey, request.getCustomerId());
+            RSet<String> globalBlacklist = redissonClient.getSet(globalKey);
+            Boolean isMember = globalBlacklist.contains(request.getCustomerId());
 
             if (Boolean.TRUE.equals(isMember)) {
                 // Cache for faster future checks
-                redisTemplate.opsForValue().set(customerKey, true, 1, TimeUnit.HOURS);
+                bucket.set(true, 1, TimeUnit.HOURS);
                 return new BlacklistCheckResult(false, "CUSTOMER_BLACKLISTED_GLOBAL",
                         "Customer is in global blacklist");
             }
@@ -221,26 +226,27 @@ public class FastCheckService implements FastCheckUseCase {
 
         } catch (Exception e) {
             log.warn("Blacklist check failed: {}", e.getMessage());
-            // Fail open - allow if Redis is down
+            // Fail open - allow if Redisson is down
             return new BlacklistCheckResult(true, null, null);
         }
     }
 
     /**
-     * Rate limiting using Redis counters
+     * Rate limiting using Redisson atomic counters
      */
     private RateLimitResult checkRateLimit(RuleConfiguration config, FastCheckRequest request) {
         try {
             String customerId = request.getCustomerId();
             String tenantId = request.getTenantId();
 
-            // Check hourly limit
+            // Check hourly limit using RAtomicLong
             if (config.getMaxPerHour() > 0) {
                 String hourKey = String.format(RATE_LIMIT_KEY, tenantId, customerId, "hour");
-                Long count = redisTemplate.opsForValue().increment(hourKey);
+                RAtomicLong hourCounter = redissonClient.getAtomicLong(hourKey);
+                long count = hourCounter.incrementAndGet();
 
                 if (count == 1) {
-                    redisTemplate.expire(hourKey, 1, TimeUnit.HOURS);
+                    hourCounter.expire(1, TimeUnit.HOURS);
                 }
 
                 if (count > config.getMaxPerHour()) {
@@ -249,13 +255,14 @@ public class FastCheckService implements FastCheckUseCase {
                 }
             }
 
-            // Check daily limit
+            // Check daily limit using RAtomicLong
             if (config.getMaxPerDay() > 0) {
                 String dayKey = String.format(RATE_LIMIT_KEY, tenantId, customerId, "day");
-                Long count = redisTemplate.opsForValue().increment(dayKey);
+                RAtomicLong dayCounter = redissonClient.getAtomicLong(dayKey);
+                long count = dayCounter.incrementAndGet();
 
                 if (count == 1) {
-                    redisTemplate.expire(dayKey, 24, TimeUnit.HOURS);
+                    dayCounter.expire(24, TimeUnit.HOURS);
                 }
 
                 if (count > config.getMaxPerDay()) {
@@ -268,7 +275,7 @@ public class FastCheckService implements FastCheckUseCase {
 
         } catch (Exception e) {
             log.warn("Rate limit check failed: {}", e.getMessage());
-            // Fail open - allow if Redis is down
+            // Fail open - allow if Redisson is down
             return new RateLimitResult(true, null, null);
         }
     }
@@ -288,7 +295,8 @@ public class FastCheckService implements FastCheckUseCase {
     private boolean isHoliday(String tenantId, LocalDate date) {
         try {
             String holidayKey = String.format(HOLIDAY_KEY, tenantId, date.toString());
-            return Boolean.TRUE.equals(redisTemplate.opsForValue().get(holidayKey));
+            RBucket<Boolean> holidayBucket = redissonClient.getBucket(holidayKey);
+            return Boolean.TRUE.equals(holidayBucket.get());
         } catch (Exception e) {
             return false;
         }
