@@ -119,26 +119,49 @@ promix:
 
   # Cache Configuration
   cache:
-    redis:
+    # MASTER SWITCH: Enable cache support globally (required for any cache provider)
+    enabled: true
+
+    # Keep Caffeine enabled for high-performance local caches (rule-bundles, limits-snapshots, kie-base)
+    # These are configured in CacheConfiguration.java with custom CaffeineCacheManager
+    caffeine:
       enabled: true
-      prefix: "validation-engine-cache:"
-      default-ttl: 30m
+
+    # Disable standard Redis cache manager (replaced by Redisson)
+    redis:
+      enabled: false
+      cluster:
+        nodes: []  # Empty to prevent initialization
+
+    # Enable Redisson for distributed caching (secondary cache manager if needed)
+    redisson:
+      enabled: true
+      mode: CLUSTER
       password: ${REDIS_PASSWORD:}
+      connection-timeout: 3000
+      timeout: 3000
+      retry-attempts: 3
+      retry-interval: 1500
+      default-ttl: 30m
+      max-idle-time: 15m
+      default-max-size: 1000
+
+      # Use JSON codec for better compatibility with Drools objects
+      codec: org.redisson.codec.JsonJacksonCodec
+
+      # Connection pool settings
+      pool:
+        min-idle: 5
+        max-pool-size: 50
+
+      # Redis cluster configuration
       cluster:
         nodes:
-          - node1:6379
-          - node2:6380
-          - node3:6381
-        max-redirects: 3
-      lettuce:
-        pool:
-          max-active: 128
-          max-idle: 64
-          min-idle: 16
-          max-wait: 2000
-        cluster:
-          refresh-period: 60000
-          adaptive: true
+          - redis://node1:6379
+          - redis://node2:6380
+          - redis://node3:6381
+        max-redirections: 3
+        scan-interval: 1000
 
 # Logging Configuration
 logging:
