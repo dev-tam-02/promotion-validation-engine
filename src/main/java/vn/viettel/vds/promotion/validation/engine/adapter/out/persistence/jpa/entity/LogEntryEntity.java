@@ -1,9 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
-import com.promix.platform.jpa.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +10,12 @@ import java.time.Instant;
 @Table(name = "compile_job_logs")
 @Getter
 @Setter
-public class LogEntryEntity extends BaseEntity {
+public class LogEntryEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "level", length = 20)
     private String level;
@@ -24,6 +26,7 @@ public class LogEntryEntity extends BaseEntity {
     @Column(name = "timestamp")
     private Instant timestamp;
 
-    @Column(name = "compile_job_id", length = 100)
-    private String compileJobId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "compile_job_id", referencedColumnName = "id")
+    private CompileJobEntity compileJob;
 }

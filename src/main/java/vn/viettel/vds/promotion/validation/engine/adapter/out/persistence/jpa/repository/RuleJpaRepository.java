@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface RuleJpaRepository extends JpaRepository<RuleEntity, String> {
+public interface RuleJpaRepository extends JpaRepository<RuleEntity, Long> {
 
     Optional<RuleEntity> findByName(String name);
 

@@ -1,24 +1,29 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
-import com.promix.platform.jpa.converter.ListStringConverter;
-import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "compile_jobs",
         indexes = {
-                @Index(name = "idx_rule_target", columnList = "tenant_id, rule_id, target_version", unique = true),
                 @Index(name = "idx_status_time", columnList = "tenant_id, status, requested_at")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_rule_target", columnNames = {"tenant_id", "rule_id", "target_version"})
         }
 )
 @Getter
 @Setter
-public class CompileJobEntity extends BaseEntity {
+public class CompileJobEntity {
+
+    @Id
+    @Column(name = "id", nullable = false, length = 200) // pj_tenantId_ruleId_targetVersion format
+    private String id;
 
     @Column(name = "tenant_id", nullable = false, length = 50)
     private String tenantId;
@@ -48,16 +53,16 @@ public class CompileJobEntity extends BaseEntity {
     @Embedded
     private EngineInfo engine;
 
-    @Column(name = "bundle_hash", length = 255)
+    @Column(name = "bundle_hash", length = 300)
     private String bundleHash;
 
-    @Convert(converter = ListStringConverter.class)
-    @Column(name = "errors", columnDefinition = "TEXT")
-    private List<String> errors;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "compileJob")
+    private List<LogEntryEntity> logs = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(name = "compile_job_id")
-    private List<LogEntryEntity> logs;
+    @ElementCollection
+    @CollectionTable(name = "compile_job_errors", joinColumns = @JoinColumn(name = "compile_job_id"))
+    @Column(name = "error_message", length = 1000)
+    private List<String> errors = new ArrayList<>();
 
     public enum JobStatus {
         RUNNING,

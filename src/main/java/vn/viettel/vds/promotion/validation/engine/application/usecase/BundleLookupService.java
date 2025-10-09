@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.Bundle;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.BundleSubjectIndex;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleSubjectIndexEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.BundleMetadataResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.LatestBundleResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.WarmupRequest;
@@ -38,7 +38,7 @@ public class BundleLookupService implements BundleLookupUseCase {
 
     @Override
     public BundleMetadataResponse getBundleMetadata(String bundleHash) {
-        Optional<Bundle> bundle = bundleRepository.findById(bundleHash);
+        Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
         if (bundle.isEmpty()) {
             throw new IllegalArgumentException("Bundle not found: " + bundleHash);
         }
@@ -48,15 +48,15 @@ public class BundleLookupService implements BundleLookupUseCase {
 
     @Override
     public LatestBundleResponse getLatestBundle(String tenantId, String subjectType, String subjectKey) {
-        Optional<BundleSubjectIndex> subjectIndex = bundleSubjectIndexRepository
+        Optional<BundleSubjectIndexEntity> subjectIndex = bundleSubjectIndexRepository
                 .findByTenantIdAndSubjectTypeAndSubjectKey(tenantId, subjectType, subjectKey);
 
         if (subjectIndex.isEmpty()) {
             throw new IllegalArgumentException("Subject not mapped: " + tenantId + "/" + subjectType + "/" + subjectKey);
         }
 
-        BundleSubjectIndex index = subjectIndex.get();
-        Optional<Bundle> bundle = bundleRepository.findById(index.getBundleHash());
+        BundleSubjectIndexEntity index = subjectIndex.get();
+        Optional<BundleEntity> bundle = bundleRepository.findById(index.getBundleHash());
 
         if (bundle.isEmpty()) {
             throw new IllegalStateException("Bundle not found for mapped subject: " + index.getBundleHash());
@@ -85,7 +85,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         }
 
         // Retrieve artifact from object storage
-        Bundle bundle = bundleRepository.findById(bundleHash).orElseThrow();
+        BundleEntity bundle = bundleRepository.findById(bundleHash).orElseThrow();
         String artifactKey = bundle.getArtifact().getKey();
 
         Optional<byte[]> artifactBytes = objectStoragePort.retrieve(artifactKey);
@@ -102,7 +102,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         eventPublisherPort.publishWarmupRequested(event);
     }
 
-    private BundleMetadataResponse mapToBundleMetadataResponse(Bundle bundle) {
+    private BundleMetadataResponse mapToBundleMetadataResponse(BundleEntity bundle) {
         BundleMetadataResponse response = new BundleMetadataResponse();
         response.setTenantId(bundle.getTenantId());
         response.setRuleId(bundle.getRuleId());
@@ -137,7 +137,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         return response;
     }
 
-    private LatestBundleResponse mapToLatestBundleResponse(BundleSubjectIndex index, Bundle bundle) {
+    private LatestBundleResponse mapToLatestBundleResponse(BundleSubjectIndexEntity index, BundleEntity bundle) {
         LatestBundleResponse response = new LatestBundleResponse();
         response.setRuleId(index.getRuleId());
         response.setRuleVersion(index.getRuleVersion());

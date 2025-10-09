@@ -1,16 +1,16 @@
 package vn.viettel.vds.promotion.validation.engine.application.port.out;
 
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.Bundle;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
 
 import java.util.Optional;
 
 public interface BundleRepositoryPort {
 
-    Bundle save(Bundle bundle);
+    BundleEntity save(BundleEntity bundle);
 
-    Optional<Bundle> findById(String bundleHash);
+    Optional<BundleEntity> findById(String bundleHash);
 
-    Optional<Bundle> findByTenantIdAndRuleIdAndRuleVersion(String tenantId, String ruleId, Integer ruleVersion);
+    Optional<BundleEntity> findByTenantIdAndRuleIdAndRuleVersion(String tenantId, String ruleId, Integer ruleVersion);
 
     boolean existsById(String bundleHash);
 }

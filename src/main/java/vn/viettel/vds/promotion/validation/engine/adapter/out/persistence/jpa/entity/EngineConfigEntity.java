@@ -1,22 +1,26 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
-import com.promix.platform.jpa.converter.MapStringObjectConverter;
-import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 @Entity
 @Table(name = "engine_configs",
-        indexes = {
-                @Index(name = "idx_tenant_unique", columnList = "tenant_id", unique = true)
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_tenant", columnNames = {"tenant_id"})
         }
 )
 @Getter
 @Setter
-public class EngineConfigEntity extends BaseEntity {
+public class EngineConfigEntity {
+
+    @Id
+    @Column(name = "id", nullable = false, length = 100) // cfg_tenantId format
+    private String id;
 
     @Column(name = "tenant_id", nullable = false, unique = true, length = 50)
     private String tenantId;
@@ -26,6 +30,12 @@ public class EngineConfigEntity extends BaseEntity {
 
     @Embedded
     private CompileConfig compile;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @Embeddable
     @Getter
@@ -40,9 +50,14 @@ public class EngineConfigEntity extends BaseEntity {
         @Column(name = "max_facts")
         private Integer maxFacts;
 
-        @Convert(converter = MapStringObjectConverter.class)
-        @Column(name = "explain_sampling", columnDefinition = "TEXT")
-        private Map<String, Double> explainSampling;
+        @ElementCollection
+        @CollectionTable(
+                name = "engine_config_explain_sampling",
+                joinColumns = @JoinColumn(name = "engine_config_id")
+        )
+        @MapKeyColumn(name = "sampling_key", length = 100)
+        @Column(name = "sampling_value")
+        private Map<String, Double> explainSampling = new HashMap<>();
     }
 
     @Embeddable

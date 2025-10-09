@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.Bundle;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.EngineConfig;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.EngineConfigEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.ExecuteRequest;
 import vn.viettel.vds.promotion.validation.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.ExecutionUseCase;
@@ -41,13 +41,13 @@ public class ExecutionService implements ExecutionUseCase {
     public ExecuteResponse execute(ExecuteRequest request) {
         // Validate bundle exists
         String bundleHash = request.getBundle().getHash();
-        Optional<Bundle> bundle = bundleRepository.findById(bundleHash);
+        Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
         if (bundle.isEmpty()) {
             throw new IllegalArgumentException("Bundle not found: " + bundleHash);
         }
 
         // Get tenant configuration
-        Optional<EngineConfig> config = engineConfigRepository.findByTenantId(request.getTenantId());
+        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
         ExecuteRequest.ExecuteOptions effectiveOptions = mergeOptions(request.getOptions(), config.orElse(null));
 
         // Validate context schema
@@ -75,13 +75,13 @@ public class ExecutionService implements ExecutionUseCase {
     public BatchExecuteResponse executeBatch(BatchExecuteRequest request) {
         // Validate bundle exists
         String bundleHash = request.getBundle().getHash();
-        Optional<Bundle> bundle = bundleRepository.findById(bundleHash);
+        Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
         if (bundle.isEmpty()) {
             throw new IllegalArgumentException("Bundle not found: " + bundleHash);
         }
 
         // Get tenant configuration
-        Optional<EngineConfig> config = engineConfigRepository.findByTenantId(request.getTenantId());
+        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
 
         // Ensure bundle is warmed up
         ensureBundleWarmedUp(bundle.get());
@@ -129,7 +129,7 @@ public class ExecutionService implements ExecutionUseCase {
     }
 
     private ExecuteRequest.ExecuteOptions mergeOptions(ExecuteRequest.ExecuteOptions requestOptions,
-                                                       EngineConfig config) {
+                                                       EngineConfigEntity config) {
         ExecuteRequest.ExecuteOptions merged = new ExecuteRequest.ExecuteOptions();
 
         if (requestOptions != null) {
@@ -140,7 +140,7 @@ public class ExecutionService implements ExecutionUseCase {
 
         // Apply defaults from config
         if (config != null && config.getExecute() != null) {
-            EngineConfig.ExecuteConfig execConfig = config.getExecute();
+            EngineConfigEntity.ExecuteConfig execConfig = config.getExecute();
 
             if (merged.getTimeoutMs() == null) {
                 merged.setTimeoutMs(execConfig.getTimeoutMs());
@@ -175,7 +175,7 @@ public class ExecutionService implements ExecutionUseCase {
         );
     }
 
-    private RuleEnginePort.ExecuteOptions getDefaultOptions(EngineConfig config) {
+    private RuleEnginePort.ExecuteOptions getDefaultOptions(EngineConfigEntity config) {
         ExecuteRequest.ExecuteOptions defaultOptions = mergeOptions(null, config);
         return mapToRuleEngineOptions(defaultOptions);
     }
@@ -197,7 +197,7 @@ public class ExecutionService implements ExecutionUseCase {
         // - Validate metadata structure
     }
 
-    private void ensureBundleWarmedUp(Bundle bundle) {
+    private void ensureBundleWarmedUp(BundleEntity bundle) {
         String bundleHash = bundle.getId();
 
         // Check if already cached

@@ -4,40 +4,49 @@ spring:
   application:
     name: validation-engine
 
-  # MongoDB Configuration
-  data:
-    mongodb:
-      database: ${MONGO_DATABASE:rule_engine}
-      host: ${MONGO_HOST:mongodb}
-      port: ${MONGO_PORT:27017}
-      username: ${MONGO_USERNAME:root}
-      password: ${MONGO_PASSWORD:123123a@}
-      authentication-database: ${MONGO_AUTH_DB:admin}
+  # DataSource Configuration for MariaDB
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:promotion-mariadb}:${DB_PORT:3306}/${DB_NAME:rule_engine}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8mb4
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123123a@}
+    driver-class-name: org.mariadb.jdbc.Driver
 
-      # Connection pool settings
-      options:
-        min-connections-per-host: 2
-        max-connections-per-host: 10
-        threads-allowed-to-block-for-connection-multiplier: 5
-        max-wait-time: 120000
-        max-connection-idle-time: 600000
-        max-connection-life-time: 1800000
-        connect-timeout: 10000
-        socket-timeout: 0
+    # HikariCP connection pool settings
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 600000
+      pool-name: ValidationEngineHikariPool
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
 
-      # SSL/TLS Configuration
-      ssl:
-        enabled: false
-        invalid-host-name-allowed: false
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate # Use 'update' for development, 'validate' for production
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDB106Dialect
+        show_sql: false
+        format_sql: true
+        use_sql_comments: false
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        enable_lazy_load_no_trans: false
+        default_batch_fetch_size: 16
+    open-in-view: false
+    generate-ddl: false
 
-      # Write Concern Configuration
-      write-concern:
-        w: 1
-        w-timeout: 10000
-        j: true
-
-      # Read Preference Configuration
-      read-preference: primary
+  # Liquibase Configuration
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    default-schema: ${DB_NAME:rule_engine}
+    liquibase-schema: ${DB_NAME:rule_engine}
 
 # Server Configuration
 server:
@@ -85,26 +94,14 @@ management:
 
 # Promix Platform Configuration - Only essential overrides
 promix:
-  # MongoDB Configuration
+  # JPA Configuration
   data:
-    mongodb:
+    jpa:
       enabled: true
       repository-scan-enabled: true
       audit:
         enabled: true
         date-time-provider: system
-      field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
-      auto-index-creation: true
-
-      # GridFS Configuration for file storage
-      gridfs:
-        database: rule-engine-files
-        bucket: fs
-
-      # Transaction Configuration
-      transaction:
-        default-timeout: 30
-        rollback-on-commit-failure: true
 
   # Kafka Configuration
   messaging:

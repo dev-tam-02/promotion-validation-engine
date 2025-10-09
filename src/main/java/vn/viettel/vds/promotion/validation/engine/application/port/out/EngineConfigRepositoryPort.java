@@ -1,16 +1,16 @@
 package vn.viettel.vds.promotion.validation.engine.application.port.out;
 
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.EngineConfig;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.EngineConfigEntity;
 
 import java.util.Optional;
 
 public interface EngineConfigRepositoryPort {
 
-    EngineConfig save(EngineConfig engineConfig);
+    EngineConfigEntity save(EngineConfigEntity engineConfig);
 
-    Optional<EngineConfig> findByTenantId(String tenantId);
+    Optional<EngineConfigEntity> findByTenantId(String tenantId);
 
-    EngineConfig upsert(EngineConfig engineConfig);
+    EngineConfigEntity upsert(EngineConfigEntity engineConfig);
 
     void deleteByTenantId(String tenantId);
 }

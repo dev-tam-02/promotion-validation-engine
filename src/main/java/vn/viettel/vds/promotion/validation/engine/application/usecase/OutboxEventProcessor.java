@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.OutboxEvent;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.EventPublisherPort;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.OutboxEventRepositoryPort;
 
@@ -31,8 +31,8 @@ public class OutboxEventProcessor {
     @Transactional
     public void processOutboxEvents() {
         try {
-            List<OutboxEvent> pendingEvents = outboxEventRepository
-                    .findByStatusOrderByCreatedAt(OutboxEvent.EventStatus.PENDING);
+            List<OutboxEventEntity> pendingEvents = outboxEventRepository
+                    .findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus.PENDING);
 
             if (pendingEvents.isEmpty()) {
                 return;
@@ -40,7 +40,7 @@ public class OutboxEventProcessor {
 
             logger.info("Processing {} pending outbox events", pendingEvents.size());
 
-            for (OutboxEvent event : pendingEvents.subList(0, Math.min(pendingEvents.size(), BATCH_SIZE))) {
+            for (OutboxEventEntity event : pendingEvents.subList(0, Math.min(pendingEvents.size(), BATCH_SIZE))) {
                 processEvent(event);
             }
 
@@ -49,7 +49,7 @@ public class OutboxEventProcessor {
         }
     }
 
-    private void processEvent(OutboxEvent event) {
+    private void processEvent(OutboxEventEntity event) {
         try {
             // Update attempt count
             event.setAttempts(event.getAttempts() + 1);
@@ -69,7 +69,7 @@ public class OutboxEventProcessor {
             }
 
             // Mark as successfully sent
-            event.setStatus(OutboxEvent.EventStatus.SENT);
+            event.setStatus(OutboxEventEntity.EventStatus.SENT);
             outboxEventRepository.save(event);
 
             logger.debug("Successfully processed outbox event: {}", event.getId());
@@ -79,7 +79,7 @@ public class OutboxEventProcessor {
 
             // Mark as failed if max attempts reached
             if (event.getAttempts() >= MAX_RETRY_ATTEMPTS) {
-                event.setStatus(OutboxEvent.EventStatus.FAILED);
+                event.setStatus(OutboxEventEntity.EventStatus.FAILED);
                 logger.error("Outbox event {} failed after {} attempts", event.getId(), MAX_RETRY_ATTEMPTS);
             }
 
@@ -87,26 +87,26 @@ public class OutboxEventProcessor {
         }
     }
 
-    private void publishBundlePublishedEvent(OutboxEvent event) {
-        Map<String, Object> payload = event.getPayload();
+    private void publishBundlePublishedEvent(OutboxEventEntity event) {
+        Map<String, String> payload = event.getPayload();
 
         EventPublisherPort.BundlePublishedEvent bundleEvent = new EventPublisherPort.BundlePublishedEvent(
                 event.getTenantId(),
-                (String) payload.get("ruleId"),
-                (Integer) payload.get("ruleVersion"),
-                (Integer) payload.get("assignmentVersion"),
-                (String) payload.get("bundleHash")
+                payload.get("ruleId"),
+                payload.get("ruleVersion") != null ? Integer.parseInt(payload.get("ruleVersion")) : null,
+                payload.get("assignmentVersion") != null ? Integer.parseInt(payload.get("assignmentVersion")) : null,
+                payload.get("bundleHash")
         );
 
         eventPublisher.publishBundlePublished(bundleEvent);
     }
 
-    private void publishWarmupRequestedEvent(OutboxEvent event) {
-        Map<String, Object> payload = event.getPayload();
+    private void publishWarmupRequestedEvent(OutboxEventEntity event) {
+        Map<String, String> payload = event.getPayload();
 
         EventPublisherPort.WarmupRequestedEvent warmupEvent = new EventPublisherPort.WarmupRequestedEvent(
                 event.getTenantId(),
-                (String) payload.get("bundleHash")
+                payload.get("bundleHash")
         );
 
         eventPublisher.publishWarmupRequested(warmupEvent);
@@ -119,12 +119,12 @@ public class OutboxEventProcessor {
             // Delete successfully sent events older than 24 hours
             Instant cutoff = Instant.now().minusSeconds(24 * 60 * 60);
 
-            List<OutboxEvent> oldEvents = outboxEventRepository
-                    .findByStatusOrderByCreatedAt(OutboxEvent.EventStatus.SENT);
+            List<OutboxEventEntity> oldEvents = outboxEventRepository
+                    .findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus.SENT);
 
             List<String> eventIdsToDelete = oldEvents.stream()
                     .filter(event -> event.getCreatedAt().isBefore(cutoff))
-                    .map(OutboxEvent::getId)
+                    .map(OutboxEventEntity::getId)
                     .toList();
 
             if (!eventIdsToDelete.isEmpty()) {

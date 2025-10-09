@@ -1,6 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.application.port.out;
 
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.OutboxEvent;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 
 public interface EventPublisherPort {
 
@@ -8,7 +8,7 @@ public interface EventPublisherPort {
 
     void publishWarmupRequested(WarmupRequestedEvent event);
 
-    void publishOutboxEvent(OutboxEvent outboxEvent);
+    void publishOutboxEvent(OutboxEventEntity outboxEvent);
 
     public static class BundlePublishedEvent {
         private String tenantId;

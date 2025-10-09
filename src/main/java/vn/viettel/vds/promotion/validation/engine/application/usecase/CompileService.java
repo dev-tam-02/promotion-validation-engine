@@ -7,9 +7,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.Bundle;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.CompileJob;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.OutboxEvent;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.CompileJobEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.LogEntryEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.TimeLinkEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse;
@@ -18,6 +20,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.*;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,27 +54,27 @@ public class CompileService implements CompileUseCase {
     public CompileResponse compile(CompileRequest request) {
         // Check for existing job (idempotency)
         String jobId = generateJobId(request.getTenantId(), request.getRuleId(), request.getVersion());
-        Optional<CompileJob> existingJob = compileJobRepository.findByTenantIdAndRuleIdAndTargetVersion(
+        Optional<CompileJobEntity> existingJob = compileJobRepository.findByTenantIdAndRuleIdAndTargetVersion(
                 request.getTenantId(), request.getRuleId(), request.getVersion());
 
         if (existingJob.isPresent()) {
-            CompileJob job = existingJob.get();
-            if (job.getStatus() == CompileJob.JobStatus.SUCCESS && job.getBundleHash() != null) {
+            CompileJobEntity job = existingJob.get();
+            if (job.getStatus() == CompileJobEntity.JobStatus.SUCCESS && job.getBundleHash() != null) {
                 // Return existing successful compilation
-                Optional<Bundle> bundle = bundleRepository.findById(job.getBundleHash());
+                Optional<BundleEntity> bundle = bundleRepository.findById(job.getBundleHash());
                 if (bundle.isPresent()) {
                     List<String> logMessages = job.getLogs().stream()
-                            .map(CompileJob.LogEntry::getMsg)
+                            .map(LogEntryEntity::getMsg)
                             .collect(Collectors.toList());
                     return mapToCompileResponse(bundle.get(), logMessages);
                 }
-            } else if (job.getStatus() == CompileJob.JobStatus.RUNNING) {
+            } else if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
                 throw new IllegalStateException("Compilation already in progress for " + jobId);
             }
         }
 
         // Create new compile job
-        CompileJob compileJob = createCompileJob(jobId, request);
+        CompileJobEntity compileJob = createCompileJob(jobId, request);
         compileJobRepository.save(compileJob);
 
         try {
@@ -92,16 +95,22 @@ public class CompileService implements CompileUseCase {
             objectStoragePort.store(artifactKey, result.getArtifactBytes());
 
             // Create bundle entity
-            Bundle bundle = createBundle(request, result, artifactKey);
+            BundleEntity bundle = createBundle(request, result, artifactKey);
             bundleRepository.save(bundle);
 
             // Update compile job as successful
-            compileJob.setStatus(CompileJob.JobStatus.SUCCESS);
+            compileJob.setStatus(CompileJobEntity.JobStatus.SUCCESS);
             compileJob.setBundleHash(result.getBundleHash());
             compileJob.setCompletedAt(Instant.now());
-            compileJob.getLogs().addAll(result.getLogs().stream()
-                    .map(log -> new CompileJob.LogEntry("INFO", log, Instant.now()))
-                    .collect(Collectors.toList()));
+            // Create new log entries
+            for (String log : result.getLogs()) {
+                LogEntryEntity logEntry = new LogEntryEntity();
+                logEntry.setLevel("INFO");
+                logEntry.setMsg(log);
+                logEntry.setTimestamp(Instant.now());
+                logEntry.setCompileJob(compileJob);
+                compileJob.getLogs().add(logEntry);
+            }
             compileJobRepository.save(compileJob);
 
             // Publish bundle published event
@@ -111,10 +120,15 @@ public class CompileService implements CompileUseCase {
 
         } catch (Exception e) {
             // Update compile job as failed
-            compileJob.setStatus(CompileJob.JobStatus.FAILED);
+            compileJob.setStatus(CompileJobEntity.JobStatus.FAILED);
             compileJob.setCompletedAt(Instant.now());
             compileJob.getErrors().add(e.getMessage());
-            compileJob.getLogs().add(new CompileJob.LogEntry("ERROR", e.getMessage(), Instant.now()));
+            LogEntryEntity errorLog = new LogEntryEntity();
+            errorLog.setLevel("ERROR");
+            errorLog.setMsg(e.getMessage());
+            errorLog.setTimestamp(Instant.now());
+            errorLog.setCompileJob(compileJob);
+            compileJob.getLogs().add(errorLog);
             compileJobRepository.save(compileJob);
 
             throw new RuntimeException("Compilation failed: " + e.getMessage(), e);
@@ -125,13 +139,13 @@ public class CompileService implements CompileUseCase {
     public List<CompileJobResponse> getCompileJobs(String tenantId, String ruleId, String status,
                                                    String from, String to, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<CompileJob> jobs;
+        Page<CompileJobEntity> jobs;
 
         if (status != null && from != null && to != null) {
             try {
                 Instant fromInstant = Instant.parse(from);
                 Instant toInstant = Instant.parse(to);
-                CompileJob.JobStatus jobStatus = CompileJob.JobStatus.valueOf(status.toUpperCase());
+                CompileJobEntity.JobStatus jobStatus = CompileJobEntity.JobStatus.valueOf(status.toUpperCase());
                 jobs = compileJobRepository.findByTenantIdAndRuleIdAndStatusAndRequestedAtBetween(
                         tenantId, ruleId, jobStatus, fromInstant, toInstant, pageable);
             } catch (DateTimeParseException | IllegalArgumentException e) {
@@ -150,7 +164,7 @@ public class CompileService implements CompileUseCase {
 
     @Override
     public CompileJobResponse getCompileJob(String jobId) {
-        Optional<CompileJob> job = compileJobRepository.findById(jobId);
+        Optional<CompileJobEntity> job = compileJobRepository.findById(jobId);
         if (job.isEmpty()) {
             throw new IllegalArgumentException("Compile job not found: " + jobId);
         }
@@ -165,24 +179,26 @@ public class CompileService implements CompileUseCase {
         return String.format("bundles/%s.kjar", bundleHash.replace("sha256:", ""));
     }
 
-    private CompileJob createCompileJob(String jobId, CompileRequest request) {
-        CompileJob job = new CompileJob();
+    private CompileJobEntity createCompileJob(String jobId, CompileRequest request) {
+        CompileJobEntity job = new CompileJobEntity();
         job.setId(jobId);
         job.setTenantId(request.getTenantId());
         job.setRuleId(request.getRuleId());
         job.setTargetVersion(request.getVersion());
-        job.setStatus(CompileJob.JobStatus.RUNNING);
+        job.setStatus(CompileJobEntity.JobStatus.RUNNING);
         job.setRequestedBy("system"); // TODO: Get from security context
         job.setRequestedAt(Instant.now());
         job.setOperatorsFingerprint(request.getOperatorsFingerprint());
-        job.setEngine(new CompileJob.Engine(request.getCompilerId()));
-        job.setLogs(List.of(new CompileJob.LogEntry("INFO", "Compilation started", Instant.now())));
+        CompileJobEntity.EngineInfo engineInfo = new CompileJobEntity.EngineInfo();
+        engineInfo.setCompilerId(request.getCompilerId());
+        job.setEngine(engineInfo);
+        // Logs will be added separately as they are separate entities
         job.setErrors(List.of());
         return job;
     }
 
-    private Bundle createBundle(CompileRequest request, RuleEnginePort.CompileResult result, String artifactKey) {
-        Bundle bundle = new Bundle();
+    private BundleEntity createBundle(CompileRequest request, RuleEnginePort.CompileResult result, String artifactKey) {
+        BundleEntity bundle = new BundleEntity();
         bundle.setId(result.getBundleHash());
         bundle.setTenantId(request.getTenantId());
         bundle.setRuleId(request.getRuleId());
@@ -190,29 +206,35 @@ public class CompileService implements CompileUseCase {
         bundle.setOperatorsFingerprint(request.getOperatorsFingerprint());
 
         // Engine info
-        Bundle.Engine engine = new Bundle.Engine();
-        engine.setType("drools");
-        engine.setCompilerId(request.getCompilerId());
-        engine.setDroolsVersion(result.getDroolsVersion());
-        bundle.setEngine(engine);
+        BundleEntity.EngineInfo engineInfo = new BundleEntity.EngineInfo();
+        engineInfo.setType("drools");
+        engineInfo.setCompilerId(request.getCompilerId());
+        engineInfo.setDroolsVersion(result.getDroolsVersion());
+        bundle.setEngine(engineInfo);
 
         // Convert limits and timeLinks
         if (request.getLimits() != null) {
-            Bundle.Limits limits = new Bundle.Limits();
+            BundleEntity.Limits limits = new BundleEntity.Limits();
             limits.setPerCustomer(request.getLimits().getPerCustomer());
             limits.setPerDay(request.getLimits().getPerDay());
             bundle.setLimits(limits);
         }
 
         if (request.getTimeLinks() != null) {
-            List<Bundle.TimeLink> timeLinks = request.getTimeLinks().stream()
-                    .map(tl -> new Bundle.TimeLink(tl.getPolicyId(), tl.getMode()))
+            List<TimeLinkEntity> timeLinks = request.getTimeLinks().stream()
+                    .map(tl -> {
+                        TimeLinkEntity timeLink = new TimeLinkEntity();
+                        timeLink.setPolicyId(tl.getPolicyId());
+                        timeLink.setMode(tl.getMode());
+                        timeLink.setBundle(bundle);
+                        return timeLink;
+                    })
                     .collect(Collectors.toList());
             bundle.setTimeLinks(timeLinks);
         }
 
         // Artifact info
-        Bundle.Artifact artifact = new Bundle.Artifact();
+        BundleEntity.Artifact artifact = new BundleEntity.Artifact();
         artifact.setStore("s3"); // TODO: Make configurable
         artifact.setKey(artifactKey);
         artifact.setSize(result.getSize());
@@ -222,7 +244,7 @@ public class CompileService implements CompileUseCase {
 
         // Source info
         if (request.getSource() != null) {
-            Bundle.Source source = new Bundle.Source();
+            BundleEntity.Source source = new BundleEntity.Source();
             source.setValidationRuleVersionId(request.getSource().getRuleVersionId());
             source.setSnapshotHash(request.getSource().getSnapshotHash());
             bundle.setSource(source);
@@ -233,16 +255,16 @@ public class CompileService implements CompileUseCase {
 
     private void publishBundlePublishedEvent(CompileRequest request, String bundleHash) {
         // Create outbox event
-        OutboxEvent outboxEvent = new OutboxEvent();
+        OutboxEventEntity outboxEvent = new OutboxEventEntity();
         outboxEvent.setId("ox_" + UUID.randomUUID().toString().replace("-", ""));
         outboxEvent.setTenantId(request.getTenantId());
-        outboxEvent.setType(OutboxEvent.EventType.BUNDLE_PUBLISHED);
-        outboxEvent.setPayload(Map.of(
-                "ruleId", request.getRuleId(),
-                "ruleVersion", request.getVersion(),
-                "bundleHash", bundleHash
-        ));
-        outboxEvent.setStatus(OutboxEvent.EventStatus.PENDING);
+        outboxEvent.setType(OutboxEventEntity.EventType.BUNDLE_PUBLISHED);
+        Map<String, String> payload = new HashMap<>();
+        payload.put("ruleId", request.getRuleId());
+        payload.put("ruleVersion", String.valueOf(request.getVersion()));
+        payload.put("bundleHash", bundleHash);
+        outboxEvent.setPayload(payload);
+        outboxEvent.setStatus(OutboxEventEntity.EventStatus.PENDING);
         outboxEvent.setAttempts(0);
         outboxEvent.setCreatedAt(Instant.now());
 
@@ -254,7 +276,7 @@ public class CompileService implements CompileUseCase {
         eventPublisherPort.publishBundlePublished(event);
     }
 
-    private CompileResponse mapToCompileResponse(Bundle bundle, List<String> logs) {
+    private CompileResponse mapToCompileResponse(BundleEntity bundle, List<String> logs) {
         CompileResponse response = new CompileResponse();
         response.setBundleHash(bundle.getId());
         response.setSize(bundle.getArtifact().getSize());
@@ -268,7 +290,7 @@ public class CompileService implements CompileUseCase {
         return response;
     }
 
-    private CompileJobResponse mapToCompileJobResponse(CompileJob job) {
+    private CompileJobResponse mapToCompileJobResponse(CompileJobEntity job) {
         CompileJobResponse response = new CompileJobResponse();
         response.setId(job.getId());
         response.setTenantId(job.getTenantId());

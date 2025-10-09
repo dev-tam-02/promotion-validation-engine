@@ -1,22 +1,30 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity;
 
-import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.List;
 
 @Entity
 @Table(name = "bundles",
         indexes = {
+                @Index(name = "idx_bundle_hash", columnList = "id", unique = true),
                 @Index(name = "idx_rule_version", columnList = "tenant_id, rule_id, rule_version"),
                 @Index(name = "idx_tenant", columnList = "tenant_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_bundle_hash", columnNames = {"id"})
         }
 )
 @Getter
 @Setter
-public class BundleEntity extends BaseEntity {
+public class BundleEntity {
+
+    @Id
+    @Column(name = "id", nullable = false, length = 300) // bundleHash (sha256:xxx)
+    private String id;
 
     @Column(name = "tenant_id", nullable = false, length = 50)
     private String tenantId;
@@ -33,8 +41,7 @@ public class BundleEntity extends BaseEntity {
     @Embedded
     private EngineInfo engine;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(name = "bundle_id")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "bundle")
     private List<TimeLinkEntity> timeLinks;
 
     @Embedded
@@ -42,6 +49,9 @@ public class BundleEntity extends BaseEntity {
 
     @Embedded
     private Artifact artifact;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
     @Embedded
     private Source source;
@@ -64,10 +74,10 @@ public class BundleEntity extends BaseEntity {
     @Getter
     @Setter
     public static class Limits {
-        @Column(name = "per_customer")
+        @Column(name = "limit_per_customer")
         private Integer perCustomer;
 
-        @Column(name = "per_day")
+        @Column(name = "limit_per_day")
         private Integer perDay;
     }
 
@@ -75,7 +85,7 @@ public class BundleEntity extends BaseEntity {
     @Getter
     @Setter
     public static class Artifact {
-        @Column(name = "store", length = 50)
+        @Column(name = "artifact_store", length = 50)
         private String store;
 
         @Column(name = "artifact_key", length = 255)

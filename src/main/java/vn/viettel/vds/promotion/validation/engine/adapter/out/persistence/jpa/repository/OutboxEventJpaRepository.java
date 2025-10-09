@@ -1,15 +1,13 @@
-package vn.viettel.vds.promotion.validation.engine.application.port.out;
+package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface OutboxEventRepositoryPort {
-
-    OutboxEventEntity save(OutboxEventEntity outboxEvent);
-
-    Optional<OutboxEventEntity> findById(String eventId);
+@Repository
+public interface OutboxEventJpaRepository extends JpaRepository<OutboxEventEntity, String> {
 
     List<OutboxEventEntity> findByTenantIdAndStatusOrderByCreatedAt(
             String tenantId, OutboxEventEntity.EventStatus status);

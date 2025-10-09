@@ -1,44 +1,37 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.persistence;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.OutboxEvent;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.repository.OutboxEventMongoRepository;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.repository.OutboxEventJpaRepository;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.OutboxEventRepositoryPort;
 
 import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class OutboxEventRepositoryAdapter implements OutboxEventRepositoryPort {
 
-    private final OutboxEventMongoRepository outboxEventMongoRepository;
+    private final OutboxEventJpaRepository outboxEventJpaRepository;
 
-    public OutboxEventRepositoryAdapter(OutboxEventMongoRepository outboxEventMongoRepository) {
-        this.outboxEventMongoRepository = outboxEventMongoRepository;
+    public OutboxEventEntity save(OutboxEventEntity outboxEvent) {
+        return outboxEventJpaRepository.save(outboxEvent);
     }
 
-    @Override
-    public OutboxEvent save(OutboxEvent outboxEvent) {
-        return outboxEventMongoRepository.save(outboxEvent);
+    public Optional<OutboxEventEntity> findById(String eventId) {
+        return outboxEventJpaRepository.findById(eventId);
     }
 
-    @Override
-    public Optional<OutboxEvent> findById(String eventId) {
-        return outboxEventMongoRepository.findById(eventId);
+    public List<OutboxEventEntity> findByTenantIdAndStatusOrderByCreatedAt(String tenantId, OutboxEventEntity.EventStatus status) {
+        return outboxEventJpaRepository.findByTenantIdAndStatusOrderByCreatedAt(tenantId, status);
     }
 
-    @Override
-    public List<OutboxEvent> findByTenantIdAndStatusOrderByCreatedAt(String tenantId, OutboxEvent.EventStatus status) {
-        return outboxEventMongoRepository.findByTenantIdAndStatusOrderByCreatedAt(tenantId, status);
+    public List<OutboxEventEntity> findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus status) {
+        return outboxEventJpaRepository.findByStatusOrderByCreatedAt(status);
     }
 
-    @Override
-    public List<OutboxEvent> findByStatusOrderByCreatedAt(OutboxEvent.EventStatus status) {
-        return outboxEventMongoRepository.findByStatusOrderByCreatedAt(status);
-    }
-
-    @Override
     public void deleteByIdIn(List<String> eventIds) {
-        outboxEventMongoRepository.deleteByIdIn(eventIds);
+        outboxEventJpaRepository.deleteByIdIn(eventIds);
     }
 }

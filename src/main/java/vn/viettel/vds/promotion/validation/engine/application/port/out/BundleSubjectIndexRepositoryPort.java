@@ -1,17 +1,17 @@
 package vn.viettel.vds.promotion.validation.engine.application.port.out;
 
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.BundleSubjectIndex;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleSubjectIndexEntity;
 
 import java.util.Optional;
 
 public interface BundleSubjectIndexRepositoryPort {
 
-    BundleSubjectIndex save(BundleSubjectIndex bundleSubjectIndex);
+    BundleSubjectIndexEntity save(BundleSubjectIndexEntity bundleSubjectIndex);
 
-    Optional<BundleSubjectIndex> findByTenantIdAndSubjectTypeAndSubjectKey(
+    Optional<BundleSubjectIndexEntity> findByTenantIdAndSubjectTypeAndSubjectKey(
             String tenantId, String subjectType, String subjectKey);
 
-    BundleSubjectIndex upsert(BundleSubjectIndex bundleSubjectIndex);
+    BundleSubjectIndexEntity upsert(BundleSubjectIndexEntity bundleSubjectIndex);
 
     void deleteById(String id);
 }

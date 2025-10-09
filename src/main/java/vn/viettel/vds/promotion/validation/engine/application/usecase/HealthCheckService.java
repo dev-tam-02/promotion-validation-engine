@@ -1,7 +1,8 @@
 package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.application.dto.HealthResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.HealthCheckUseCase;
@@ -16,8 +17,8 @@ import java.util.Map;
 @Service
 public class HealthCheckService implements HealthCheckUseCase {
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private ObjectStoragePort objectStoragePort;
@@ -125,8 +126,8 @@ public class HealthCheckService implements HealthCheckUseCase {
         try {
             long startTime = System.currentTimeMillis();
 
-            // Simple ping to MongoDB
-            mongoTemplate.getCollection("bundles").estimatedDocumentCount();
+            // Simple ping to database using JPA
+            entityManager.createNativeQuery("SELECT 1").getSingleResult();
 
             long responseTime = System.currentTimeMillis() - startTime;
 

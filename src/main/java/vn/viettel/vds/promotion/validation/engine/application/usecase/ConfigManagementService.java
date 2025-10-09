@@ -3,7 +3,7 @@ package vn.viettel.vds.promotion.validation.engine.application.usecase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.EngineConfig;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.EngineConfigEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.EngineConfigResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.EngineConfigUpdateRequest;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.ConfigManagementUseCase;
@@ -23,7 +23,7 @@ public class ConfigManagementService implements ConfigManagementUseCase {
     @Override
     @Transactional(readOnly = true)
     public EngineConfigResponse getConfig(String tenantId) {
-        Optional<EngineConfig> config = engineConfigRepository.findByTenantId(tenantId);
+        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(tenantId);
 
         if (config.isPresent()) {
             return mapToConfigResponse(config.get());
@@ -35,9 +35,9 @@ public class ConfigManagementService implements ConfigManagementUseCase {
 
     @Override
     public EngineConfigResponse updateConfig(String tenantId, EngineConfigUpdateRequest request) {
-        Optional<EngineConfig> existingConfig = engineConfigRepository.findByTenantId(tenantId);
+        Optional<EngineConfigEntity> existingConfig = engineConfigRepository.findByTenantId(tenantId);
 
-        EngineConfig config;
+        EngineConfigEntity config;
         if (existingConfig.isPresent()) {
             config = existingConfig.get();
             updateConfigFromRequest(config, request);
@@ -46,7 +46,7 @@ public class ConfigManagementService implements ConfigManagementUseCase {
             config = createConfigFromRequest(tenantId, request);
         }
 
-        EngineConfig savedConfig = engineConfigRepository.save(config);
+        EngineConfigEntity savedConfig = engineConfigRepository.save(config);
         return mapToConfigResponse(savedConfig);
     }
 
@@ -78,8 +78,8 @@ public class ConfigManagementService implements ConfigManagementUseCase {
         return response;
     }
 
-    private EngineConfig createConfigFromRequest(String tenantId, EngineConfigUpdateRequest request) {
-        EngineConfig config = new EngineConfig();
+    private EngineConfigEntity createConfigFromRequest(String tenantId, EngineConfigUpdateRequest request) {
+        EngineConfigEntity config = new EngineConfigEntity();
         config.setId("cfg_" + tenantId);
         config.setTenantId(tenantId);
 
@@ -92,10 +92,10 @@ public class ConfigManagementService implements ConfigManagementUseCase {
         return config;
     }
 
-    private void updateConfigFromRequest(EngineConfig config, EngineConfigUpdateRequest request) {
+    private void updateConfigFromRequest(EngineConfigEntity config, EngineConfigUpdateRequest request) {
         // Update execute configuration
         if (request.getExecute() != null) {
-            EngineConfig.ExecuteConfig executeConfig = new EngineConfig.ExecuteConfig();
+            EngineConfigEntity.ExecuteConfig executeConfig = new EngineConfigEntity.ExecuteConfig();
 
             if (request.getExecute().getTimeoutMs() != null) {
                 executeConfig.setTimeoutMs(request.getExecute().getTimeoutMs());
@@ -134,7 +134,7 @@ public class ConfigManagementService implements ConfigManagementUseCase {
 
         // Update compile configuration
         if (request.getCompile() != null) {
-            EngineConfig.CompileConfig compileConfig = new EngineConfig.CompileConfig();
+            EngineConfigEntity.CompileConfig compileConfig = new EngineConfigEntity.CompileConfig();
 
             if (request.getCompile().getMaxNodes() != null) {
                 compileConfig.setMaxNodes(request.getCompile().getMaxNodes());
@@ -156,7 +156,7 @@ public class ConfigManagementService implements ConfigManagementUseCase {
         }
     }
 
-    private EngineConfigResponse mapToConfigResponse(EngineConfig config) {
+    private EngineConfigResponse mapToConfigResponse(EngineConfigEntity config) {
         EngineConfigResponse response = new EngineConfigResponse();
         response.setTenantId(config.getTenantId());
         response.setCreatedAt(config.getCreatedAt());

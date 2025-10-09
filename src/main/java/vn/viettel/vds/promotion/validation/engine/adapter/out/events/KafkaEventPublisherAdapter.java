@@ -3,7 +3,7 @@ package vn.viettel.vds.promotion.validation.engine.adapter.out.events;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.mongo.document.OutboxEvent;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.EventPublisherPort;
 
 @Component
@@ -30,7 +30,7 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
     }
 
     @Override
-    public void publishOutboxEvent(OutboxEvent outboxEvent) {
+    public void publishOutboxEvent(OutboxEventEntity outboxEvent) {
         logger.info("Publishing outbox event: id={}, type={}, tenantId={}",
                 outboxEvent.getId(), outboxEvent.getType(), outboxEvent.getTenantId());
 
