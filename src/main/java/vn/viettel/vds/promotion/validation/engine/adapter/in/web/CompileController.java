@@ -41,15 +41,14 @@ public class CompileController {
                 webResponse.setEngineVersion(useCaseResponse.getEngine().getDroolsVersion());
             }
 
-            // Load artifactBytes from storage for warmup
-            try {
-                String artifactKey = "bundles/" + useCaseResponse.getBundleHash().replace("sha256:", "") + ".kjar";
-                objectStoragePort.retrieve(artifactKey).ifPresent(webResponse::setArtifactBytes);
-            } catch (Exception e) {
-                // Log warning but don't fail - warmup is optional
-                // Client can still use the bundle if they don't need warmup
-            }
+            // Load artifactBytes from storage for warmup - this is MANDATORY for proper execution
+            String artifactKey = "bundles/" + useCaseResponse.getBundleHash().replace("sha256:", "") + ".kjar";
+            byte[] artifactBytes = objectStoragePort.retrieve(artifactKey)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Failed to retrieve compiled artifact from storage. Bundle may not be usable for execution. " +
+                            "BundleHash: " + useCaseResponse.getBundleHash() + ", Key: " + artifactKey));
 
+            webResponse.setArtifactBytes(artifactBytes);
             webResponse.setErrors(new ArrayList<>());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(webResponse);
