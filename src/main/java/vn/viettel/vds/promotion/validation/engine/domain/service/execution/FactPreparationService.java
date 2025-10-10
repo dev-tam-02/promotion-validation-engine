@@ -3,6 +3,10 @@ package vn.viettel.vds.promotion.validation.engine.domain.service.execution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CandidateDto;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CustomerDto;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.OrderDto;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.OrderItemDto;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
@@ -81,6 +85,31 @@ public class FactPreparationService {
                 return (Customer) customerObj;
             }
 
+            // Handle CustomerDto record
+            if (customerObj instanceof CustomerDto) {
+                CustomerDto dto = (CustomerDto) customerObj;
+                Customer customer = new Customer();
+                customer.setId(dto.id());
+                // Convert List to Set for segments
+                if (dto.segments() != null) {
+                    customer.setSegments(new java.util.HashSet<>(dto.segments()));
+                }
+                // Map tier Integer to loyaltyTier String
+                if (dto.tier() != null) {
+                    customer.setLoyaltyTier(String.valueOf(dto.tier()));
+                }
+                // Add region to attrs if present
+                Map<String, Object> attrs = new HashMap<>();
+                if (dto.metadata() != null) {
+                    attrs.putAll(dto.metadata());
+                }
+                if (dto.region() != null) {
+                    attrs.put("region", dto.region());
+                }
+                customer.setAttrs(attrs);
+                return customer;
+            }
+
             if (customerObj instanceof Map) {
                 Map<String, Object> customerMap = (Map<String, Object>) customerObj;
                 Customer customer = new Customer();
@@ -116,6 +145,32 @@ public class FactPreparationService {
         try {
             if (orderObj instanceof Order) {
                 return (Order) orderObj;
+            }
+
+            // Handle OrderDto record
+            if (orderObj instanceof OrderDto) {
+                OrderDto dto = (OrderDto) orderObj;
+                Order order = new Order();
+                order.setId(dto.id());
+                order.setCurrency(dto.currency());
+                order.setTotal(dto.total());
+
+                // Convert order items
+                if (dto.items() != null) {
+                    List<OrderItem> items = new ArrayList<>();
+                    for (OrderItemDto itemDto : dto.items()) {
+                        OrderItem item = new OrderItem();
+                        item.setSku(itemDto.productId());
+                        item.setQuantity(itemDto.quantity());
+                        item.setPrice(itemDto.price().doubleValue());
+                        item.setCategory(itemDto.category());
+                        // OrderItem doesn't have brand field - store in metadata if needed
+                        items.add(item);
+                    }
+                    order.setItems(items);
+                }
+
+                return order;
             }
 
             if (orderObj instanceof Map) {
@@ -196,6 +251,16 @@ public class FactPreparationService {
         try {
             if (candidateObj instanceof Candidate) {
                 return (Candidate) candidateObj;
+            }
+
+            // Handle CandidateDto record
+            if (candidateObj instanceof CandidateDto) {
+                CandidateDto dto = (CandidateDto) candidateObj;
+                Candidate candidate = new Candidate();
+                candidate.setId(dto.id());
+                candidate.setType(dto.type());
+                // CandidateDto doesn't have code field, leave it null
+                return candidate;
             }
 
             if (candidateObj instanceof Map) {
