@@ -160,8 +160,9 @@ public class CompilationController {
         response.setBundleHash(result.getBundleHash());
         response.setArtifactBytes(result.getArtifactBytes());
         response.setArtifactSize(result.getSize());
-        response.setLogs(result.getLogs());
+        response.setLogs(result.getLogs() != null ? result.getLogs() : new ArrayList<>());
         response.setEngineVersion(result.getDroolsVersion());
+        response.setErrors(new ArrayList<>()); // Initialize errors as empty list for successful compilation
         return response;
     }
 }
