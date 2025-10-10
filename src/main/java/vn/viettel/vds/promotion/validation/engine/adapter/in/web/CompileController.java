@@ -9,6 +9,7 @@ import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CompileResp
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.CompileUseCase;
+import vn.viettel.vds.promotion.validation.engine.application.port.out.ObjectStoragePort;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,9 @@ public class CompileController {
 
     @Autowired
     private CompileUseCase compileUseCase;
+
+    @Autowired
+    private ObjectStoragePort objectStoragePort;
 
     @PostMapping("/compile")
     public ResponseEntity<CompileResponse> compile(@Valid @RequestBody CompileRequest request) {
@@ -35,6 +39,15 @@ public class CompileController {
 
             if (useCaseResponse.getEngine() != null) {
                 webResponse.setEngineVersion(useCaseResponse.getEngine().getDroolsVersion());
+            }
+
+            // Load artifactBytes from storage for warmup
+            try {
+                String artifactKey = "bundles/" + useCaseResponse.getBundleHash().replace("sha256:", "") + ".kjar";
+                objectStoragePort.retrieve(artifactKey).ifPresent(webResponse::setArtifactBytes);
+            } catch (Exception e) {
+                // Log warning but don't fail - warmup is optional
+                // Client can still use the bundle if they don't need warmup
             }
 
             webResponse.setErrors(new ArrayList<>());
