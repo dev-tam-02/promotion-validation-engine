@@ -17,7 +17,7 @@ public class TimeWindowEntity {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "policy_id", nullable = false, length = 100)
+    @Column(name = "policy_id", nullable = false, length = 100, insertable = false, updatable = false)
     private String policyId;
 
     @Column(name = "days_of_week", length = 100)

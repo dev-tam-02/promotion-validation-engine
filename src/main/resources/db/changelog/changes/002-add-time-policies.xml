@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="022-create-time-policies-table" author="system">
+        <createTable tableName="time_policies">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="time_policies" indexName="idx_time_policy_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="time_policies" indexName="idx_time_policy_active">
+            <column name="active"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="023-create-time-windows-table" author="system">
+        <createTable tableName="time_windows">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="policy_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="days_of_week" type="VARCHAR(100)"/>
+            <column name="start_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="spans_midnight" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="time_windows"
+                                 baseColumnNames="policy_id"
+                                 constraintName="fk_time_windows_policy"
+                                 referencedTableName="time_policies"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="time_windows" indexName="idx_time_window_policy">
+            <column name="policy_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
