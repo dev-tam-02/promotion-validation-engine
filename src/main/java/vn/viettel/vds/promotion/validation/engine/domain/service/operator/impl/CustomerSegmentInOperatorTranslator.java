@@ -14,7 +14,7 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         Object segmentsParam = params.get("segments");
         if (segmentsParam == null) {
-            throw new IllegalArgumentException("Missing required parameter 'segments' for customer.segment.in operator");
+            throw new IllegalArgumentException("Missing required parameter 'segments' for customer.in_segment operator");
         }
 
         List<String> segments;
@@ -24,11 +24,11 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
             // Handle single segment as a list
             segments = List.of((String) segmentsParam);
         } else {
-            throw new IllegalArgumentException("Parameter 'segments' must be a List<String> or String for customer.segment.in operator");
+            throw new IllegalArgumentException("Parameter 'segments' must be a List<String> or String for customer.in_segment operator");
         }
 
         if (segments.isEmpty()) {
-            throw new IllegalArgumentException("Parameter 'segments' cannot be empty for customer.segment.in operator");
+            throw new IllegalArgumentException("Parameter 'segments' cannot be empty for customer.in_segment operator");
         }
 
         // Generate Drools condition to check if any of the customer's segments matches any of the target segments
@@ -55,7 +55,7 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
 
     @Override
     public String getOperatorName() {
-        return "customer.segment.in";
+        return "customer.in_segment";
     }
 
     @Override
@@ -65,7 +65,7 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
 
     @Override
     public boolean supports(String operatorName, Integer version) {
-        return "customer.segment.in".equals(operatorName) &&
+        return "customer.in_segment".equals(operatorName) &&
                 (version == null || version.equals(getVersion()));
     }
 }
