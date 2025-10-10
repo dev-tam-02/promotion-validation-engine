@@ -51,12 +51,13 @@ public class RuleTranslationService {
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;\n");
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;\n");
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;\n");
+        drl.append("import vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService;\n");
         drl.append("import java.util.List;\n");
         drl.append("import java.util.ArrayList;\n\n");
 
         drl.append("global ValidationResult result;\n");
         drl.append("global List<String> reasonCodes;\n");
-        drl.append("global Object timeWindowService;\n");
+        drl.append("global TimeWindowService timeWindowService;\n");
         drl.append("global Object usageService;\n\n");
     }
 
