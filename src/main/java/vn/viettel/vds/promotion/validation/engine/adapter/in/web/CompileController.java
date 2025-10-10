@@ -5,11 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CompileResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
-import vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.CompileUseCase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -22,14 +23,38 @@ public class CompileController {
     @PostMapping("/compile")
     public ResponseEntity<CompileResponse> compile(@Valid @RequestBody CompileRequest request) {
         try {
-            CompileResponse response = compileUseCase.compile(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse useCaseResponse =
+                    compileUseCase.compile(request);
+
+            // Map application DTO to web DTO with ok field
+            CompileResponse webResponse = new CompileResponse();
+            webResponse.setOk(true);
+            webResponse.setBundleHash(useCaseResponse.getBundleHash());
+            webResponse.setArtifactSize(useCaseResponse.getSize());
+            webResponse.setLogs(useCaseResponse.getLogs() != null ? useCaseResponse.getLogs() : new ArrayList<>());
+
+            if (useCaseResponse.getEngine() != null) {
+                webResponse.setEngineVersion(useCaseResponse.getEngine().getDroolsVersion());
+            }
+
+            webResponse.setErrors(new ArrayList<>());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(webResponse);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            CompileResponse errorResponse = new CompileResponse();
+            errorResponse.setOk(false);
+            errorResponse.setErrors(List.of("Compilation already in progress"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            CompileResponse errorResponse = new CompileResponse();
+            errorResponse.setOk(false);
+            errorResponse.setErrors(List.of("Invalid request: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+            CompileResponse errorResponse = new CompileResponse();
+            errorResponse.setOk(false);
+            errorResponse.setErrors(List.of("Compilation failed: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
         }
     }
 
