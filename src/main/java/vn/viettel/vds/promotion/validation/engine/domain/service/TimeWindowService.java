@@ -1,33 +1,30 @@
 package vn.viettel.vds.promotion.validation.engine.domain.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import vn.viettel.vds.promotion.validation.engine.application.port.out.TimePolicyRepositoryPort;
+import vn.viettel.vds.promotion.validation.engine.domain.model.TimePolicy;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 
 /**
- * Service for validating time windows
+ * Service for validating time windows against time policies
  */
 @Service
+@RequiredArgsConstructor
 public class TimeWindowService {
+
+    private final TimePolicyRepositoryPort timePolicyRepository;
 
     /**
      * Check if current time is within an active time window
      *
      * @param policyId The time policy identifier
-     * @param timezone The timezone to use for time checks
+     * @param timezone The timezone to use for time checks (e.g., "Asia/Ho_Chi_Minh")
      * @return true if current time is within the active window
      */
     public boolean isActiveNow(String policyId, String timezone) {
-        // TODO: Implement actual time window logic
-        // For now, return true to allow rules to pass
-        // In production, this should:
-        // 1. Fetch the time policy by policyId
-        // 2. Check if current time (in given timezone) falls within policy's active windows
-        // 3. Consider day of week, time ranges, etc.
-
-        return true;
+        return isActive(policyId, Instant.now(), timezone);
     }
 
     /**
@@ -39,10 +36,56 @@ public class TimeWindowService {
      * @return true if the instant is within the active window
      */
     public boolean isActive(String policyId, Instant instant, String timezone) {
-        ZonedDateTime zdt = instant.atZone(ZoneId.of(timezone));
+        // Check if policy is active
+        if (!timePolicyRepository.isActive(policyId)) {
+            return false;
+        }
 
-        // TODO: Implement actual time window validation
-        // This is a placeholder implementation
-        return true;
+        // Get the time policy
+        TimePolicy policy = timePolicyRepository.findById(policyId)
+                .orElse(null);
+
+        if (policy == null || !policy.isActive() || policy.getTimeWindows().isEmpty()) {
+            return false;
+        }
+
+        // Convert instant to zoned date time
+        ZoneId zoneId = ZoneId.of(timezone);
+        ZonedDateTime zdt = instant.atZone(zoneId);
+        DayOfWeek currentDay = zdt.getDayOfWeek();
+        LocalTime currentTime = zdt.toLocalTime();
+
+        // Check if current time falls within any time window
+        for (TimePolicy.TimeWindow window : policy.getTimeWindows()) {
+            if (isTimeInWindow(currentDay, currentTime, window)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a specific day and time falls within a time window
+     */
+    private boolean isTimeInWindow(DayOfWeek day, LocalTime time, TimePolicy.TimeWindow window) {
+        // Check day of week constraint
+        if (!window.getDaysOfWeek().isEmpty() && !window.getDaysOfWeek().contains(day)) {
+            return false;
+        }
+
+        // Check time range
+        LocalTime startTime = window.getStartTime();
+        LocalTime endTime = window.getEndTime();
+
+        if (window.isSpansMidnight()) {
+            // Time window spans midnight (e.g., 23:00 to 02:00)
+            return time.isAfter(startTime) || time.equals(startTime) ||
+                   time.isBefore(endTime) || time.equals(endTime);
+        } else {
+            // Normal time window (e.g., 09:00 to 17:00)
+            return (time.isAfter(startTime) || time.equals(startTime)) &&
+                   (time.isBefore(endTime) || time.equals(endTime));
+        }
     }
 }
