@@ -83,9 +83,9 @@ public class CompileService implements CompileUseCase {
                     request.getTenantId(),
                     request.getRuleId(),
                     request.getVersion(),
+                    request.getLogic(),
                     request.getNodes(),
-                    request.getOperatorsFingerprint(),
-                    request.getCompilerId()
+                    request.getOperatorsFingerprint()
             );
 
             RuleEnginePort.CompileResult result = ruleEnginePort.compile(compileInput);
@@ -190,7 +190,7 @@ public class CompileService implements CompileUseCase {
         job.setRequestedAt(Instant.now());
         job.setOperatorsFingerprint(request.getOperatorsFingerprint());
         CompileJobEntity.EngineInfo engineInfo = new CompileJobEntity.EngineInfo();
-        engineInfo.setCompilerId(request.getCompilerId());
+        engineInfo.setCompilerId("drools");  // Default compiler ID
         job.setEngine(engineInfo);
         // Logs will be added separately as they are separate entities
         job.setErrors(List.of());
@@ -208,7 +208,7 @@ public class CompileService implements CompileUseCase {
         // Engine info
         BundleEntity.EngineInfo engineInfo = new BundleEntity.EngineInfo();
         engineInfo.setType("drools");
-        engineInfo.setCompilerId(request.getCompilerId());
+        engineInfo.setCompilerId("drools");  // Default compiler ID
         engineInfo.setDroolsVersion(result.getDroolsVersion());
         bundle.setEngine(engineInfo);
 
@@ -241,14 +241,6 @@ public class CompileService implements CompileUseCase {
         bundle.setArtifact(artifact);
 
         bundle.setCreatedAt(Instant.now());
-
-        // Source info
-        if (request.getSource() != null) {
-            BundleEntity.Source source = new BundleEntity.Source();
-            source.setValidationRuleVersionId(request.getSource().getRuleVersionId());
-            source.setSnapshotHash(request.getSource().getSnapshotHash());
-            bundle.setSource(source);
-        }
 
         return bundle;
     }

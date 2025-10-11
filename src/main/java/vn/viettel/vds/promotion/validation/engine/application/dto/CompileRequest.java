@@ -20,38 +20,33 @@ public class CompileRequest {
     @Positive
     private Integer version;
 
+    @NotBlank
+    private String logic;
+
     @NotNull
     private List<Map<String, Object>> nodes;
+
+    private String operatorsFingerprint;
 
     @Valid
     private Limits limits;
 
     private List<TimeLink> timeLinks;
 
-    @NotBlank
-    private String operatorsFingerprint;
-
-    @NotBlank
-    private String compilerId;
-
-    @Valid
-    private Source source;
-
     public CompileRequest() {
     }
 
-    public CompileRequest(String tenantId, String ruleId, Integer version, List<Map<String, Object>> nodes,
-                          Limits limits, List<TimeLink> timeLinks, String operatorsFingerprint,
-                          String compilerId, Source source) {
+    public CompileRequest(String tenantId, String ruleId, Integer version, String logic,
+                          List<Map<String, Object>> nodes, String operatorsFingerprint,
+                          Limits limits, List<TimeLink> timeLinks) {
         this.tenantId = tenantId;
         this.ruleId = ruleId;
         this.version = version;
+        this.logic = logic;
         this.nodes = nodes;
+        this.operatorsFingerprint = operatorsFingerprint;
         this.limits = limits;
         this.timeLinks = timeLinks;
-        this.operatorsFingerprint = operatorsFingerprint;
-        this.compilerId = compilerId;
-        this.source = source;
     }
 
     // Getters and Setters
@@ -77,6 +72,14 @@ public class CompileRequest {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public String getLogic() {
+        return logic;
+    }
+
+    public void setLogic(String logic) {
+        this.logic = logic;
     }
 
     public List<Map<String, Object>> getNodes() {
@@ -109,22 +112,6 @@ public class CompileRequest {
 
     public void setOperatorsFingerprint(String operatorsFingerprint) {
         this.operatorsFingerprint = operatorsFingerprint;
-    }
-
-    public String getCompilerId() {
-        return compilerId;
-    }
-
-    public void setCompilerId(String compilerId) {
-        this.compilerId = compilerId;
-    }
-
-    public Source getSource() {
-        return source;
-    }
-
-    public void setSource(Source source) {
-        this.source = source;
     }
 
     // Nested classes
@@ -186,38 +173,6 @@ public class CompileRequest {
 
         public void setMode(String mode) {
             this.mode = mode;
-        }
-    }
-
-    public static class Source {
-        @NotBlank
-        private String ruleVersionId;
-
-        @NotBlank
-        private String snapshotHash;
-
-        public Source() {
-        }
-
-        public Source(String ruleVersionId, String snapshotHash) {
-            this.ruleVersionId = ruleVersionId;
-            this.snapshotHash = snapshotHash;
-        }
-
-        public String getRuleVersionId() {
-            return ruleVersionId;
-        }
-
-        public void setRuleVersionId(String ruleVersionId) {
-            this.ruleVersionId = ruleVersionId;
-        }
-
-        public String getSnapshotHash() {
-            return snapshotHash;
-        }
-
-        public void setSnapshotHash(String snapshotHash) {
-            this.snapshotHash = snapshotHash;
         }
     }
 }

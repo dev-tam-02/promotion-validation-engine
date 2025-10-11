@@ -41,7 +41,7 @@ public class CompileRequest {
     @JsonProperty("nodes")
     private List<RuleNodeDto> nodes;
 
-    @Schema(description = "Operators fingerprint for cache invalidation", example = "abc123")
+    @Schema(description = "Operators fingerprint for cache invalidation", example = "abc123", required = false)
     @JsonProperty("operatorsFingerprint")
     private String operatorsFingerprint;
 
