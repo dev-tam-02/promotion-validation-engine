@@ -32,12 +32,10 @@ public class RuleEngineAdapter implements RuleEnginePort {
     private static final Logger logger = LoggerFactory.getLogger(RuleEngineAdapter.class);
     private static final String DEFAULT_BUNDLE = "default";
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final RuleRepositoryPort ruleRepositoryPort;
     // Cache for KieBase by bundleHash
     private final Cache<String, KieBase> kieBaseCache;
     private final ConcurrentHashMap<String, KieContainer> kieContainerCache = new ConcurrentHashMap<>();
-    private volatile KieContainer defaultKieContainer;
 
     public RuleEngineAdapter(RuleRepositoryPort ruleRepositoryPort) {
         this.ruleRepositoryPort = ruleRepositoryPort;
@@ -120,7 +118,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
                 kieBase = kieBaseCache.getIfPresent(DEFAULT_BUNDLE);
                 if (kieBase == null) {
                     // Return failed results for all candidates
-                    for (Candidate candidate : candidates) {
+                    for (int i = 0; i < candidates.size(); i++) {
                         results.add(new ValidationResult(false, "No rules available for validation"));
                     }
                     return results;
@@ -154,7 +152,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
         } catch (Exception e) {
             logger.error("Error executing bulk rules for bundleHash: {}", bundleHash, e);
             // Return error results for all candidates
-            for (Candidate candidate : candidates) {
+            for (int i = 0; i < candidates.size(); i++) {
                 results.add(new ValidationResult(false, "Rule execution error: " + e.getMessage()));
             }
         }
@@ -203,8 +201,9 @@ public class RuleEngineAdapter implements RuleEnginePort {
             KieBuilder kieBuilder = ks.newKieBuilder(kfs).buildAll();
 
             if (kieBuilder.getResults().hasMessages(Message.Level.ERROR)) {
+                String errorMessage = "Error building rule bundle: " + kieBuilder.getResults();
                 logger.error("Error building rule bundle {}: {}", bundleHash, kieBuilder.getResults());
-                throw new RuntimeException("Error building rule bundle: " + kieBuilder.getResults());
+                throw new RuleBundleException(errorMessage);
             }
 
             // Create container with custom release ID
@@ -215,9 +214,14 @@ public class RuleEngineAdapter implements RuleEnginePort {
             kieBaseCache.put(bundleHash, container.getKieBase(bundleHash + "KBase"));
 
             logger.info("Loaded rule bundle with hash: {}", bundleHash);
+        } catch (RuleBundleException e) {
+            // Re-throw RuleBundleException with original context
+            throw e;
         } catch (Exception e) {
-            logger.error("Failed to load rule bundle: {}", bundleHash, e);
-            throw new RuntimeException("Failed to load rule bundle", e);
+            String errorMessage = String.format("Failed to load rule bundle with hash '%s': %s",
+                    bundleHash, e.getMessage());
+            logger.error(errorMessage, e);
+            throw new RuleBundleException(errorMessage, e);
         }
     }
 
@@ -273,7 +277,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
 
         // 4) Create container from default ReleaseId
         ReleaseId releaseId = ks.getRepository().getDefaultReleaseId();
-        this.defaultKieContainer = ks.newKieContainer(releaseId);
+        KieContainer defaultKieContainer = ks.newKieContainer(releaseId);
 
         // Cache the default KieBase
         kieBaseCache.put(DEFAULT_BUNDLE, defaultKieContainer.getKieBase());
