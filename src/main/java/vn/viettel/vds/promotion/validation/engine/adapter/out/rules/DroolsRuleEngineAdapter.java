@@ -57,7 +57,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                 input.getTenantId(), input.getRuleId(), input.getVersion());
 
         long startTime = System.currentTimeMillis();
-        boolean success = false;
 
         try {
             String drlContent = ruleTranslationService.translateToDrl(
@@ -77,7 +76,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             );
 
             bundleArtifacts.put(result.getBundleHash(), result.getArtifactBytes());
-            success = true;
 
             // Record compilation metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), true);
@@ -91,13 +89,14 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             );
 
         } catch (Exception e) {
-            logger.error("Compilation failed: tenantId={}, ruleId={}, error={}",
-                    input.getTenantId(), input.getRuleId(), e.getMessage(), e);
+            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s): %s",
+                    input.getRuleId(), input.getTenantId(), input.getVersion(), e.getMessage());
+            logger.error(errorMessage, e);
 
             // Record compilation failure metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), false);
 
-            throw new RuntimeException("Compilation failed: " + e.getMessage(), e);
+            throw new RuleBundleException(errorMessage, e);
         }
     }
 
@@ -136,49 +135,55 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         logger.info("Executing batch: size={}", inputs.size());
 
         try {
-            // Group inputs by bundle hash and get containers
-            Map<String, KieContainer> containersByBundle = new HashMap<>();
-
-            for (ExecuteInput input : inputs) {
-                String bundleHash = input.getBundleHash();
-                if (!containersByBundle.containsKey(bundleHash)) {
-                    try {
-                        KieContainer container = getOrCreateContainer(bundleHash);
-                        containersByBundle.put(bundleHash, container);
-                    } catch (Exception e) {
-                        logger.warn("Failed to get container for bundle: {}, error: {}", bundleHash, e.getMessage());
-                        // Container will be null, handled in orchestrator
-                    }
-                }
-            }
-
-            // Use optimized batch execution
+            Map<String, KieContainer> containersByBundle = loadContainersForBatch(inputs);
             return executionOrchestrator.executeOptimizedBatch(inputs, containersByBundle);
-
         } catch (Exception e) {
             logger.error("Batch execution failed", e);
-
-            // Return error responses for all inputs
-            List<ExecuteResponse> errorResponses = new ArrayList<>();
-            for (ExecuteInput input : inputs) {
-                ExecuteResponse response = new ExecuteResponse();
-                response.setOk(false);
-                response.setDecision("DENY");
-                response.setReasonCodes(List.of("BATCH_EXECUTION_ERROR"));
-                response.setExplain(List.of(
-                        new ExecuteResponse.ExplainEntry("batch", ERROR_VERSION, false)
-                ));
-
-                ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
-                engine.setVersion(ERROR_VERSION);
-                engine.setLatencyMs(0);
-                engine.setCacheHit(false);
-                response.setEngine(engine);
-
-                errorResponses.add(response);
-            }
-            return errorResponses;
+            return createBatchErrorResponses(inputs.size());
         }
+    }
+
+    private Map<String, KieContainer> loadContainersForBatch(List<ExecuteInput> inputs) {
+        Map<String, KieContainer> containersByBundle = new HashMap<>();
+
+        for (ExecuteInput input : inputs) {
+            String bundleHash = input.getBundleHash();
+            if (!containersByBundle.containsKey(bundleHash)) {
+                try {
+                    KieContainer container = getOrCreateContainer(bundleHash);
+                    containersByBundle.put(bundleHash, container);
+                } catch (Exception e) {
+                    logger.warn("Failed to get container for bundle: {}, error: {}", bundleHash, e.getMessage());
+                    // Container will be null, handled in orchestrator
+                }
+            }
+        }
+
+        return containersByBundle;
+    }
+
+    private List<ExecuteResponse> createBatchErrorResponses(int count) {
+        List<ExecuteResponse> errorResponses = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            ExecuteResponse response = new ExecuteResponse();
+            response.setOk(false);
+            response.setDecision("DENY");
+            response.setReasonCodes(List.of("BATCH_EXECUTION_ERROR"));
+            response.setExplain(List.of(
+                    new ExecuteResponse.ExplainEntry("batch", ERROR_VERSION, false)
+            ));
+
+            ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
+            engine.setVersion(ERROR_VERSION);
+            engine.setLatencyMs(0);
+            engine.setCacheHit(false);
+            response.setEngine(engine);
+
+            errorResponses.add(response);
+        }
+
+        return errorResponses;
     }
 
     @Override
@@ -192,9 +197,10 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
             logger.info("Bundle warmup completed: bundleHash={}", bundleHash);
         } catch (Exception e) {
-            logger.error("Bundle warmup failed: bundleHash={}, error={}",
-                    bundleHash, e.getMessage(), e);
-            throw new RuntimeException("Bundle warmup failed: " + e.getMessage(), e);
+            String errorMessage = String.format("Bundle warmup failed for hash '%s': %s",
+                    bundleHash, e.getMessage());
+            logger.error(errorMessage, e);
+            throw new RuleBundleException(errorMessage, e);
         }
     }
 
