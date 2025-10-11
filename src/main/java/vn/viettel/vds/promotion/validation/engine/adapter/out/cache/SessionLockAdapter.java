@@ -97,42 +97,31 @@ public class SessionLockAdapter implements SessionLockPort {
 
     // Redisson lock operations using RLock
     private boolean acquireRedissonLock(String lockKey, int ttlSeconds) {
-        RLock lock = null;
-        boolean acquired = false;
         try {
-            lock = redissonClient.getLock(lockKey);
-            acquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
-
-            if (acquired) {
-                logger.debug("Acquired Redisson lock: {}", lockKey);
-            } else {
-                logger.debug("Failed to acquire Redisson lock: {}", lockKey);
-            }
+            RLock lock = redissonClient.getLock(lockKey);
+            boolean acquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
+            logLockAcquisitionResult(lockKey, acquired);
             return acquired;
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Interrupted while acquiring Redisson lock: {}", lockKey, e);
-            // Release the lock if acquired but interrupted
-            if (acquired && lock != null && lock.isHeldByCurrentThread()) {
-                try {
-                    lock.unlock();
-                } catch (Exception unlockException) {
-                    logger.warn("Failed to unlock after interruption: {}", lockKey, unlockException);
-                }
-            }
+            handleInterruptedException(lockKey, e);
             return false;
         } catch (Exception e) {
             logger.error("Error acquiring Redisson lock: {}", lockKey, e);
-            // Release the lock if acquired but exception occurred
-            if (acquired && lock != null && lock.isHeldByCurrentThread()) {
-                try {
-                    lock.unlock();
-                } catch (Exception unlockException) {
-                    logger.warn("Failed to unlock after exception: {}", lockKey, unlockException);
-                }
-            }
             return false;
         }
+    }
+
+    private void logLockAcquisitionResult(String lockKey, boolean acquired) {
+        if (acquired) {
+            logger.debug("Acquired Redisson lock: {}", lockKey);
+        } else {
+            logger.debug("Failed to acquire Redisson lock: {}", lockKey);
+        }
+    }
+
+    private void handleInterruptedException(String lockKey, InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.error("Interrupted while acquiring Redisson lock: {}", lockKey, e);
     }
 
     private boolean releaseRedissonLock(String lockKey) {
@@ -161,46 +150,33 @@ public class SessionLockAdapter implements SessionLockPort {
     }
 
     private boolean extendRedissonLock(String lockKey, int ttlSeconds) {
-        RLock lock = null;
-        boolean wasUnlocked = false;
-        boolean reacquired = false;
         try {
-            lock = redissonClient.getLock(lockKey);
-            // Redisson doesn't have direct extend - we need to re-acquire with new TTL
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-                wasUnlocked = true;
-                reacquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
-                if (reacquired) {
-                    logger.debug("Extended Redisson lock: {}", lockKey);
-                }
-                return reacquired;
+            RLock lock = redissonClient.getLock(lockKey);
+
+            if (!lock.isHeldByCurrentThread()) {
+                return false;
             }
-            return false;
+
+            return reacquireLockWithNewTTL(lock, lockKey, ttlSeconds);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Interrupted while extending Redisson lock: {}", lockKey, e);
-            // If we unlocked but failed to reacquire, ensure lock is released
-            if (wasUnlocked && !reacquired && lock != null && lock.isHeldByCurrentThread()) {
-                try {
-                    lock.unlock();
-                } catch (Exception unlockException) {
-                    logger.warn("Failed to unlock after extension interruption: {}", lockKey, unlockException);
-                }
-            }
+            handleInterruptedException(lockKey, e);
             return false;
         } catch (Exception e) {
             logger.error("Error extending Redisson lock: {}", lockKey, e);
-            // If we unlocked but failed to reacquire, ensure lock is released
-            if (wasUnlocked && !reacquired && lock != null && lock.isHeldByCurrentThread()) {
-                try {
-                    lock.unlock();
-                } catch (Exception unlockException) {
-                    logger.warn("Failed to unlock after extension failure: {}", lockKey, unlockException);
-                }
-            }
             return false;
         }
+    }
+
+    private boolean reacquireLockWithNewTTL(RLock lock, String lockKey, int ttlSeconds) throws InterruptedException {
+        // Redisson doesn't have direct extend - we need to re-acquire with new TTL
+        lock.unlock();
+        boolean reacquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
+
+        if (reacquired) {
+            logger.debug("Extended Redisson lock: {}", lockKey);
+        }
+
+        return reacquired;
     }
 
     // In-memory fallback lock operations
