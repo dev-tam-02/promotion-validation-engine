@@ -83,9 +83,9 @@ public class CompileService implements CompileUseCase {
                     request.getTenantId(),
                     request.getRuleId(),
                     request.getVersion(),
-                    request.getLogic(),
                     request.getNodes(),
-                    request.getOperatorsFingerprint()
+                    request.getOperatorsFingerprint(),
+                    "drools"
             );
 
             RuleEnginePort.CompileResult result = ruleEnginePort.compile(compileInput);
