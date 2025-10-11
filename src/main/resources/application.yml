@@ -91,6 +91,8 @@ management:
   zipkin:
     tracing:
       endpoint: ""
+      export:
+        enabled: false
 
 # Promix Platform Configuration - Only essential overrides
 promix:
