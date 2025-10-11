@@ -78,21 +78,38 @@ public class CompilationController {
             @ApiResponse(responseCode = "500", description = "Warmup failed")
     })
     @PostMapping("/warmup")
-    public ResponseEntity<Void> warmupBundle(@Valid @RequestBody WarmupRequest request) {
+    public ResponseEntity<WarmupResponse> warmupBundle(@Valid @RequestBody WarmupRequest request) {
 
         logger.info("Warming up bundle: bundleHash={}", request.getBundleHash());
+
+        long startTime = System.currentTimeMillis();
 
         try {
             ruleEnginePort.warmupBundle(request.getBundleHash(), request.getArtifactBytes());
 
-            logger.info("Bundle warmup completed: bundleHash={}", request.getBundleHash());
+            long duration = System.currentTimeMillis() - startTime;
 
-            return ResponseEntity.ok().build();
+            logger.info("Bundle warmup completed: bundleHash={}, durationMs={}",
+                    request.getBundleHash(), duration);
+
+            WarmupResponse response = new WarmupResponse(
+                    true,
+                    "Bundle warmed up successfully",
+                    duration
+            );
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Bundle warmup failed: bundleHash={}, error={}",
                     request.getBundleHash(), e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+
+            WarmupResponse errorResponse = new WarmupResponse(
+                    false,
+                    "Warmup failed: " + e.getMessage()
+            );
+
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 
