@@ -94,6 +94,13 @@ management:
 
 # Promix Platform Configuration - Only essential overrides
 promix:
+  # Observer Configuration (Tracing, Logging, Metrics)
+  observer:
+    enabled: true
+    tracing:
+      enabled: true
+      service-name: ${spring.application.name}
+
   # JPA Configuration
   data:
     jpa:
