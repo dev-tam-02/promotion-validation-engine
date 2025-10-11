@@ -217,7 +217,7 @@ public class FastCheckService implements FastCheckUseCase {
 
             if (Boolean.TRUE.equals(isMember)) {
                 // Cache for faster future checks
-                bucket.set(true, 1, TimeUnit.HOURS);
+                bucket.set(true, java.time.Duration.ofHours(1));
                 return new BlacklistCheckResult(false, "CUSTOMER_BLACKLISTED_GLOBAL",
                         "Customer is in global blacklist");
             }
@@ -246,7 +246,7 @@ public class FastCheckService implements FastCheckUseCase {
                 long count = hourCounter.incrementAndGet();
 
                 if (count == 1) {
-                    hourCounter.expire(1, TimeUnit.HOURS);
+                    hourCounter.expire(java.time.Duration.ofHours(1));
                 }
 
                 if (count > config.getMaxPerHour()) {
@@ -262,7 +262,7 @@ public class FastCheckService implements FastCheckUseCase {
                 long count = dayCounter.incrementAndGet();
 
                 if (count == 1) {
-                    dayCounter.expire(24, TimeUnit.HOURS);
+                    dayCounter.expire(java.time.Duration.ofHours(24));
                 }
 
                 if (count > config.getMaxPerDay()) {

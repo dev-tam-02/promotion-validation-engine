@@ -244,7 +244,8 @@ public class KieSessionPool {
         public boolean isValid() {
             try {
                 // Simple validation - check if session is still usable
-                return kieSession != null && kieSession.getId() > 0;
+                // Just check if session exists and can be accessed
+                return kieSession != null;
             } catch (Exception e) {
                 return false;
             }

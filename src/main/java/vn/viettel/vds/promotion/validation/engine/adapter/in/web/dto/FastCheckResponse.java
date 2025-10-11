@@ -14,11 +14,11 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FastCheckResponse {
 
-    @Schema(description = "Validation decision", example = "ALLOW", required = true, allowableValues = {"ALLOW", "DENY"})
+    @Schema(description = "Validation decision", example = "ALLOW", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {"ALLOW", "DENY"})
     @JsonProperty("decision")
     private String decision;
 
-    @Schema(description = "Should continue to full evaluation", example = "true", required = true)
+    @Schema(description = "Should continue to full evaluation", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty("shouldContinue")
     private boolean shouldContinue;
 

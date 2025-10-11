@@ -17,17 +17,17 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FastCheckRequest {
 
-    @Schema(description = "Tenant identifier", example = "viettel", required = true)
+    @Schema(description = "Tenant identifier", example = "viettel", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Tenant ID is required")
     @JsonProperty("tenantId")
     private String tenantId;
 
-    @Schema(description = "Campaign/Bundle identifier", example = "tet-2025", required = true)
+    @Schema(description = "Campaign/Bundle identifier", example = "tet-2025", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Campaign ID is required")
     @JsonProperty("campaignId")
     private String campaignId;
 
-    @Schema(description = "Customer identifier", example = "CUST123", required = true)
+    @Schema(description = "Customer identifier", example = "CUST123", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Customer ID is required")
     @JsonProperty("customerId")
     private String customerId;
@@ -40,12 +40,12 @@ public class FastCheckRequest {
     @JsonProperty("customerRegion")
     private String customerRegion;
 
-    @Schema(description = "Order total amount", example = "500000", required = true)
+    @Schema(description = "Order total amount", example = "500000", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Order total is required")
     @JsonProperty("orderTotal")
     private Long orderTotal;
 
-    @Schema(description = "Currency code", example = "VND", required = true)
+    @Schema(description = "Currency code", example = "VND", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Currency is required")
     @JsonProperty("currency")
     private String currency;
