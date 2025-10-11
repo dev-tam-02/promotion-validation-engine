@@ -27,20 +27,17 @@ public class RuleExecutionOrchestrator {
     private final ExecutionMetricsService metricsService;
     private final vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService timeWindowService;
     private final Executor executionExecutor;
-    private final SessionPoolConfig poolConfig;
 
     public RuleExecutionOrchestrator(KieSessionManager sessionManager,
                                      FactPreparationService factPreparationService,
                                      ExecutionTracingService tracingService,
                                      ExecutionMetricsService metricsService,
-                                     vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService timeWindowService,
-                                     SessionPoolConfig poolConfig) {
+                                     vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService timeWindowService) {
         this.sessionManager = sessionManager;
         this.factPreparationService = factPreparationService;
         this.tracingService = tracingService;
         this.metricsService = metricsService;
         this.timeWindowService = timeWindowService;
-        this.poolConfig = poolConfig;
         this.executionExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -86,7 +83,7 @@ public class RuleExecutionOrchestrator {
             response = buildSuccessResponse(result, reasonCodes, startTime, tracingListener, input);
 
             // Record metrics
-            boolean success = response.getOk() != null ? response.getOk() : false;
+            boolean success = Boolean.TRUE.equals(response.getOk());
             metricsService.recordExecution(input.getBundleHash(),
                     Duration.ofMillis(response.getEngine().getLatencyMs()), success);
 
@@ -101,7 +98,7 @@ public class RuleExecutionOrchestrator {
 
         } catch (Exception e) {
             logger.error("Single rule execution failed: executionId={}, error={}", executionId, e.getMessage(), e);
-            response = buildErrorResponse(startTime, e);
+            response = buildErrorResponse(startTime);
         }
 
         return response;
@@ -118,7 +115,7 @@ public class RuleExecutionOrchestrator {
             KieContainer container = containersByBundle.get(input.getBundleHash());
             if (container == null) {
                 futures.add(CompletableFuture.completedFuture(
-                        buildBundleNotFoundResponse(input.getBundleHash())
+                        buildBundleNotFoundResponse()
                 ));
             } else {
                 CompletableFuture<ExecuteResponse> future = CompletableFuture
@@ -153,7 +150,7 @@ public class RuleExecutionOrchestrator {
                         try {
                             return future.join();
                         } catch (Exception ex) {
-                            return buildErrorResponse(System.currentTimeMillis(), ex);
+                            return buildErrorResponse(System.currentTimeMillis());
                         }
                     })
                     .toList();
@@ -179,8 +176,8 @@ public class RuleExecutionOrchestrator {
 
             if (container == null) {
                 // Add error responses for missing bundle
-                for (RuleEnginePort.ExecuteInput input : bundleInputs) {
-                    allResponses.add(buildBundleNotFoundResponse(bundleHash));
+                for (int i = 0; i < bundleInputs.size(); i++) {
+                    allResponses.add(buildBundleNotFoundResponse());
                 }
                 continue;
             }
@@ -191,8 +188,8 @@ public class RuleExecutionOrchestrator {
             } catch (Exception e) {
                 logger.error("Optimized batch execution failed for bundle: {}", bundleHash, e);
                 // Add error responses for the failed bundle
-                for (RuleEnginePort.ExecuteInput input : bundleInputs) {
-                    allResponses.add(buildErrorResponse(System.currentTimeMillis(), e));
+                for (int i = 0; i < bundleInputs.size(); i++) {
+                    allResponses.add(buildErrorResponse(System.currentTimeMillis()));
                 }
             }
         }
@@ -211,23 +208,31 @@ public class RuleExecutionOrchestrator {
 
         try {
             StatelessKieSession session = sessionManager.createStatelessSession(container);
-
-            // Process each input individually but reuse session setup
-            for (RuleEnginePort.ExecuteInput input : inputs) {
-                try {
-                    ExecuteResponse response = executeSingleInSession(input, session, executionId);
-                    responses.add(response);
-                } catch (Exception e) {
-                    logger.error("Failed to execute single input in batch: executionId={}", executionId, e);
-                    responses.add(buildErrorResponse(startTime, e));
-                }
-            }
-
+            responses = processInputsWithSession(inputs, session, executionId, startTime);
         } catch (Exception e) {
             logger.error("Failed to create session for bundle batch execution: executionId={}", executionId, e);
             // Return error responses for all inputs
-            for (RuleEnginePort.ExecuteInput input : inputs) {
-                responses.add(buildErrorResponse(startTime, e));
+            for (int i = 0; i < inputs.size(); i++) {
+                responses.add(buildErrorResponse(startTime));
+            }
+        }
+
+        return responses;
+    }
+
+    private List<ExecuteResponse> processInputsWithSession(List<RuleEnginePort.ExecuteInput> inputs,
+                                                           StatelessKieSession session,
+                                                           String executionId,
+                                                           long startTime) {
+        List<ExecuteResponse> responses = new ArrayList<>();
+
+        for (RuleEnginePort.ExecuteInput input : inputs) {
+            try {
+                ExecuteResponse response = executeSingleInSession(input, session, executionId);
+                responses.add(response);
+            } catch (Exception e) {
+                logger.error("Failed to execute single input in batch: executionId={}", executionId, e);
+                responses.add(buildErrorResponse(startTime));
             }
         }
 
@@ -278,10 +283,9 @@ public class RuleExecutionOrchestrator {
                                                  RuleEnginePort.ExecuteInput input) {
         ExecuteResponse response = new ExecuteResponse();
 
-        response.setOk(result.getOk() != null ? result.getOk() : false);
+        response.setOk(Boolean.TRUE.equals(result.getOk()));
         response.setDecision(result.getDecision() != null ? result.getDecision() : "DENY");
-        response.setReasonCodes(reasonCodes.isEmpty() ?
-                (result.getReasonCodes() != null ? result.getReasonCodes() : List.of()) : reasonCodes);
+        response.setReasonCodes(determineReasonCodes(reasonCodes, result));
 
         // Set explain entries
         if (tracingListener != null) {
@@ -301,7 +305,14 @@ public class RuleExecutionOrchestrator {
         return response;
     }
 
-    private ExecuteResponse buildErrorResponse(long startTime, Exception error) {
+    private List<String> determineReasonCodes(List<String> reasonCodes, ValidationResult result) {
+        if (!reasonCodes.isEmpty()) {
+            return reasonCodes;
+        }
+        return result.getReasonCodes() != null ? result.getReasonCodes() : List.of();
+    }
+
+    private ExecuteResponse buildErrorResponse(long startTime) {
         ExecuteResponse response = new ExecuteResponse();
         response.setOk(false);
         response.setDecision("DENY");
@@ -319,7 +330,7 @@ public class RuleExecutionOrchestrator {
         return response;
     }
 
-    private ExecuteResponse buildBundleNotFoundResponse(String bundleHash) {
+    private ExecuteResponse buildBundleNotFoundResponse() {
         ExecuteResponse response = new ExecuteResponse();
         response.setOk(false);
         response.setDecision("DENY");
