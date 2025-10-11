@@ -23,114 +23,91 @@ public class FactPreparationService {
 
     private static final Logger logger = LoggerFactory.getLogger(FactPreparationService.class);
 
+    // Constants for commonly used attribute keys
+    private static final String ATTR_EMAIL = "email";
+    private static final String ATTR_PHONE = "phone";
+
     public List<Object> prepareFacts(Map<String, Object> context) {
         logger.debug("Preparing facts from context with {} entries", context.size());
 
         List<Object> facts = new ArrayList<>();
 
-        // Extract and validate core domain objects
-        Object customerObj = context.get("customer");
-        Object orderObj = context.get("order");
-        Object candidateObj = context.get("candidate");
-        Object executionContextObj = context.get("executionContext");
-
-        // Add customer if present
-        if (customerObj != null) {
-            Customer customer = convertToCustomer(customerObj);
-            if (customer != null) {
-                facts.add(customer);
-                logger.debug("Added Customer fact: id={}", customer.getId());
-            }
-        }
-
-        // Add order if present
-        if (orderObj != null) {
-            Order order = convertToOrder(orderObj);
-            if (order != null) {
-                facts.add(order);
-                logger.debug("Added Order fact: id={}, total={}", order.getId(), order.getTotal());
-
-                // Add order items as individual facts
-                if (order.getItems() != null) {
-                    for (OrderItem item : order.getItems()) {
-                        facts.add(item);
-                    }
-                    logger.debug("Added {} OrderItem facts", order.getItems().size());
-                }
-            }
-        }
-
-        // Add candidate if present
-        if (candidateObj != null) {
-            Candidate candidate = convertToCandidate(candidateObj);
-            if (candidate != null) {
-                facts.add(candidate);
-                logger.debug("Added Candidate fact: id={}, type={}", candidate.getId(), candidate.getType());
-            }
-        }
-
-        // Add execution context metadata as facts
-        if (executionContextObj instanceof Map) {
-            Map<String, Object> execContext = (Map<String, Object>) executionContextObj;
-            facts.addAll(prepareContextFacts(execContext));
-        }
+        // Add domain object facts
+        addCustomerFacts(context.get("customer"), facts);
+        addOrderFacts(context.get("order"), facts);
+        addCandidateFacts(context.get("candidate"), facts);
+        addExecutionContextFacts(context.get("executionContext"), facts);
 
         logger.debug("Prepared {} total facts for rule execution", facts.size());
         return facts;
     }
 
+    private void addCustomerFacts(Object customerObj, List<Object> facts) {
+        if (customerObj == null) {
+            return;
+        }
+
+        Customer customer = convertToCustomer(customerObj);
+        if (customer != null) {
+            facts.add(customer);
+            logger.debug("Added Customer fact: id={}", customer.getId());
+        }
+    }
+
+    private void addOrderFacts(Object orderObj, List<Object> facts) {
+        if (orderObj == null) {
+            return;
+        }
+
+        Order order = convertToOrder(orderObj);
+        if (order != null) {
+            facts.add(order);
+            logger.debug("Added Order fact: id={}, total={}", order.getId(), order.getTotal());
+            addOrderItemFacts(order, facts);
+        }
+    }
+
+    private void addOrderItemFacts(Order order, List<Object> facts) {
+        if (order.getItems() == null) {
+            return;
+        }
+
+        for (OrderItem item : order.getItems()) {
+            facts.add(item);
+        }
+        logger.debug("Added {} OrderItem facts", order.getItems().size());
+    }
+
+    private void addCandidateFacts(Object candidateObj, List<Object> facts) {
+        if (candidateObj == null) {
+            return;
+        }
+
+        Candidate candidate = convertToCandidate(candidateObj);
+        if (candidate != null) {
+            facts.add(candidate);
+            logger.debug("Added Candidate fact: id={}, type={}", candidate.getId(), candidate.getType());
+        }
+    }
+
+    private void addExecutionContextFacts(Object executionContextObj, List<Object> facts) {
+        if (executionContextObj instanceof Map execContext) {
+            facts.addAll(prepareContextFacts(execContext));
+        }
+    }
+
     private Customer convertToCustomer(Object customerObj) {
         try {
-            if (customerObj instanceof Customer) {
-                return (Customer) customerObj;
-            }
-
-            // Handle CustomerDto record
-            if (customerObj instanceof CustomerDto) {
-                CustomerDto dto = (CustomerDto) customerObj;
-                Customer customer = new Customer();
-                customer.setId(dto.id());
-                // Convert List to Set for segments
-                if (dto.segments() != null) {
-                    customer.setSegments(new java.util.HashSet<>(dto.segments()));
-                }
-                // Map tier Integer to loyaltyTier String
-                if (dto.tier() != null) {
-                    customer.setLoyaltyTier(String.valueOf(dto.tier()));
-                }
-                // Add region to attrs if present
-                Map<String, Object> attrs = new HashMap<>();
-                if (dto.metadata() != null) {
-                    attrs.putAll(dto.metadata());
-                }
-                if (dto.region() != null) {
-                    attrs.put("region", dto.region());
-                }
-                customer.setAttrs(attrs);
+            if (customerObj instanceof Customer customer) {
                 return customer;
             }
 
-            if (customerObj instanceof Map) {
-                Map<String, Object> customerMap = (Map<String, Object>) customerObj;
-                Customer customer = new Customer();
+            if (customerObj instanceof CustomerDto dto) {
+                return convertFromCustomerDto(dto);
+            }
 
-                customer.setId((String) customerMap.get("id"));
-                customer.setLoyaltyTier((String) customerMap.get("tier"));
-
-                // Set attributes from map
-                Map<String, Object> attrs = new HashMap<>();
-                if (customerMap.get("name") != null) {
-                    attrs.put("name", customerMap.get("name"));
-                }
-                if (customerMap.get("email") != null) {
-                    attrs.put("email", customerMap.get("email"));
-                }
-                if (customerMap.get("phone") != null) {
-                    attrs.put("phone", customerMap.get("phone"));
-                }
-                customer.setAttrs(attrs);
-
-                return customer;
+            if (customerObj instanceof Map customerMap) {
+                return convertFromCustomerMap(customerMap);
             }
 
             logger.warn("Unable to convert customer object of type: {}", customerObj.getClass());
@@ -141,67 +118,68 @@ public class FactPreparationService {
         }
     }
 
+    private Customer convertFromCustomerDto(CustomerDto dto) {
+        Customer customer = new Customer();
+        customer.setId(dto.id());
+
+        // Convert List to Set for segments
+        if (dto.segments() != null) {
+            customer.setSegments(new java.util.HashSet<>(dto.segments()));
+        }
+
+        // Map tier Integer to loyaltyTier String
+        if (dto.tier() != null) {
+            customer.setLoyaltyTier(String.valueOf(dto.tier()));
+        }
+
+        // Build attributes from metadata and region
+        Map<String, Object> attrs = new HashMap<>();
+        if (dto.metadata() != null) {
+            attrs.putAll(dto.metadata());
+        }
+        if (dto.region() != null) {
+            attrs.put("region", dto.region());
+        }
+        customer.setAttrs(attrs);
+
+        return customer;
+    }
+
+    private Customer convertFromCustomerMap(Map<String, Object> customerMap) {
+        Customer customer = new Customer();
+        customer.setId((String) customerMap.get("id"));
+        customer.setLoyaltyTier((String) customerMap.get("tier"));
+        customer.setAttrs(buildCustomerAttributes(customerMap));
+        return customer;
+    }
+
+    private Map<String, Object> buildCustomerAttributes(Map<String, Object> customerMap) {
+        Map<String, Object> attrs = new HashMap<>();
+        addAttributeIfPresent(attrs, customerMap, "name");
+        addAttributeIfPresent(attrs, customerMap, ATTR_EMAIL);
+        addAttributeIfPresent(attrs, customerMap, ATTR_PHONE);
+        return attrs;
+    }
+
+    private void addAttributeIfPresent(Map<String, Object> attrs, Map<String, Object> source, String key) {
+        Object value = source.get(key);
+        if (value != null) {
+            attrs.put(key, value);
+        }
+    }
+
     private Order convertToOrder(Object orderObj) {
         try {
-            if (orderObj instanceof Order) {
-                return (Order) orderObj;
-            }
-
-            // Handle OrderDto record
-            if (orderObj instanceof OrderDto) {
-                OrderDto dto = (OrderDto) orderObj;
-                Order order = new Order();
-                order.setId(dto.id());
-                order.setCurrency(dto.currency());
-                order.setTotal(dto.total());
-
-                // Convert order items
-                if (dto.items() != null) {
-                    List<OrderItem> items = new ArrayList<>();
-                    for (OrderItemDto itemDto : dto.items()) {
-                        OrderItem item = new OrderItem();
-                        item.setSku(itemDto.productId());
-                        item.setQuantity(itemDto.quantity());
-                        item.setPrice(itemDto.price().doubleValue());
-                        item.setCategory(itemDto.category());
-                        // OrderItem doesn't have brand field - store in metadata if needed
-                        items.add(item);
-                    }
-                    order.setItems(items);
-                }
-
+            if (orderObj instanceof Order order) {
                 return order;
             }
 
-            if (orderObj instanceof Map) {
-                Map<String, Object> orderMap = (Map<String, Object>) orderObj;
-                Order order = new Order();
+            if (orderObj instanceof OrderDto dto) {
+                return convertFromOrderDto(dto);
+            }
 
-                order.setId((String) orderMap.get("id"));
-                order.setCurrency((String) orderMap.get("currency"));
-
-                // Convert total from various number types
-                Object totalObj = orderMap.get("total");
-                if (totalObj instanceof Number) {
-                    order.setTotal(BigDecimal.valueOf(((Number) totalObj).doubleValue()));
-                }
-
-                // Convert items
-                Object itemsObj = orderMap.get("items");
-                if (itemsObj instanceof List) {
-                    List<OrderItem> items = new ArrayList<>();
-                    List<?> itemsList = (List<?>) itemsObj;
-
-                    for (Object itemObj : itemsList) {
-                        OrderItem item = convertToOrderItem(itemObj);
-                        if (item != null) {
-                            items.add(item);
-                        }
-                    }
-                    order.setItems(items);
-                }
-
-                return order;
+            if (orderObj instanceof Map orderMap) {
+                return convertFromOrderMap(orderMap);
             }
 
             logger.warn("Unable to convert order object of type: {}", orderObj.getClass());
@@ -212,10 +190,66 @@ public class FactPreparationService {
         }
     }
 
+    private Order convertFromOrderDto(OrderDto dto) {
+        Order order = new Order();
+        order.setId(dto.id());
+        order.setCurrency(dto.currency());
+        order.setTotal(dto.total());
+        order.setItems(convertOrderItemsFromDto(dto.items()));
+        return order;
+    }
+
+    private List<OrderItem> convertOrderItemsFromDto(List<OrderItemDto> itemDtos) {
+        if (itemDtos == null) {
+            return null;
+        }
+
+        List<OrderItem> items = new ArrayList<>();
+        for (OrderItemDto itemDto : itemDtos) {
+            OrderItem item = new OrderItem();
+            item.setSku(itemDto.productId());
+            item.setQuantity(itemDto.quantity());
+            item.setPrice(itemDto.price().doubleValue());
+            item.setCategory(itemDto.category());
+            items.add(item);
+        }
+        return items;
+    }
+
+    private Order convertFromOrderMap(Map<String, Object> orderMap) {
+        Order order = new Order();
+        order.setId((String) orderMap.get("id"));
+        order.setCurrency((String) orderMap.get("currency"));
+        setOrderTotal(order, orderMap.get("total"));
+        setOrderItems(order, orderMap.get("items"));
+        return order;
+    }
+
+    private void setOrderTotal(Order order, Object totalObj) {
+        if (totalObj instanceof Number number) {
+            order.setTotal(BigDecimal.valueOf(number.doubleValue()));
+        }
+    }
+
+    private void setOrderItems(Order order, Object itemsObj) {
+        if (!(itemsObj instanceof List itemsList)) {
+            return;
+        }
+
+        List<OrderItem> items = new ArrayList<>();
+        for (Object itemObj : itemsList) {
+            OrderItem item = convertToOrderItem(itemObj);
+            if (item != null) {
+                items.add(item);
+            }
+        }
+        order.setItems(items);
+    }
+
     private OrderItem convertToOrderItem(Object itemObj) {
         try {
-            if (itemObj instanceof OrderItem) {
-                return (OrderItem) itemObj;
+            if (itemObj instanceof OrderItem orderItem) {
+                return orderItem;
             }
 
             if (itemObj instanceof Map) {
@@ -228,13 +262,13 @@ public class FactPreparationService {
                 item.setProductName((String) itemMap.get("name"));
 
                 Object priceObj = itemMap.get("price");
-                if (priceObj instanceof Number) {
-                    item.setPrice(((Number) priceObj).doubleValue());
+                if (priceObj instanceof Number number) {
+                    item.setPrice(number.doubleValue());
                 }
 
                 Object quantityObj = itemMap.get("quantity");
-                if (quantityObj instanceof Number) {
-                    item.setQuantity(((Number) quantityObj).intValue());
+                if (quantityObj instanceof Number number) {
+                    item.setQuantity(number.intValue());
                 }
 
                 return item;
@@ -249,13 +283,12 @@ public class FactPreparationService {
 
     private Candidate convertToCandidate(Object candidateObj) {
         try {
-            if (candidateObj instanceof Candidate) {
-                return (Candidate) candidateObj;
+            if (candidateObj instanceof Candidate candidate) {
+                return candidate;
             }
 
             // Handle CandidateDto record
-            if (candidateObj instanceof CandidateDto) {
-                CandidateDto dto = (CandidateDto) candidateObj;
+            if (candidateObj instanceof CandidateDto dto) {
                 Candidate candidate = new Candidate();
                 candidate.setId(dto.id());
                 candidate.setType(dto.type());
@@ -296,8 +329,8 @@ public class FactPreparationService {
 
         // Add timestamp context
         Object timestampObj = executionContext.get("timestamp");
-        if (timestampObj instanceof Number) {
-            contextFacts.add(new ExecutionTimestamp(((Number) timestampObj).longValue()));
+        if (timestampObj instanceof Number number) {
+            contextFacts.add(new ExecutionTimestamp(number.longValue()));
         }
 
         // Add any custom metadata as generic facts
