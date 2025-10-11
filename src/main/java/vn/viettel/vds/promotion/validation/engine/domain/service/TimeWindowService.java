@@ -31,7 +31,7 @@ public class TimeWindowService {
      * Check if a specific instant is within an active time window
      *
      * @param policyId The time policy identifier
-     * @param instant The instant to check
+     * @param instant  The instant to check
      * @param timezone The timezone to use
      * @return true if the instant is within the active window
      */
@@ -81,11 +81,11 @@ public class TimeWindowService {
         if (window.isSpansMidnight()) {
             // Time window spans midnight (e.g., 23:00 to 02:00)
             return time.isAfter(startTime) || time.equals(startTime) ||
-                   time.isBefore(endTime) || time.equals(endTime);
+                    time.isBefore(endTime) || time.equals(endTime);
         } else {
             // Normal time window (e.g., 09:00 to 17:00)
             return (time.isAfter(startTime) || time.equals(startTime)) &&
-                   (time.isBefore(endTime) || time.equals(endTime));
+                    (time.isBefore(endTime) || time.equals(endTime));
         }
     }
 }

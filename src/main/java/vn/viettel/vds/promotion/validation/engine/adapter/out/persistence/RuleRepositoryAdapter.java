@@ -21,7 +21,7 @@ public class RuleRepositoryAdapter implements RuleRepositoryPort {
         return ruleJpaRepository.findAllEnabledRules()
                 .stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class RuleRepositoryAdapter implements RuleRepositoryPort {
         return ruleJpaRepository.findAll()
                 .stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Rule toDomain(RuleEntity entity) {

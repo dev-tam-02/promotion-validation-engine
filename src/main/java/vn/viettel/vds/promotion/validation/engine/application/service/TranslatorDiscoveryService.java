@@ -114,7 +114,7 @@ public class TranslatorDiscoveryService {
                 .map(OperatorTranslator::getOperatorName)
                 .distinct()
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String extractContext(String operatorName) {

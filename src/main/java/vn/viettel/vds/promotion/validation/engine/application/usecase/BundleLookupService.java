@@ -121,7 +121,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         if (bundle.getTimeLinks() != null) {
             List<BundleMetadataResponse.TimeLink> timeLinks = bundle.getTimeLinks().stream()
                     .map(tl -> new BundleMetadataResponse.TimeLink(tl.getPolicyId(), tl.getMode()))
-                    .collect(Collectors.toList());
+                    .toList();
             response.setTimeLinks(timeLinks);
         }
 
@@ -156,7 +156,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         if (bundle.getTimeLinks() != null) {
             List<LatestBundleResponse.TimeLink> timeLinks = bundle.getTimeLinks().stream()
                     .map(tl -> new LatestBundleResponse.TimeLink(tl.getPolicyId(), tl.getMode()))
-                    .collect(Collectors.toList());
+                    .toList();
             response.setTimeLinks(timeLinks);
         }
 

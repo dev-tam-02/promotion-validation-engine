@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
     private static final Logger logger = LoggerFactory.getLogger(DroolsRuleEngineAdapter.class);
+    private static final String ERROR_VERSION = "error";
 
     private final RuleTranslationService ruleTranslationService;
     private final DroolsCompilationService compilationService;
@@ -117,11 +118,11 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             response.setDecision("DENY");
             response.setReasonCodes(List.of("EXECUTION_ERROR"));
             response.setExplain(List.of(
-                    new ExecuteResponse.ExplainEntry("error", "exception", false)
+                    new ExecuteResponse.ExplainEntry(ERROR_VERSION, "exception", false)
             ));
 
             ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
-            engine.setVersion("error");
+            engine.setVersion(ERROR_VERSION);
             engine.setLatencyMs(0);
             engine.setCacheHit(false);
             response.setEngine(engine);
@@ -165,11 +166,11 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                 response.setDecision("DENY");
                 response.setReasonCodes(List.of("BATCH_EXECUTION_ERROR"));
                 response.setExplain(List.of(
-                        new ExecuteResponse.ExplainEntry("batch", "error", false)
+                        new ExecuteResponse.ExplainEntry("batch", ERROR_VERSION, false)
                 ));
 
                 ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
-                engine.setVersion("error");
+                engine.setVersion(ERROR_VERSION);
                 engine.setLatencyMs(0);
                 engine.setCacheHit(false);
                 response.setEngine(engine);

@@ -158,8 +158,14 @@ public class BundlePreloadService {
             for (int i = 0; i < config.getPrewarmSessionCount(); i++) {
                 org.kie.api.runtime.KieContainer container = sessionManager.getCachedContainer(bundleHash);
                 if (container != null) {
-                    org.kie.api.runtime.KieSession session = container.newKieSession();
-                    session.dispose(); // Dispose immediately after creation
+                    org.kie.api.runtime.KieSession session = null;
+                    try {
+                        session = container.newKieSession();
+                    } finally {
+                        if (session != null) {
+                            session.dispose(); // Dispose immediately after creation
+                        }
+                    }
                 }
             }
             logger.debug("Session pool prewarmed for bundle: {}", bundleHash);

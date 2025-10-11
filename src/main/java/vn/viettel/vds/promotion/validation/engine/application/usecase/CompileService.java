@@ -7,11 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.CompileJobEntity;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.LogEntryEntity;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
-import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.TimeLinkEntity;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.*;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse;
@@ -20,16 +16,14 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.*;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class CompileService implements CompileUseCase {
+
+    private static final String ENGINE_TYPE_DROOLS = "drools";
 
     @Autowired
     private BundleRepositoryPort bundleRepository;
@@ -65,7 +59,7 @@ public class CompileService implements CompileUseCase {
                 if (bundle.isPresent()) {
                     List<String> logMessages = job.getLogs().stream()
                             .map(LogEntryEntity::getMsg)
-                            .collect(Collectors.toList());
+                            .toList();
                     return mapToCompileResponse(bundle.get(), logMessages);
                 }
             } else if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
@@ -85,7 +79,7 @@ public class CompileService implements CompileUseCase {
                     request.getVersion(),
                     request.getNodes(),
                     request.getOperatorsFingerprint(),
-                    "drools"
+                    ENGINE_TYPE_DROOLS
             );
 
             RuleEnginePort.CompileResult result = ruleEnginePort.compile(compileInput);
@@ -159,7 +153,7 @@ public class CompileService implements CompileUseCase {
 
         return jobs.getContent().stream()
                 .map(this::mapToCompileJobResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -190,7 +184,7 @@ public class CompileService implements CompileUseCase {
         job.setRequestedAt(Instant.now());
         job.setOperatorsFingerprint(request.getOperatorsFingerprint());
         CompileJobEntity.EngineInfo engineInfo = new CompileJobEntity.EngineInfo();
-        engineInfo.setCompilerId("drools");  // Default compiler ID
+        engineInfo.setCompilerId(ENGINE_TYPE_DROOLS);  // Default compiler ID
         job.setEngine(engineInfo);
         // Logs will be added separately as they are separate entities
         job.setErrors(List.of());
@@ -207,8 +201,8 @@ public class CompileService implements CompileUseCase {
 
         // Engine info
         BundleEntity.EngineInfo engineInfo = new BundleEntity.EngineInfo();
-        engineInfo.setType("drools");
-        engineInfo.setCompilerId("drools");  // Default compiler ID
+        engineInfo.setType(ENGINE_TYPE_DROOLS);
+        engineInfo.setCompilerId(ENGINE_TYPE_DROOLS);  // Default compiler ID
         engineInfo.setDroolsVersion(result.getDroolsVersion());
         bundle.setEngine(engineInfo);
 
@@ -229,7 +223,7 @@ public class CompileService implements CompileUseCase {
                         timeLink.setBundle(bundle);
                         return timeLink;
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             bundle.setTimeLinks(timeLinks);
         }
 
@@ -295,7 +289,7 @@ public class CompileService implements CompileUseCase {
         response.setBundleHash(job.getBundleHash());
         response.setLogs(job.getLogs().stream()
                 .map(log -> new CompileJobResponse.LogEntry(log.getLevel(), log.getMsg(), log.getTimestamp()))
-                .collect(Collectors.toList()));
+                .toList());
         response.setErrors(job.getErrors());
         return response;
     }

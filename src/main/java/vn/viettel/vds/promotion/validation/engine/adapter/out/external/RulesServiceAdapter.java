@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 public class RulesServiceAdapter implements RulesServicePort {
 
     private static final Logger logger = LoggerFactory.getLogger(RulesServiceAdapter.class);
+    private static final String DEFAULT_VERSION = "1.0.0";
 
     private final RulesServiceFeignClient rulesServiceFeignClient;
 
@@ -34,9 +35,9 @@ public class RulesServiceAdapter implements RulesServicePort {
             return new RuleBundle(
                     mockBundleHash,
                     mockKieModuleBytes,
-                    "1.0.0",
-                    "1.0.0",
-                    "1.0.0"
+                    DEFAULT_VERSION,
+                    DEFAULT_VERSION,
+                    DEFAULT_VERSION
             );
 
             // TODO: Uncomment when rules-service is available

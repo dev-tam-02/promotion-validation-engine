@@ -22,7 +22,7 @@ public class TimePolicyMapper {
 
         List<TimePolicy.TimeWindow> windows = entity.getTimeWindows().stream()
                 .map(this::toWindowDomain)
-                .collect(Collectors.toList());
+                .toList();
 
         return TimePolicy.builder()
                 .id(entity.getId())

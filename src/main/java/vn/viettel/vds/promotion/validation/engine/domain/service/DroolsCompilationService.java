@@ -110,15 +110,30 @@ public class DroolsCompilationService {
     }
 
     public boolean validateArtifact(byte[] artifactBytes) {
+        KieContainer container = null;
+        KieSession session = null;
         try {
-            KieContainer container = createKieContainer(artifactBytes);
-            KieSession session = container.newKieSession();
-            session.dispose();
-            container.dispose();
+            container = createKieContainer(artifactBytes);
+            session = container.newKieSession();
             return true;
         } catch (Exception e) {
             logger.warn("Artifact validation failed", e);
             return false;
+        } finally {
+            if (session != null) {
+                try {
+                    session.dispose();
+                } catch (Exception e) {
+                    logger.warn("Failed to dispose KieSession", e);
+                }
+            }
+            if (container != null) {
+                try {
+                    container.dispose();
+                } catch (Exception e) {
+                    logger.warn("Failed to dispose KieContainer", e);
+                }
+            }
         }
     }
 

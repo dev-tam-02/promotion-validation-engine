@@ -21,6 +21,7 @@ import java.util.Map;
 public class MetricsController {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsController.class);
+    private static final String METRIC_AVG_EXECUTION_TIME = "averageExecutionTime";
 
     private final ExecutionMetricsService metricsService;
     private final KieSessionManager sessionManager;
@@ -65,7 +66,7 @@ public class MetricsController {
         bundleMetrics.put("bundleHash", bundleHash);
         bundleMetrics.put("executionCount", executionCount);
         bundleMetrics.put("totalExecutionTime", totalExecutionTime);
-        bundleMetrics.put("averageExecutionTime", averageExecutionTime);
+        bundleMetrics.put(METRIC_AVG_EXECUTION_TIME, averageExecutionTime);
         bundleMetrics.put("cached", isCached);
 
         if (executionCount == 0) {
@@ -184,7 +185,7 @@ public class MetricsController {
         health.put("status", "UP");
         health.put("totalExecutions", summary.getTotalExecutions());
         health.put("successRate", summary.getSuccessRate());
-        health.put("averageExecutionTime", summary.getAverageExecutionTime());
+        health.put(METRIC_AVG_EXECUTION_TIME, summary.getAverageExecutionTime());
         health.put("cacheSize", sessionManager.getCacheSize());
         health.put("timestamp", System.currentTimeMillis());
 

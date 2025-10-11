@@ -97,9 +97,11 @@ public class SessionLockAdapter implements SessionLockPort {
 
     // Redisson lock operations using RLock
     private boolean acquireRedissonLock(String lockKey, int ttlSeconds) {
+        RLock lock = null;
+        boolean acquired = false;
         try {
-            RLock lock = redissonClient.getLock(lockKey);
-            boolean acquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
+            lock = redissonClient.getLock(lockKey);
+            acquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
 
             if (acquired) {
                 logger.debug("Acquired Redisson lock: {}", lockKey);
@@ -107,8 +109,28 @@ public class SessionLockAdapter implements SessionLockPort {
                 logger.debug("Failed to acquire Redisson lock: {}", lockKey);
             }
             return acquired;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while acquiring Redisson lock: {}", lockKey, e);
+            // Release the lock if acquired but interrupted
+            if (acquired && lock != null && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception unlockException) {
+                    logger.warn("Failed to unlock after interruption: {}", lockKey, unlockException);
+                }
+            }
+            return false;
         } catch (Exception e) {
             logger.error("Error acquiring Redisson lock: {}", lockKey, e);
+            // Release the lock if acquired but exception occurred
+            if (acquired && lock != null && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception unlockException) {
+                    logger.warn("Failed to unlock after exception: {}", lockKey, unlockException);
+                }
+            }
             return false;
         }
     }
@@ -139,20 +161,44 @@ public class SessionLockAdapter implements SessionLockPort {
     }
 
     private boolean extendRedissonLock(String lockKey, int ttlSeconds) {
+        RLock lock = null;
+        boolean wasUnlocked = false;
+        boolean reacquired = false;
         try {
-            RLock lock = redissonClient.getLock(lockKey);
+            lock = redissonClient.getLock(lockKey);
             // Redisson doesn't have direct extend - we need to re-acquire with new TTL
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                boolean reacquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
+                wasUnlocked = true;
+                reacquired = lock.tryLock(0, ttlSeconds, TimeUnit.SECONDS);
                 if (reacquired) {
                     logger.debug("Extended Redisson lock: {}", lockKey);
                 }
                 return reacquired;
             }
             return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while extending Redisson lock: {}", lockKey, e);
+            // If we unlocked but failed to reacquire, ensure lock is released
+            if (wasUnlocked && !reacquired && lock != null && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception unlockException) {
+                    logger.warn("Failed to unlock after extension interruption: {}", lockKey, unlockException);
+                }
+            }
+            return false;
         } catch (Exception e) {
             logger.error("Error extending Redisson lock: {}", lockKey, e);
+            // If we unlocked but failed to reacquire, ensure lock is released
+            if (wasUnlocked && !reacquired && lock != null && lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception unlockException) {
+                    logger.warn("Failed to unlock after extension failure: {}", lockKey, unlockException);
+                }
+            }
             return false;
         }
     }

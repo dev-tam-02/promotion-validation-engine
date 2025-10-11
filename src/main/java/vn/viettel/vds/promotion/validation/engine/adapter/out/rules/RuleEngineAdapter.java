@@ -30,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class RuleEngineAdapter implements RuleEnginePort {
 
     private static final Logger logger = LoggerFactory.getLogger(RuleEngineAdapter.class);
+    private static final String DEFAULT_BUNDLE = "default";
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final RuleRepositoryPort ruleRepositoryPort;
@@ -63,7 +64,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
             if (kieBase == null) {
                 logger.warn("KieBase not found for bundleHash: {}, trying to load it", bundleHash);
                 // Try to use default KieBase if specific bundle not found
-                kieBase = kieBaseCache.getIfPresent("default");
+                kieBase = kieBaseCache.getIfPresent(DEFAULT_BUNDLE);
                 if (kieBase == null) {
                     return new ValidationResult(false, "No rules available for validation");
                 }
@@ -116,7 +117,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
             KieBase kieBase = kieBaseCache.getIfPresent(bundleHash);
             if (kieBase == null) {
                 logger.warn("KieBase not found for bundleHash: {}, falling back to default", bundleHash);
-                kieBase = kieBaseCache.getIfPresent("default");
+                kieBase = kieBaseCache.getIfPresent(DEFAULT_BUNDLE);
                 if (kieBase == null) {
                     // Return failed results for all candidates
                     for (Candidate candidate : candidates) {
@@ -275,8 +276,8 @@ public class RuleEngineAdapter implements RuleEnginePort {
         this.defaultKieContainer = ks.newKieContainer(releaseId);
 
         // Cache the default KieBase
-        kieBaseCache.put("default", defaultKieContainer.getKieBase());
-        kieContainerCache.put("default", defaultKieContainer);
+        kieBaseCache.put(DEFAULT_BUNDLE, defaultKieContainer.getKieBase());
+        kieContainerCache.put(DEFAULT_BUNDLE, defaultKieContainer);
 
         logger.info("Default rule engine initialized successfully");
     }

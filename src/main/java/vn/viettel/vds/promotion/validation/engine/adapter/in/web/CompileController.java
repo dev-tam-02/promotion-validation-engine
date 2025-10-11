@@ -46,7 +46,7 @@ public class CompileController {
             byte[] artifactBytes = objectStoragePort.retrieve(artifactKey)
                     .orElseThrow(() -> new IllegalStateException(
                             "Failed to retrieve compiled artifact from storage. Bundle may not be usable for execution. " +
-                            "BundleHash: " + useCaseResponse.getBundleHash() + ", Key: " + artifactKey));
+                                    "BundleHash: " + useCaseResponse.getBundleHash() + ", Key: " + artifactKey));
 
             webResponse.setArtifactBytes(artifactBytes);
             webResponse.setErrors(new ArrayList<>());
