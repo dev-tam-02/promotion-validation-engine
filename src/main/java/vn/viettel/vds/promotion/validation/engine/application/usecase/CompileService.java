@@ -55,20 +55,9 @@ public class CompileService implements CompileUseCase {
         Optional<CompileJobEntity> existingJob = compileJobRepository.findByTenantIdAndRuleIdAndTargetVersion(
                 request.getTenantId(), request.getRuleId(), request.getVersion());
 
-        if (existingJob.isPresent()) {
-            CompileJobEntity job = existingJob.get();
-            if (job.getStatus() == CompileJobEntity.JobStatus.SUCCESS && job.getBundleHash() != null) {
-                // Return existing successful compilation
-                Optional<BundleEntity> bundle = bundleRepository.findById(job.getBundleHash());
-                if (bundle.isPresent()) {
-                    List<String> logMessages = job.getLogs().stream()
-                            .map(LogEntryEntity::getMsg)
-                            .toList();
-                    return mapToCompileResponse(bundle.get(), logMessages);
-                }
-            } else if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
-                throw new IllegalStateException("Compilation already in progress for " + jobId);
-            }
+        CompileResponse existingResult = handleExistingJob(existingJob, jobId);
+        if (existingResult != null) {
+            return existingResult;
         }
 
         // Create new compile job
@@ -96,57 +85,96 @@ public class CompileService implements CompileUseCase {
             BundleEntity bundle = createBundle(request, result, artifactKey);
             bundleRepository.save(bundle);
 
-            // Update compile job as successful
-            compileJob.setStatus(CompileJobEntity.JobStatus.SUCCESS);
-            compileJob.setBundleHash(result.getBundleHash());
-            compileJob.setCompletedAt(Instant.now());
-            // Create new log entries
-            for (String log : result.getLogs()) {
-                LogEntryEntity logEntry = new LogEntryEntity();
-                logEntry.setLevel("INFO");
-                logEntry.setMsg(log);
-                logEntry.setTimestamp(Instant.now());
-                logEntry.setCompileJob(compileJob);
-                compileJob.getLogs().add(logEntry);
-            }
-            compileJobRepository.save(compileJob);
-
-            // Publish bundle published event
-            publishBundlePublishedEvent(request, result.getBundleHash());
-
-            return mapToCompileResponse(bundle, result.getLogs());
+            return handleCompilationSuccess(compileJob, request, result, bundle);
 
         } catch (Exception e) {
-            // Log the full error for debugging
-            org.slf4j.LoggerFactory.getLogger(CompileService.class)
-                    .error("Compilation job failed: jobId={}, tenantId={}, ruleId={}, version={}, errorType={}",
-                            jobId, request.getTenantId(), request.getRuleId(), request.getVersion(),
-                            e.getClass().getSimpleName(), e);
-
-            // Update compile job as failed
-            compileJob.setStatus(CompileJobEntity.JobStatus.FAILED);
-            compileJob.setCompletedAt(Instant.now());
-
-            // Ensure error message is never null
-            String errorMessage = e.getMessage();
-            if (errorMessage == null || errorMessage.trim().isEmpty()) {
-                errorMessage = e.getClass().getSimpleName();
-                if (e.getCause() != null && e.getCause().getMessage() != null) {
-                    errorMessage += ": " + e.getCause().getMessage();
-                }
-            }
-
-            compileJob.getErrors().add(errorMessage);
-            LogEntryEntity errorLog = new LogEntryEntity();
-            errorLog.setLevel("ERROR");
-            errorLog.setMsg(errorMessage);
-            errorLog.setTimestamp(Instant.now());
-            errorLog.setCompileJob(compileJob);
-            compileJob.getLogs().add(errorLog);
-            compileJobRepository.save(compileJob);
-
-            throw new CompilationFailedException("Compilation failed: " + errorMessage, e);
+            handleCompilationFailure(compileJob, e);
+            throw new CompilationFailedException("Compilation failed: " + getErrorMessage(e), e);
         }
+    }
+
+    private CompileResponse handleExistingJob(Optional<CompileJobEntity> existingJob, String jobId) {
+        if (existingJob.isEmpty()) {
+            return null;
+        }
+
+        CompileJobEntity job = existingJob.get();
+        if (job.getStatus() == CompileJobEntity.JobStatus.SUCCESS && job.getBundleHash() != null) {
+            return buildResponseFromExistingJob(job);
+        }
+
+        if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
+            throw new IllegalStateException("Compilation already in progress for " + jobId);
+        }
+
+        return null;
+    }
+
+    private CompileResponse buildResponseFromExistingJob(CompileJobEntity job) {
+        Optional<BundleEntity> bundle = bundleRepository.findById(job.getBundleHash());
+        if (bundle.isPresent()) {
+            List<String> logMessages = job.getLogs().stream()
+                    .map(LogEntryEntity::getMsg)
+                    .toList();
+            return mapToCompileResponse(bundle.get(), logMessages);
+        }
+        return null;
+    }
+
+    private CompileResponse handleCompilationSuccess(CompileJobEntity compileJob, CompileRequest request,
+                                                      RuleEnginePort.CompileResult result, BundleEntity bundle) {
+        // Update compile job as successful
+        compileJob.setStatus(CompileJobEntity.JobStatus.SUCCESS);
+        compileJob.setBundleHash(result.getBundleHash());
+        compileJob.setCompletedAt(Instant.now());
+
+        // Create new log entries
+        addLogEntries(compileJob, result.getLogs());
+        compileJobRepository.save(compileJob);
+
+        // Publish bundle published event
+        publishBundlePublishedEvent(request, result.getBundleHash());
+
+        return mapToCompileResponse(bundle, result.getLogs());
+    }
+
+    private void addLogEntries(CompileJobEntity compileJob, List<String> logs) {
+        for (String log : logs) {
+            LogEntryEntity logEntry = new LogEntryEntity();
+            logEntry.setLevel("INFO");
+            logEntry.setMsg(log);
+            logEntry.setTimestamp(Instant.now());
+            logEntry.setCompileJob(compileJob);
+            compileJob.getLogs().add(logEntry);
+        }
+    }
+
+    private void handleCompilationFailure(CompileJobEntity compileJob, Exception e) {
+        compileJob.setStatus(CompileJobEntity.JobStatus.FAILED);
+        compileJob.setCompletedAt(Instant.now());
+
+        String errorMessage = getErrorMessage(e);
+        compileJob.getErrors().add(errorMessage);
+
+        LogEntryEntity errorLog = new LogEntryEntity();
+        errorLog.setLevel("ERROR");
+        errorLog.setMsg(errorMessage);
+        errorLog.setTimestamp(Instant.now());
+        errorLog.setCompileJob(compileJob);
+        compileJob.getLogs().add(errorLog);
+
+        compileJobRepository.save(compileJob);
+    }
+
+    private String getErrorMessage(Exception e) {
+        String errorMessage = e.getMessage();
+        if (errorMessage == null || errorMessage.trim().isEmpty()) {
+            errorMessage = e.getClass().getSimpleName();
+            if (e.getCause() != null && e.getCause().getMessage() != null) {
+                errorMessage += ": " + e.getCause().getMessage();
+            }
+        }
+        return errorMessage;
     }
 
     @Override
