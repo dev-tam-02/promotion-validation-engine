@@ -217,9 +217,8 @@ public class RuleEngineAdapter implements RuleEnginePort {
             // Re-throw RuleBundleException with original context
             throw e;
         } catch (Exception e) {
-            String errorMessage = String.format("Failed to load rule bundle with hash '%s'", bundleHash);
-            logger.error(errorMessage, e);
-            throw new RuleBundleException(errorMessage, e);
+            throw new RuleBundleException(
+                    String.format("Failed to load rule bundle with hash '%s'", bundleHash), e);
         }
     }
 

@@ -38,9 +38,8 @@ public class KieSessionFactory {
             return session;
 
         } catch (Exception e) {
-            String errorMessage = String.format("Failed to create KIE session for bundle: %s", bundleHash);
-            logger.error(errorMessage, e);
-            throw new KieSessionCreationException(errorMessage, e);
+            throw new KieSessionCreationException(
+                    String.format("Failed to create KIE session for bundle: %s", bundleHash), e);
         }
     }
 

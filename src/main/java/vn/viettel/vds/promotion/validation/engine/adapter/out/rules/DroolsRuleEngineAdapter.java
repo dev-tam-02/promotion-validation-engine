@@ -52,7 +52,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     }
 
     @Override
-    @SuppressWarnings("java:S2139")
     public CompileResult compile(CompileInput input) {
         logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
                 input.getTenantId(), input.getRuleId(), input.getVersion());
@@ -88,13 +87,11 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             );
 
         } catch (Exception e) {
-            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s)",
-                    input.getRuleId(), input.getTenantId(), input.getVersion());
-            logger.error(errorMessage, e);
-
             // Record compilation failure metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), false);
 
+            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s)",
+                    input.getRuleId(), input.getTenantId(), input.getVersion());
             throw new RuleBundleException(errorMessage, e);
         }
     }
@@ -196,9 +193,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
             logger.info("Bundle warmup completed: bundleHash={}", bundleHash);
         } catch (Exception e) {
-            String errorMessage = String.format("Bundle warmup failed for hash '%s'", bundleHash);
-            logger.error(errorMessage, e);
-            throw new RuleBundleException(errorMessage, e);
+            throw new RuleBundleException(
+                    String.format("Bundle warmup failed for hash '%s'", bundleHash), e);
         }
     }
 

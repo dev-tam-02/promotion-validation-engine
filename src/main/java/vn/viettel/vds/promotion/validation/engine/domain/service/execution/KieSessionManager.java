@@ -61,7 +61,6 @@ public class KieSessionManager {
             logger.debug("Created new stateless KIE session for container");
             return session;
         } catch (Exception e) {
-            logger.error("Failed to create stateless KIE session", e);
             throw new KieSessionCreationException("Failed to create stateless KIE session", e);
         }
     }
@@ -73,7 +72,6 @@ public class KieSessionManager {
             logger.debug("Created new stateful KIE session for container");
             return session;
         } catch (Exception e) {
-            logger.error("Failed to create stateful KIE session", e);
             throw new KieSessionCreationException("Failed to create stateful KIE session", e);
         }
     }

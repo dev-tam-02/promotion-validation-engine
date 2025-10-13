@@ -86,8 +86,8 @@ public class DroolsCompilationService {
             );
 
         } catch (Exception e) {
-            logger.error("DRL compilation failed for rule: {}", ruleId, e);
-            throw new CompilationException("DRL compilation failed", e);
+            throw new CompilationException(
+                    String.format("DRL compilation failed for rule: %s", ruleId), e);
         }
     }
 
@@ -104,7 +104,6 @@ public class DroolsCompilationService {
             return kieServices.newKieContainer(kieModule.getReleaseId());
 
         } catch (Exception e) {
-            logger.error("Failed to create KIE container", e);
             throw new CompilationException("Failed to create KIE container", e);
         }
     }

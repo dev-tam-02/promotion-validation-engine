@@ -71,8 +71,8 @@ public class CompilationCacheService {
             return cached;
 
         } catch (Exception e) {
-            logger.error("Compilation failed for key: {}", cacheKey, e);
-            throw new CompilationException("Compilation failed", e);
+            throw new CompilationException(
+                    String.format("Compilation failed for key: %s", cacheKey), e);
         }
     }
 
