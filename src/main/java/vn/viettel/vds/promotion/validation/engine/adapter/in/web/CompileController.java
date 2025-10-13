@@ -63,9 +63,29 @@ public class CompileController {
             errorResponse.setErrors(List.of("Invalid request: " + e.getMessage()));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         } catch (Exception e) {
+            // Log the full error for debugging
+            org.slf4j.LoggerFactory.getLogger(CompileController.class)
+                    .error("Compilation failed for tenantId={}, ruleId={}, version={}, errorType={}",
+                            request.getTenantId(), request.getRuleId(), request.getVersion(),
+                            e.getClass().getSimpleName(), e);
+
             CompileResponse errorResponse = new CompileResponse();
             errorResponse.setOk(false);
-            errorResponse.setErrors(List.of("Compilation failed: " + e.getMessage()));
+
+            // Ensure error message is never null
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+                errorMessage = "Compilation failed: " + e.getClass().getSimpleName();
+
+                // Try to get cause message if available
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    errorMessage += " - " + e.getCause().getMessage();
+                }
+            } else {
+                errorMessage = "Compilation failed: " + errorMessage;
+            }
+
+            errorResponse.setErrors(List.of(errorMessage));
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
         }
     }

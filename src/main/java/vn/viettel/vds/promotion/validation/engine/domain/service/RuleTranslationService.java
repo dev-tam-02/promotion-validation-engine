@@ -162,6 +162,13 @@ public class RuleTranslationService {
         Map<String, Object> params = (Map<String, Object>) condNode.get("params");
         String reasonCode = (String) condNode.get("reasonCode");
 
+        // Defensive null-check: Initialize empty map if params is null
+        if (params == null) {
+            params = java.util.Collections.emptyMap();
+            logger.debug("No parameters provided for operator '{}' in node '{}', using empty map",
+                    operatorName, nodeId);
+        }
+
         OperatorTranslator translator = translatorRegistry.getTranslator(operatorName, operatorVersion);
         String condition = translator.translate(nodeId, params, reasonCode);
 

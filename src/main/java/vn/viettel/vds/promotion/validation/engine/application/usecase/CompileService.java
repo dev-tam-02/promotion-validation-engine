@@ -117,19 +117,35 @@ public class CompileService implements CompileUseCase {
             return mapToCompileResponse(bundle, result.getLogs());
 
         } catch (Exception e) {
+            // Log the full error for debugging
+            org.slf4j.LoggerFactory.getLogger(CompileService.class)
+                    .error("Compilation job failed: jobId={}, tenantId={}, ruleId={}, version={}, errorType={}",
+                            jobId, request.getTenantId(), request.getRuleId(), request.getVersion(),
+                            e.getClass().getSimpleName(), e);
+
             // Update compile job as failed
             compileJob.setStatus(CompileJobEntity.JobStatus.FAILED);
             compileJob.setCompletedAt(Instant.now());
-            compileJob.getErrors().add(e.getMessage());
+
+            // Ensure error message is never null
+            String errorMessage = e.getMessage();
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+                errorMessage = e.getClass().getSimpleName();
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    errorMessage += ": " + e.getCause().getMessage();
+                }
+            }
+
+            compileJob.getErrors().add(errorMessage);
             LogEntryEntity errorLog = new LogEntryEntity();
             errorLog.setLevel("ERROR");
-            errorLog.setMsg(e.getMessage());
+            errorLog.setMsg(errorMessage);
             errorLog.setTimestamp(Instant.now());
             errorLog.setCompileJob(compileJob);
             compileJob.getLogs().add(errorLog);
             compileJobRepository.save(compileJob);
 
-            throw new CompilationFailedException("Compilation failed: " + e.getMessage(), e);
+            throw new CompilationFailedException("Compilation failed: " + errorMessage, e);
         }
     }
 
@@ -190,8 +206,8 @@ public class CompileService implements CompileUseCase {
         CompileJobEntity.EngineInfo engineInfo = new CompileJobEntity.EngineInfo();
         engineInfo.setCompilerId(ENGINE_TYPE_DROOLS);  // Default compiler ID
         job.setEngine(engineInfo);
-        // Logs will be added separately as they are separate entities
-        job.setErrors(List.of());
+        // Logs and errors will be added separately as they are separate entities
+        // errors is already initialized as ArrayList in the entity, so don't override with immutable list
         return job;
     }
 

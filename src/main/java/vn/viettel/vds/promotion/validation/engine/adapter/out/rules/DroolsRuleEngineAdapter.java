@@ -90,8 +90,15 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             // Record compilation failure metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), false);
 
-            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s)",
-                    input.getRuleId(), input.getTenantId(), input.getVersion());
+            // Log full error details for debugging
+            logger.error("Rule compilation failed: tenantId={}, ruleId={}, version={}, errorType={}, errorMessage={}",
+                    input.getTenantId(), input.getRuleId(), input.getVersion(),
+                    e.getClass().getSimpleName(),
+                    e.getMessage() != null ? e.getMessage() : "No error message provided", e);
+
+            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s): %s",
+                    input.getRuleId(), input.getTenantId(), input.getVersion(),
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
             throw new RuleBundleException(errorMessage, e);
         }
     }
