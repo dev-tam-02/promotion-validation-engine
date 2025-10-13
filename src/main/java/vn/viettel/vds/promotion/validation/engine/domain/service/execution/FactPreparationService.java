@@ -14,6 +14,7 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +92,8 @@ public class FactPreparationService {
     }
 
     private void addExecutionContextFacts(Object executionContextObj, List<Object> facts) {
-        if (executionContextObj instanceof Map execContext) {
-            facts.addAll(prepareContextFacts(execContext));
+        if (executionContextObj instanceof Map<?, ?> execContext) {
+            facts.addAll(prepareContextFacts((Map<String, Object>) execContext));
         }
     }
 
@@ -106,8 +107,8 @@ public class FactPreparationService {
                 return convertFromCustomerDto(dto);
             }
 
-            if (customerObj instanceof Map customerMap) {
-                return convertFromCustomerMap(customerMap);
+            if (customerObj instanceof Map<?, ?> customerMap) {
+                return convertFromCustomerMap((Map<String, Object>) customerMap);
             }
 
             logger.warn("Unable to convert customer object of type: {}", customerObj.getClass());
@@ -178,8 +179,8 @@ public class FactPreparationService {
                 return convertFromOrderDto(dto);
             }
 
-            if (orderObj instanceof Map orderMap) {
-                return convertFromOrderMap(orderMap);
+            if (orderObj instanceof Map<?, ?> orderMap) {
+                return convertFromOrderMap((Map<String, Object>) orderMap);
             }
 
             logger.warn("Unable to convert order object of type: {}", orderObj.getClass());
@@ -201,7 +202,7 @@ public class FactPreparationService {
 
     private List<OrderItem> convertOrderItemsFromDto(List<OrderItemDto> itemDtos) {
         if (itemDtos == null) {
-            return null;
+            return Collections.emptyList();
         }
 
         List<OrderItem> items = new ArrayList<>();
@@ -232,7 +233,7 @@ public class FactPreparationService {
     }
 
     private void setOrderItems(Order order, Object itemsObj) {
-        if (!(itemsObj instanceof List itemsList)) {
+        if (!(itemsObj instanceof List<?> itemsList)) {
             return;
         }
 
@@ -256,9 +257,9 @@ public class FactPreparationService {
                 Map<String, Object> itemMap = (Map<String, Object>) itemObj;
                 OrderItem item = new OrderItem();
 
-                item.setSku((String) itemMap.get("id")); // Map id to sku
-                item.setCategory((String) itemMap.get("category"));
                 item.setSku((String) itemMap.get("productId")); // Map productId to sku
+                item.setCategory((String) itemMap.get("category"));
+                item.setProductName((String) itemMap.get("name")); // Set product name if available
                 item.setProductName((String) itemMap.get("name"));
 
                 Object priceObj = itemMap.get("price");

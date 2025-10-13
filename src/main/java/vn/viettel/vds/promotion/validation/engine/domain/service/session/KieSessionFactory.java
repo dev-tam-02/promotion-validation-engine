@@ -6,6 +6,7 @@ import org.kie.api.runtime.KieSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import vn.viettel.vds.promotion.validation.engine.domain.service.execution.KieSessionCreationException;
 
 @Component
 public class KieSessionFactory {
@@ -18,6 +19,7 @@ public class KieSessionFactory {
         this.containerCache = containerCache;
     }
 
+    @SuppressWarnings("java:S2095") // Returning session to be managed by caller
     public KieSession createSession(String bundleHash) {
         logger.debug("Creating new KIE session for bundle: {}", bundleHash);
 
@@ -36,8 +38,9 @@ public class KieSessionFactory {
             return session;
 
         } catch (Exception e) {
-            logger.error("Failed to create KIE session for bundle: {}", bundleHash, e);
-            throw new RuntimeException("Failed to create KIE session: " + e.getMessage(), e);
+            String errorMessage = String.format("Failed to create KIE session for bundle: %s", bundleHash);
+            logger.error(errorMessage, e);
+            throw new KieSessionCreationException(errorMessage, e);
         }
     }
 

@@ -44,8 +44,10 @@ public class ExecutionController {
     @PostMapping
     public ResponseEntity<ExecuteResponse> executeRule(@Valid @RequestBody ExecuteRequest request) {
 
-        logger.debug("Executing rule: bundleHash={}, customerId={}",
-                request.getBundleHash(), request.getCustomer().id());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Executing rule: bundleHash={}, customerId={}",
+                    request.getBundleHash(), request.getCustomer().id());
+        }
 
         try {
             // Convert DTO to domain input
@@ -109,7 +111,18 @@ public class ExecutionController {
         } catch (Exception e) {
             logger.error("Batch execution failed: batchSize={}, error={}",
                     requests.size(), e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+            
+            // Create error responses for all requests in batch
+            List<ExecuteResponse> errorResponses = new ArrayList<>();
+            for (int i = 0; i < requests.size(); i++) {
+                ExecuteResponse errorResponse = new ExecuteResponse();
+                errorResponse.setOk(false);
+                errorResponse.setDecision("DENY");
+                errorResponse.setReasonCodes(List.of("EXECUTION_ERROR"));
+                errorResponses.add(errorResponse);
+            }
+            
+            return ResponseEntity.ok(errorResponses);
         }
     }
 

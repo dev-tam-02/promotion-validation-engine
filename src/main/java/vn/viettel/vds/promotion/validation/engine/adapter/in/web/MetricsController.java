@@ -91,7 +91,7 @@ public class MetricsController {
             Map<String, Object> bundleMetrics = new HashMap<>();
             bundleMetrics.put("executionCount", count.get());
             bundleMetrics.put("totalExecutionTime", metricsService.getBundleExecutionTime(bundleHash));
-            bundleMetrics.put("averageExecutionTime", metricsService.getBundleAverageExecutionTime(bundleHash));
+            bundleMetrics.put(METRIC_AVG_EXECUTION_TIME, metricsService.getBundleAverageExecutionTime(bundleHash));
             bundleMetrics.put("cached", sessionManager.isContainerCached(bundleHash));
 
             allMetrics.put(bundleHash, bundleMetrics);

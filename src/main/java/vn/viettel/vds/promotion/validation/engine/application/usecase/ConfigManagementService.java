@@ -93,67 +93,36 @@ public class ConfigManagementService implements ConfigManagementUseCase {
     }
 
     private void updateConfigFromRequest(EngineConfigEntity config, EngineConfigUpdateRequest request) {
-        // Update execute configuration
         if (request.getExecute() != null) {
-            EngineConfigEntity.ExecuteConfig executeConfig = new EngineConfigEntity.ExecuteConfig();
-
-            if (request.getExecute().getTimeoutMs() != null) {
-                executeConfig.setTimeoutMs(request.getExecute().getTimeoutMs());
-            } else if (config.getExecute() != null) {
-                executeConfig.setTimeoutMs(config.getExecute().getTimeoutMs());
-            } else {
-                executeConfig.setTimeoutMs(40); // Default
-            }
-
-            if (request.getExecute().getMaxRulesFired() != null) {
-                executeConfig.setMaxRulesFired(request.getExecute().getMaxRulesFired());
-            } else if (config.getExecute() != null) {
-                executeConfig.setMaxRulesFired(config.getExecute().getMaxRulesFired());
-            } else {
-                executeConfig.setMaxRulesFired(500); // Default
-            }
-
-            if (request.getExecute().getMaxFacts() != null) {
-                executeConfig.setMaxFacts(request.getExecute().getMaxFacts());
-            } else if (config.getExecute() != null) {
-                executeConfig.setMaxFacts(config.getExecute().getMaxFacts());
-            } else {
-                executeConfig.setMaxFacts(500); // Default
-            }
-
-            if (request.getExecute().getExplainSampling() != null) {
-                executeConfig.setExplainSampling(request.getExecute().getExplainSampling());
-            } else if (config.getExecute() != null) {
-                executeConfig.setExplainSampling(config.getExecute().getExplainSampling());
-            } else {
-                executeConfig.setExplainSampling(Map.of("FULL", 0.01, "FAIL_ONLY", 1.0)); // Default
-            }
-
-            config.setExecute(executeConfig);
+            updateExecuteConfig(config, request.getExecute());
         }
-
-        // Update compile configuration
         if (request.getCompile() != null) {
-            EngineConfigEntity.CompileConfig compileConfig = new EngineConfigEntity.CompileConfig();
-
-            if (request.getCompile().getMaxNodes() != null) {
-                compileConfig.setMaxNodes(request.getCompile().getMaxNodes());
-            } else if (config.getCompile() != null) {
-                compileConfig.setMaxNodes(config.getCompile().getMaxNodes());
-            } else {
-                compileConfig.setMaxNodes(400); // Default
-            }
-
-            if (request.getCompile().getMaxDepth() != null) {
-                compileConfig.setMaxDepth(request.getCompile().getMaxDepth());
-            } else if (config.getCompile() != null) {
-                compileConfig.setMaxDepth(config.getCompile().getMaxDepth());
-            } else {
-                compileConfig.setMaxDepth(8); // Default
-            }
-
-            config.setCompile(compileConfig);
+            updateCompileConfig(config, request.getCompile());
         }
+    }
+
+    private void updateExecuteConfig(EngineConfigEntity config, EngineConfigUpdateRequest.ExecuteConfig requestConfig) {
+        EngineConfigEntity.ExecuteConfig executeConfig = Optional.ofNullable(config.getExecute()).orElseGet(EngineConfigEntity.ExecuteConfig::new);
+
+        executeConfig.setTimeoutMs(getValue(requestConfig.getTimeoutMs(), executeConfig.getTimeoutMs(), 40));
+        executeConfig.setMaxRulesFired(getValue(requestConfig.getMaxRulesFired(), executeConfig.getMaxRulesFired(), 500));
+        executeConfig.setMaxFacts(getValue(requestConfig.getMaxFacts(), executeConfig.getMaxFacts(), 500));
+        executeConfig.setExplainSampling(getValue(requestConfig.getExplainSampling(), executeConfig.getExplainSampling(), Map.of("FULL", 0.01, "FAIL_ONLY", 1.0)));
+
+        config.setExecute(executeConfig);
+    }
+
+    private void updateCompileConfig(EngineConfigEntity config, EngineConfigUpdateRequest.CompileConfig requestConfig) {
+        EngineConfigEntity.CompileConfig compileConfig = Optional.ofNullable(config.getCompile()).orElseGet(EngineConfigEntity.CompileConfig::new);
+
+        compileConfig.setMaxNodes(getValue(requestConfig.getMaxNodes(), compileConfig.getMaxNodes(), 400));
+        compileConfig.setMaxDepth(getValue(requestConfig.getMaxDepth(), compileConfig.getMaxDepth(), 8));
+
+        config.setCompile(compileConfig);
+    }
+
+    private <T> T getValue(T fromRequest, T fromExisting, T defaultValue) {
+        return Optional.ofNullable(fromRequest).orElse(Optional.ofNullable(fromExisting).orElse(defaultValue));
     }
 
     private EngineConfigResponse mapToConfigResponse(EngineConfigEntity config) {

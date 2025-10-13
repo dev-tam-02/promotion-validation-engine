@@ -16,8 +16,8 @@ public class OrderAmountGteOperatorTranslator implements OperatorTranslator {
         }
 
         Number amount;
-        if (amountParam instanceof Number) {
-            amount = (Number) amountParam;
+        if (amountParam instanceof Number number) {
+            amount = number;
         } else {
             try {
                 amount = Double.parseDouble(amountParam.toString());

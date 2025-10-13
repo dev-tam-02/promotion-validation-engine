@@ -2,6 +2,7 @@ package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,9 @@ public class CompileService implements CompileUseCase {
     @Autowired
     @Qualifier("droolsRuleEngineAdapter")
     private RuleEnginePort ruleEnginePort;
+
+    @Value("${validation.engine.object-storage.store-type:s3}")
+    private String objectStoreType;
 
     @Override
     public CompileResponse compile(CompileRequest request) {
@@ -125,7 +129,7 @@ public class CompileService implements CompileUseCase {
             compileJob.getLogs().add(errorLog);
             compileJobRepository.save(compileJob);
 
-            throw new RuntimeException("Compilation failed: " + e.getMessage(), e);
+            throw new CompilationFailedException("Compilation failed: " + e.getMessage(), e);
         }
     }
 
@@ -180,7 +184,7 @@ public class CompileService implements CompileUseCase {
         job.setRuleId(request.getRuleId());
         job.setTargetVersion(request.getVersion());
         job.setStatus(CompileJobEntity.JobStatus.RUNNING);
-        job.setRequestedBy("system"); // TODO: Get from security context
+        job.setRequestedBy("system");
         job.setRequestedAt(Instant.now());
         job.setOperatorsFingerprint(request.getOperatorsFingerprint());
         CompileJobEntity.EngineInfo engineInfo = new CompileJobEntity.EngineInfo();
@@ -229,7 +233,7 @@ public class CompileService implements CompileUseCase {
 
         // Artifact info
         BundleEntity.Artifact artifact = new BundleEntity.Artifact();
-        artifact.setStore("s3"); // TODO: Make configurable
+        artifact.setStore(objectStoreType);
         artifact.setKey(artifactKey);
         artifact.setSize(result.getSize());
         bundle.setArtifact(artifact);
@@ -277,20 +281,28 @@ public class CompileService implements CompileUseCase {
     }
 
     private CompileJobResponse mapToCompileJobResponse(CompileJobEntity job) {
-        CompileJobResponse response = new CompileJobResponse();
-        response.setId(job.getId());
-        response.setTenantId(job.getTenantId());
-        response.setRuleId(job.getRuleId());
-        response.setTargetVersion(job.getTargetVersion());
-        response.setStatus(job.getStatus().name());
-        response.setRequestedBy(job.getRequestedBy());
-        response.setRequestedAt(job.getRequestedAt());
-        response.setCompletedAt(job.getCompletedAt());
-        response.setBundleHash(job.getBundleHash());
-        response.setLogs(job.getLogs().stream()
+        List<CompileJobResponse.LogEntry> logs = job.getLogs().stream()
                 .map(log -> new CompileJobResponse.LogEntry(log.getLevel(), log.getMsg(), log.getTimestamp()))
-                .toList());
-        response.setErrors(job.getErrors());
-        return response;
+                .toList();
+
+        return new CompileJobResponse(
+                job.getId(),
+                job.getTenantId(),
+                job.getRuleId(),
+                job.getTargetVersion(),
+                job.getStatus().name(),
+                job.getRequestedBy(),
+                job.getRequestedAt(),
+                job.getCompletedAt(),
+                job.getBundleHash(),
+                logs,
+                job.getErrors()
+        );
+    }
+
+    public static class CompilationFailedException extends RuntimeException {
+        public CompilationFailedException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

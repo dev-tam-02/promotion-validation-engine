@@ -124,13 +124,11 @@ public class FastCheckService implements FastCheckUseCase {
         }
 
         // Check business hours
-        if (config.getBusinessHours() != null) {
-            if (!isInBusinessHours(zonedTime, config.getBusinessHours())) {
-                return new TimeCheckResult(false, "OUTSIDE_BUSINESS_HOURS",
-                        String.format("Outside business hours: %s-%s",
-                                config.getBusinessHours().getStart(),
-                                config.getBusinessHours().getEnd()));
-            }
+        if (config.getBusinessHours() != null && !isInBusinessHours(zonedTime, config.getBusinessHours())) {
+            return new TimeCheckResult(false, "OUTSIDE_BUSINESS_HOURS",
+                    String.format("Outside business hours: %s-%s",
+                            config.getBusinessHours().getStart(),
+                            config.getBusinessHours().getEnd()));
         }
 
         // Check allowed days of week

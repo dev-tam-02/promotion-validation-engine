@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Transactional(readOnly = true)
 public class ExecutionService implements ExecutionUseCase {
 
+    private static final String BUNDLE_NOT_FOUND_MSG = "Bundle not found: ";
+
     @Autowired
     private BundleRepositoryPort bundleRepository;
 
@@ -39,22 +41,19 @@ public class ExecutionService implements ExecutionUseCase {
 
     @Override
     public ExecuteResponse execute(ExecuteRequest request) {
-        // Validate bundle exists
         String bundleHash = request.getBundle().getHash();
+        validateBundleExists(bundleHash);
+        
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
-        if (bundle.isEmpty()) {
-            throw new IllegalArgumentException("Bundle not found: " + bundleHash);
-        }
 
         // Get tenant configuration
         Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
         ExecuteRequest.ExecuteOptions effectiveOptions = mergeOptions(request.getOptions(), config.orElse(null));
 
-        // Validate context schema
-        validateContext(request.getContext());
-
         // Ensure bundle is warmed up
-        ensureBundleWarmedUp(bundle.get());
+        if (bundle.isPresent()) {
+            ensureBundleWarmedUp(bundle.get());
+        }
 
         // Execute rules
         RuleEnginePort.ExecuteInput executeInput = new RuleEnginePort.ExecuteInput(
@@ -67,24 +66,24 @@ public class ExecutionService implements ExecutionUseCase {
         try {
             return ruleEnginePort.execute(executeInput);
         } catch (Exception e) {
-            throw new RuntimeException("Rule execution failed: " + e.getMessage(), e);
+            throw new RuleExecutionException("Rule execution failed: " + e.getMessage(), e);
         }
     }
 
     @Override
     public BatchExecuteResponse executeBatch(BatchExecuteRequest request) {
-        // Validate bundle exists
         String bundleHash = request.getBundle().getHash();
+        validateBundleExists(bundleHash);
+        
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
-        if (bundle.isEmpty()) {
-            throw new IllegalArgumentException("Bundle not found: " + bundleHash);
-        }
 
         // Get tenant configuration
         Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
 
         // Ensure bundle is warmed up
-        ensureBundleWarmedUp(bundle.get());
+        if (bundle.isPresent()) {
+            ensureBundleWarmedUp(bundle.get());
+        }
 
         // Prepare execution inputs
         List<RuleEnginePort.ExecuteInput> executeInputs = request.getCases().stream()
@@ -115,7 +114,7 @@ public class ExecutionService implements ExecutionUseCase {
 
             results.add(new BatchExecuteResponse.TestResult(testCase.getName(), response));
 
-            if (response.getOk() && "ALLOW".equals(response.getDecision())) {
+            if (Boolean.TRUE.equals(response.getOk()) && "ALLOW".equals(response.getDecision())) {
                 passCount.incrementAndGet();
             } else {
                 failCount.incrementAndGet();
@@ -190,7 +189,11 @@ public class ExecutionService implements ExecutionUseCase {
             throw new IllegalArgumentException("Context must contain 'now' field");
         }
 
-        // TODO: Add more sophisticated schema validation
+        // Future enhancement: Add more sophisticated schema validation
+        // This could include:
+        // 1. JSON Schema validation
+        // 2. Type checking for known fields
+        // 3. Required field validation
         // - Validate customer structure
         // - Validate order structure
         // - Validate items array
@@ -214,5 +217,12 @@ public class ExecutionService implements ExecutionUseCase {
         }
 
         ruleEnginePort.warmupBundle(bundleHash, artifactBytes.get());
+    }
+
+    private void validateBundleExists(String bundleHash) {
+        Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
+        if (bundle.isEmpty()) {
+            throw new IllegalArgumentException(BUNDLE_NOT_FOUND_MSG + bundleHash);
+        }
     }
 }

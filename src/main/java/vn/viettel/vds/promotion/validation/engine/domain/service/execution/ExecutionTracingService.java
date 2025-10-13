@@ -145,7 +145,7 @@ public class ExecutionTracingService {
         public long getTotalExecutionTime() {
             return ruleExecutionTimes.entrySet().stream()
                     .filter(entry -> entry.getKey().endsWith("_duration"))
-                    .mapToLong(entry -> entry.getValue())
+                    .mapToLong(java.util.Map.Entry::getValue)
                     .sum();
         }
     }

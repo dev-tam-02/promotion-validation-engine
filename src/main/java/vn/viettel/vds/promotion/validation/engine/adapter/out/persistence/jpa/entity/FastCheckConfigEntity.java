@@ -72,11 +72,9 @@ public class FastCheckConfigEntity {
         private List<BlackoutPeriod> blackoutPeriods = new ArrayList<>();
 
         @Embedded
-        @AttributeOverrides({
-                @AttributeOverride(name = "start", column = @Column(name = "business_hours_start")),
-                @AttributeOverride(name = "end", column = @Column(name = "business_hours_end")),
-                @AttributeOverride(name = "timezone", column = @Column(name = "business_hours_timezone"))
-        })
+        @AttributeOverride(name = "start", column = @Column(name = "business_hours_start"))
+        @AttributeOverride(name = "end", column = @Column(name = "business_hours_end"))
+        @AttributeOverride(name = "timezone", column = @Column(name = "business_hours_timezone"))
         private BusinessHours businessHours;
 
         @ElementCollection

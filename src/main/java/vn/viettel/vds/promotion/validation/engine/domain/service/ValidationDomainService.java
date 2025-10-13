@@ -3,17 +3,13 @@ package vn.viettel.vds.promotion.validation.engine.domain.service;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
-import vn.viettel.vds.promotion.validation.engine.domain.model.Redemption;
+
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
 
 @Service
 public class ValidationDomainService {
 
     public ValidationResult validatePromotion(Customer customer, Order order) {
-        return validatePromotion(customer, order, null);
-    }
-
-    public ValidationResult validatePromotion(Customer customer, Order order, Redemption redemption) {
         // Domain-level validation logic
         if (customer == null || order == null) {
             return new ValidationResult(false, "Customer and order are required");

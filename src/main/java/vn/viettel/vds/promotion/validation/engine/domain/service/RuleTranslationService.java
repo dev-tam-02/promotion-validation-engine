@@ -1,5 +1,7 @@
 package vn.viettel.vds.promotion.validation.engine.domain.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.domain.service.operator.OperatorTranslator;
 import vn.viettel.vds.promotion.validation.engine.domain.service.operator.OperatorTranslatorRegistry;
@@ -13,14 +15,16 @@ import java.util.stream.Collectors;
 @Service
 public class RuleTranslationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RuleTranslationService.class);
+    private static final String CHILDREN_KEY = "children";
+
     private final OperatorTranslatorRegistry translatorRegistry;
 
     public RuleTranslationService(OperatorTranslatorRegistry translatorRegistry) {
         this.translatorRegistry = translatorRegistry;
     }
 
-    public String translateToDrl(String tenantId, String ruleId, Integer version,
-                                 List<Map<String, Object>> nodes) {
+    public String translateToDrl(String tenantId, List<Map<String, Object>> nodes) {
 
         Map<String, Map<String, Object>> nodeMap = nodes.stream()
                 .collect(Collectors.toMap(
@@ -35,13 +39,13 @@ public class RuleTranslationService {
 
         StringBuilder drl = new StringBuilder();
 
-        generateDrlHeader(drl, tenantId, ruleId, version);
-        generateRule(drl, ruleId, rootNode, nodeMap);
+        generateDrlHeader(drl, tenantId);
+        generateRule(drl, rootNode, nodeMap);
 
         return drl.toString();
     }
 
-    private void generateDrlHeader(StringBuilder drl, String tenantId, String ruleId, Integer version) {
+    private void generateDrlHeader(StringBuilder drl, String tenantId) {
         // Convert tenantId to valid package name - replace "default" and sanitize
         String packageName = sanitizePackageName(tenantId);
         drl.append("package ").append(packageName).append(";\n\n");
@@ -61,10 +65,10 @@ public class RuleTranslationService {
         drl.append("global Object usageService;\n\n");
     }
 
-    private void generateRule(StringBuilder drl, String ruleId, Map<String, Object> rootNode,
+    private void generateRule(StringBuilder drl, Map<String, Object> rootNode,
                               Map<String, Map<String, Object>> nodeMap) {
 
-        drl.append("rule \"").append(ruleId).append("\"\n");
+        drl.append("rule \"promotion_validation_rule\"\n");
         drl.append("    when\n");
 
         generateConditions(drl, rootNode, nodeMap, 2);
@@ -74,7 +78,7 @@ public class RuleTranslationService {
         drl.append("        result.setOk(true);\n");
         drl.append("end\n\n");
 
-        generateFailureRule(drl, ruleId, rootNode, nodeMap);
+        generateFailureRule(drl, rootNode, nodeMap);
     }
 
     private void generateConditions(StringBuilder drl, Map<String, Object> node,
@@ -93,48 +97,62 @@ public class RuleTranslationService {
                                          Map<String, Map<String, Object>> nodeMap, int indent) {
 
         String groupLogic = (String) groupNode.get("groupLogic");
-        List<String> children = (List<String>) groupNode.get("children");
+        List<String> children = extractChildIds(groupNode);
 
-        if (children == null || children.isEmpty()) {
+        if (children.isEmpty()) {
             return;
         }
 
         String indentStr = " ".repeat(indent);
 
-        if ("ALL".equals(groupLogic)) {
-            for (String childId : children) {
-                Map<String, Object> childNode = nodeMap.get(childId);
-                if (childNode != null) {
-                    generateConditions(drl, childNode, nodeMap, indent);
-                }
-            }
-        } else if ("ANY".equals(groupLogic)) {
-            drl.append(indentStr).append("(\n");
-            for (int i = 0; i < children.size(); i++) {
-                String childId = children.get(i);
-                Map<String, Object> childNode = nodeMap.get(childId);
-                if (childNode != null) {
-                    if (i > 0) {
-                        drl.append(indentStr).append("    or\n");
-                    }
-                    generateConditions(drl, childNode, nodeMap, indent + 4);
-                }
-            }
-            drl.append(indentStr).append(")\n");
-        } else if ("NONE".equals(groupLogic)) {
-            drl.append(indentStr).append("not (\n");
-            for (int i = 0; i < children.size(); i++) {
-                String childId = children.get(i);
-                Map<String, Object> childNode = nodeMap.get(childId);
-                if (childNode != null) {
-                    if (i > 0) {
-                        drl.append(indentStr).append("    or\n");
-                    }
-                    generateConditions(drl, childNode, nodeMap, indent + 4);
-                }
-            }
-            drl.append(indentStr).append(")\n");
+        switch (groupLogic) {
+            case "ALL" -> generateAllConditions(drl, children, nodeMap, indent);
+            case "ANY" -> generateAnyConditions(drl, children, nodeMap, indent, indentStr);
+            case "NONE" -> generateNoneConditions(drl, children, nodeMap, indent, indentStr);
+            default -> logger.warn("Unknown groupLogic value: {}", groupLogic);
         }
+    }
+
+    private void generateAllConditions(StringBuilder drl, List<String> children, 
+                                       Map<String, Map<String, Object>> nodeMap, int indent) {
+        for (String childId : children) {
+            Map<String, Object> childNode = nodeMap.get(childId);
+            if (childNode != null) {
+                generateConditions(drl, childNode, nodeMap, indent);
+            }
+        }
+    }
+
+    private void generateAnyConditions(StringBuilder drl, List<String> children,
+                                       Map<String, Map<String, Object>> nodeMap, int indent, String indentStr) {
+        drl.append(indentStr).append("(\n");
+        for (int i = 0; i < children.size(); i++) {
+            String childId = children.get(i);
+            Map<String, Object> childNode = nodeMap.get(childId);
+            if (childNode != null) {
+                if (i > 0) {
+                    drl.append(indentStr).append("    or\n");
+                }
+                generateConditions(drl, childNode, nodeMap, indent + 4);
+            }
+        }
+        drl.append(indentStr).append(")\n");
+    }
+
+    private void generateNoneConditions(StringBuilder drl, List<String> children,
+                                        Map<String, Map<String, Object>> nodeMap, int indent, String indentStr) {
+        drl.append(indentStr).append("not (\n");
+        for (int i = 0; i < children.size(); i++) {
+            String childId = children.get(i);
+            Map<String, Object> childNode = nodeMap.get(childId);
+            if (childNode != null) {
+                if (i > 0) {
+                    drl.append(indentStr).append("    or\n");
+                }
+                generateConditions(drl, childNode, nodeMap, indent + 4);
+            }
+        }
+        drl.append(indentStr).append(")\n");
     }
 
     private void generateConditionNode(StringBuilder drl, Map<String, Object> condNode, int indent) {
@@ -156,12 +174,12 @@ public class RuleTranslationService {
         }
     }
 
-    private void generateFailureRule(StringBuilder drl, String ruleId, Map<String, Object> rootNode,
+    private void generateFailureRule(StringBuilder drl, Map<String, Object> rootNode,
                                      Map<String, Map<String, Object>> nodeMap) {
 
         Set<String> allReasonCodes = collectReasonCodes(rootNode, nodeMap);
 
-        drl.append("rule \"").append(ruleId).append("_failure\"\n");
+        drl.append("rule \"promotion_validation_failure\"\n");
         drl.append("    salience -100\n");
         drl.append("    when\n");
         drl.append("        not ValidationResult(decision == \"ALLOW\")\n");
@@ -198,8 +216,8 @@ public class RuleTranslationService {
                 reasonCodes.add(reasonCode);
             }
         } else if ("GROUP".equals(type)) {
-            List<String> children = (List<String>) node.get("children");
-            if (children != null) {
+            List<String> children = extractChildIds(node);
+            if (!children.isEmpty()) {
                 for (String childId : children) {
                     Map<String, Object> childNode = nodeMap.get(childId);
                     if (childNode != null) {
@@ -211,19 +229,35 @@ public class RuleTranslationService {
     }
 
     private Map<String, Object> findRootNode(Map<String, Map<String, Object>> nodeMap) {
+        Set<String> childIds = collectAllChildIds(nodeMap);
+        return findNodeNotInChildIds(nodeMap, childIds);
+    }
+
+    private Set<String> collectAllChildIds(Map<String, Map<String, Object>> nodeMap) {
         Set<String> childIds = new HashSet<>();
-
         for (Map<String, Object> node : nodeMap.values()) {
-            List<String> children = (List<String>) node.get("children");
-            if (children != null) {
-                childIds.addAll(children);
-            }
+            List<String> children = extractChildIds(node);
+            childIds.addAll(children);
         }
+        return childIds;
+    }
 
+    private Map<String, Object> findNodeNotInChildIds(Map<String, Map<String, Object>> nodeMap, Set<String> childIds) {
         return nodeMap.values().stream()
                 .filter(node -> !childIds.contains(node.get("id")))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private List<String> extractChildIds(Map<String, Object> node) {
+        Object childrenObj = node.get(CHILDREN_KEY);
+        if (childrenObj instanceof List) {
+            return ((List<?>) childrenObj).stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList();
+        }
+        return List.of();
     }
 
     private String sanitizePackageName(String tenantId) {
@@ -235,7 +269,7 @@ public class RuleTranslationService {
         // Convert to lowercase and replace invalid characters
         String sanitized = tenantId.toLowerCase()
                 .replaceAll("[^a-z0-9_.]", "_")
-                .replaceAll("^[0-9]", "_$0"); // Prefix with _ if starts with number
+                .replaceAll("^\\\\d", "_$0"); // Prefix with _ if starts with number
 
         // Ensure it doesn't start with a reserved word
         if (isReservedKeyword(sanitized)) {
@@ -245,22 +279,18 @@ public class RuleTranslationService {
         return sanitized;
     }
 
-    private boolean isReservedKeyword(String word) {
-        // Java reserved keywords
-        String[] keywords = {"abstract", "assert", "boolean", "break", "byte",
-                "case", "catch", "char", "class", "const", "continue", "default",
-                "do", "double", "else", "enum", "extends", "final", "finally",
-                "float", "for", "goto", "if", "implements", "import", "instanceof",
-                "int", "interface", "long", "native", "new", "package", "private",
-                "protected", "public", "return", "short", "static", "strictfp",
-                "super", "switch", "synchronized", "this", "throw", "throws",
-                "transient", "try", "void", "volatile", "while"};
+    private static final Set<String> JAVA_RESERVED_KEYWORDS = Set.of(
+            "abstract", "assert", "boolean", "break", "byte",
+            "case", "catch", "char", "class", "const", "continue", "default",
+            "do", "double", "else", "enum", "extends", "final", "finally",
+            "float", "for", "goto", "if", "implements", "import", "instanceof",
+            "int", "interface", "long", "native", "new", "package", "private",
+            "protected", "public", "return", "short", "static", "strictfp",
+            "super", "switch", "synchronized", "this", "throw", "throws",
+            "transient", "try", "void", "volatile", "while"
+    );
 
-        for (String keyword : keywords) {
-            if (keyword.equals(word)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean isReservedKeyword(String word) {
+        return JAVA_RESERVED_KEYWORDS.contains(word);
     }
 }

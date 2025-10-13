@@ -72,7 +72,7 @@ public class CompilationCacheService {
 
         } catch (Exception e) {
             logger.error("Compilation failed for key: {}", cacheKey, e);
-            throw new RuntimeException("Compilation failed: " + e.getMessage(), e);
+            throw new CompilationException("Compilation failed", e);
         }
     }
 
@@ -118,7 +118,7 @@ public class CompilationCacheService {
 
     @FunctionalInterface
     public interface CompilationSupplier {
-        CompilationResult compile() throws Exception;
+        CompilationResult compile() throws CompilationException;
     }
 
     // Inner classes

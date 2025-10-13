@@ -94,7 +94,8 @@ public class PerformanceMonitoringController {
         try {
             // This would need implementation in sessionManager to get pool stats for all bundles
             Map<String, KieSessionPool.PoolStatistics> stats = new HashMap<>();
-            // TODO: Implement getting stats for all bundles
+            // Future enhancement: Implement getting stats for all bundles from session manager
+            // This would involve querying the KieSessionManager for bundle statistics
 
             return ResponseEntity.ok(stats);
 

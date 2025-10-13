@@ -52,6 +52,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     }
 
     @Override
+    @SuppressWarnings("java:S2139")
     public CompileResult compile(CompileInput input) {
         logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
                 input.getTenantId(), input.getRuleId(), input.getVersion());
@@ -61,8 +62,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         try {
             String drlContent = ruleTranslationService.translateToDrl(
                     input.getTenantId(),
-                    input.getRuleId(),
-                    input.getVersion(),
                     input.getNodes()
             );
 
@@ -89,8 +88,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             );
 
         } catch (Exception e) {
-            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s): %s",
-                    input.getRuleId(), input.getTenantId(), input.getVersion(), e.getMessage());
+            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s)",
+                    input.getRuleId(), input.getTenantId(), input.getVersion());
             logger.error(errorMessage, e);
 
             // Record compilation failure metrics
@@ -153,7 +152,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                     KieContainer container = getOrCreateContainer(bundleHash);
                     containersByBundle.put(bundleHash, container);
                 } catch (Exception e) {
-                    logger.warn("Failed to get container for bundle: {}, error: {}", bundleHash, e.getMessage());
+                    logger.warn("Failed to get container for bundle: {}", bundleHash, e);
                     // Container will be null, handled in orchestrator
                 }
             }
@@ -197,8 +196,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
             logger.info("Bundle warmup completed: bundleHash={}", bundleHash);
         } catch (Exception e) {
-            String errorMessage = String.format("Bundle warmup failed for hash '%s': %s",
-                    bundleHash, e.getMessage());
+            String errorMessage = String.format("Bundle warmup failed for hash '%s'", bundleHash);
             logger.error(errorMessage, e);
             throw new RuleBundleException(errorMessage, e);
         }

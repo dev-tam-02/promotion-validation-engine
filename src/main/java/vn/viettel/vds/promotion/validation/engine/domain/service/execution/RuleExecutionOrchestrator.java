@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-import vn.viettel.vds.promotion.validation.engine.domain.service.session.SessionPoolConfig;
 
 import java.time.Duration;
 import java.util.*;
@@ -137,7 +136,7 @@ public class RuleExecutionOrchestrator {
 
             // Record batch metrics
             long batchDuration = System.currentTimeMillis() - batchStartTime;
-            int successCount = (int) responses.stream().mapToLong(r -> r.getOk() != null && r.getOk() ? 1 : 0).sum();
+            int successCount = (int) responses.stream().filter(r -> r.getOk() != null && r.getOk()).count();
             metricsService.recordBatchExecution(inputs.size(), Duration.ofMillis(batchDuration), successCount);
 
             logger.info("Batch rule execution completed: {} responses", responses.size());

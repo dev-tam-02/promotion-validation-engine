@@ -20,6 +20,7 @@ public class ExecutionMetricsService {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutionMetricsService.class);
 
+    private static final String BUNDLE_TAG = "bundle";
     private final MeterRegistry meterRegistry;
 
     // Metrics counters
@@ -120,11 +121,11 @@ public class ExecutionMetricsService {
     }
 
     public void recordCacheHit(String bundleHash) {
-        meterRegistry.counter("drools.cache.hits", "bundle", bundleHash).increment();
+        meterRegistry.counter("drools.cache.hits", BUNDLE_TAG, bundleHash).increment();
     }
 
     public void recordCacheMiss(String bundleHash) {
-        meterRegistry.counter("drools.cache.misses", "bundle", bundleHash).increment();
+        meterRegistry.counter("drools.cache.misses", BUNDLE_TAG, bundleHash).increment();
     }
 
     public void recordSessionCreation(String sessionType) {
@@ -132,7 +133,7 @@ public class ExecutionMetricsService {
     }
 
     public void recordRuleFired(String ruleName, String bundleHash) {
-        meterRegistry.counter("drools.rules.fired", "rule", ruleName, "bundle", bundleHash).increment();
+        meterRegistry.counter("drools.rules.fired", "rule", ruleName, BUNDLE_TAG, bundleHash).increment();
     }
 
     // Getter methods for metrics
@@ -268,64 +269,77 @@ public class ExecutionMetricsService {
         }
     }
 
-    public static class ExecutionStats {
-        private final long totalExecutions;
-        private final long successfulExecutions;
-        private final long failedExecutions;
-        private final long batchExecutions;
-        private final double averageExecutionTime;
-        private final double maxExecutionTime;
-        private final Map<String, Object> bundleStats;
-        private final Instant timestamp;
-
-        public ExecutionStats(long totalExecutions, long successfulExecutions, long failedExecutions,
-                              long batchExecutions, double averageExecutionTime, double maxExecutionTime,
-                              Map<String, Object> bundleStats, Instant timestamp) {
-            this.totalExecutions = totalExecutions;
-            this.successfulExecutions = successfulExecutions;
-            this.failedExecutions = failedExecutions;
-            this.batchExecutions = batchExecutions;
-            this.averageExecutionTime = averageExecutionTime;
-            this.maxExecutionTime = maxExecutionTime;
-            this.bundleStats = bundleStats;
-            this.timestamp = timestamp;
-        }
-
-        // Getters
-        public long getTotalExecutions() {
-            return totalExecutions;
-        }
-
-        public long getSuccessfulExecutions() {
-            return successfulExecutions;
-        }
-
-        public long getFailedExecutions() {
-            return failedExecutions;
-        }
-
-        public long getBatchExecutions() {
-            return batchExecutions;
-        }
-
-        public double getAverageExecutionTime() {
-            return averageExecutionTime;
-        }
-
-        public double getMaxExecutionTime() {
-            return maxExecutionTime;
-        }
-
-        public Map<String, Object> getBundleStats() {
-            return bundleStats;
-        }
-
-        public Instant getTimestamp() {
-            return timestamp;
-        }
-
+    public record ExecutionStats(
+            long totalExecutions,
+            long successfulExecutions,
+            long failedExecutions,
+            long batchExecutions,
+            double averageExecutionTime,
+            double maxExecutionTime,
+            Map<String, Object> bundleStats,
+            Instant timestamp
+    ) {
         public double getSuccessRate() {
             return totalExecutions > 0 ? (double) successfulExecutions / totalExecutions * 100 : 0.0;
+        }
+
+        public static class ExecutionStatsBuilder {
+            private long totalExecutions;
+            private long successfulExecutions;
+            private long failedExecutions;
+            private long batchExecutions;
+            private double averageExecutionTime;
+            private double maxExecutionTime;
+            private Map<String, Object> bundleStats;
+            private Instant timestamp;
+
+            public ExecutionStatsBuilder totalExecutions(long totalExecutions) {
+                this.totalExecutions = totalExecutions;
+                return this;
+            }
+
+            public ExecutionStatsBuilder successfulExecutions(long successfulExecutions) {
+                this.successfulExecutions = successfulExecutions;
+                return this;
+            }
+
+            public ExecutionStatsBuilder failedExecutions(long failedExecutions) {
+                this.failedExecutions = failedExecutions;
+                return this;
+            }
+
+            public ExecutionStatsBuilder batchExecutions(long batchExecutions) {
+                this.batchExecutions = batchExecutions;
+                return this;
+            }
+
+            public ExecutionStatsBuilder averageExecutionTime(double averageExecutionTime) {
+                this.averageExecutionTime = averageExecutionTime;
+                return this;
+            }
+
+            public ExecutionStatsBuilder maxExecutionTime(double maxExecutionTime) {
+                this.maxExecutionTime = maxExecutionTime;
+                return this;
+            }
+
+            public ExecutionStatsBuilder bundleStats(Map<String, Object> bundleStats) {
+                this.bundleStats = bundleStats;
+                return this;
+            }
+
+            public ExecutionStatsBuilder timestamp(Instant timestamp) {
+                this.timestamp = timestamp;
+                return this;
+            }
+
+            public ExecutionStats build() {
+                return new ExecutionStats(
+                        totalExecutions, successfulExecutions, failedExecutions,
+                        batchExecutions, averageExecutionTime, maxExecutionTime,
+                        bundleStats, timestamp
+                );
+            }
         }
     }
 }

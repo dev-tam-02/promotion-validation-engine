@@ -59,13 +59,4 @@ public class WarmupResponse {
     public void setDurationMs(Long durationMs) {
         this.durationMs = durationMs;
     }
-
-    // Compatibility method for validation module
-    public boolean isOk() {
-        return success;
-    }
-
-    public void setOk(boolean ok) {
-        this.success = ok;
-    }
 }

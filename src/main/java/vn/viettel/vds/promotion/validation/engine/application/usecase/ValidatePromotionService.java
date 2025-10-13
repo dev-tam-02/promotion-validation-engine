@@ -14,7 +14,6 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Decision;
 import vn.viettel.vds.promotion.validation.engine.domain.model.ReasonCode;
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-import vn.viettel.vds.promotion.validation.engine.domain.service.ValidationDomainService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,16 +24,15 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(ValidatePromotionService.class);
 
-    private final ValidationDomainService validationDomainService;
+    private static final String MESSAGE_KEY = "message";
+
     private final RuleEnginePort ruleEnginePort;
     private final RulesServicePort rulesServicePort;
     private final SessionLockPort sessionLockPort;
 
-    public ValidatePromotionService(ValidationDomainService validationDomainService,
-                                    @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
+    public ValidatePromotionService(@Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
                                     RulesServicePort rulesServicePort,
                                     SessionLockPort sessionLockPort) {
-        this.validationDomainService = validationDomainService;
         this.ruleEnginePort = ruleEnginePort;
         this.rulesServicePort = rulesServicePort;
         this.sessionLockPort = sessionLockPort;
@@ -47,7 +45,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         // Early validation checks that can fail fast
         if (!isValidRequest(request)) {
             Decision errorDecision = createInvalidDecision(null,
-                    List.of(new ReasonCode("INVALID_REQUEST", Map.of("message", "Invalid request structure"))));
+                    List.of(new ReasonCode("INVALID_REQUEST", Map.of(MESSAGE_KEY, "Invalid request structure"))));
             return new ValidationResponse(List.of(errorDecision));
         }
 
@@ -153,7 +151,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
                         candidate.getCode(), customerId);
                 return createInvalidDecision(candidate,
                         List.of(new ReasonCode("VALIDATION_SESSION_LOCKED",
-                                Map.of("message", "Another validation is in progress for this candidate"))));
+                                Map.of(MESSAGE_KEY, "Another validation is in progress for this candidate"))));
             }
 
             // 2. Get rule bundle from rules repository
@@ -176,7 +174,7 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
             List<ReasonCode> reasons = new ArrayList<>();
 
             if (!ruleResult.isMatched()) {
-                reasons.add(new ReasonCode("RULE_FAILED", Map.of("message", ruleResult.getMessage())));
+                reasons.add(new ReasonCode("RULE_FAILED", Map.of(MESSAGE_KEY, ruleResult.getMessage())));
             }
 
             // 6. Create decision

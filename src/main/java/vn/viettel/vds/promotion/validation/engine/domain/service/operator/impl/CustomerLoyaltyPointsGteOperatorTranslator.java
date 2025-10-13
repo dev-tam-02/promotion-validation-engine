@@ -16,8 +16,8 @@ public class CustomerLoyaltyPointsGteOperatorTranslator implements OperatorTrans
         }
 
         Integer points;
-        if (pointsParam instanceof Integer) {
-            points = (Integer) pointsParam;
+        if (pointsParam instanceof Integer integer) {
+            points = integer;
         } else {
             try {
                 points = Integer.parseInt(pointsParam.toString());

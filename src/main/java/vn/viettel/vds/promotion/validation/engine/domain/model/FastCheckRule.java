@@ -9,6 +9,10 @@ import java.time.LocalTime;
  */
 public class FastCheckRule {
 
+    private FastCheckRule() {
+        // Private constructor to prevent instantiation
+    }
+
     /**
      * Blackout period when promotions are not allowed
      */

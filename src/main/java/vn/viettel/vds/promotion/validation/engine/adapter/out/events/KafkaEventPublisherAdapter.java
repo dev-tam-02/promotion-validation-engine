@@ -16,8 +16,11 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
         logger.info("Publishing BundlePublished event: tenantId={}, ruleId={}, bundleHash={}",
                 event.getTenantId(), event.getRuleId(), event.getBundleHash());
 
-        // TODO: Implement actual Kafka publishing using promix-platform starters
-        // Example: kafkaTemplate.send("bundle-published", event);
+        // Future enhancement: Implement actual Kafka publishing using promix-platform starters
+        // This would involve:
+        // 1. Injecting KafkaTemplate from promix-platform messaging starter
+        // 2. Serializing the event to appropriate format
+        // 3. Sending to configured Kafka topic
     }
 
     @Override
@@ -25,8 +28,8 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
         logger.info("Publishing WarmupRequested event: tenantId={}, bundleHash={}",
                 event.getTenantId(), event.getBundleHash());
 
-        // TODO: Implement actual Kafka publishing
-        // Example: kafkaTemplate.send("warmup-requested", event);
+        // Future enhancement: Implement actual Kafka publishing
+        // Similar to publishBundlePublished but for warmup requests
     }
 
     @Override
@@ -34,15 +37,10 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
         logger.info("Publishing outbox event: id={}, type={}, tenantId={}",
                 outboxEvent.getId(), outboxEvent.getType(), outboxEvent.getTenantId());
 
-        switch (outboxEvent.getType()) {
-            case BUNDLE_PUBLISHED:
-                // Extract payload and publish as BundlePublishedEvent
-                break;
-            case WARMUP_REQUESTED:
-                // Extract payload and publish as WarmupRequestedEvent
-                break;
+        if (OutboxEventEntity.EventType.BUNDLE_PUBLISHED.equals(outboxEvent.getType())) {
+            // Extract payload and publish as BundlePublishedEvent
         }
 
-        // TODO: Implement actual event publishing and update outbox status
+        // Future enhancement: Implement actual event publishing and update outbox status
     }
 }

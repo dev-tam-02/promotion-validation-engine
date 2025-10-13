@@ -23,7 +23,7 @@ import java.util.List;
 public class BundleEntity {
 
     @Id
-    @Column(name = "id", nullable = false, length = 300) // bundleHash (sha256:xxx)
+    @Column(name = "id", nullable = false, length = 300) // bundleHash (sha256 hash format)
     private String id;
 
     @Column(name = "tenant_id", nullable = false, length = 50)

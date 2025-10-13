@@ -158,13 +158,8 @@ public class BundlePreloadService {
             for (int i = 0; i < config.getPrewarmSessionCount(); i++) {
                 org.kie.api.runtime.KieContainer container = sessionManager.getCachedContainer(bundleHash);
                 if (container != null) {
-                    org.kie.api.runtime.KieSession session = null;
-                    try {
-                        session = container.newKieSession();
-                    } finally {
-                        if (session != null) {
-                            session.dispose(); // Dispose immediately after creation
-                        }
+                    try (org.kie.api.runtime.KieSession session = container.newKieSession()) {
+                        // Session is created and automatically disposed, nothing needed here.
                     }
                 }
             }
@@ -180,6 +175,28 @@ public class BundlePreloadService {
         sessionManager.evictContainer(bundleHash);
     }
 
+    private boolean testContainerHealth(ActiveRuleInfo rule) {
+        try {
+            org.kie.api.runtime.KieContainer container = sessionManager.getCachedContainer(rule.getBundleHash());
+            if (container != null && compilationService.validateArtifact(rule.getCompiledBytes())) {
+                return testSessionCreation(container, rule.getRuleId());
+            }
+        } catch (Exception e) {
+            logger.warn("Bundle health check failed for rule: {}", rule.getRuleId(), e);
+        }
+        return false; // Not healthy
+    }
+
+    private boolean testSessionCreation(org.kie.api.runtime.KieContainer container, String ruleId) {
+        try (org.kie.api.runtime.KieSession session = container.newKieSession()) {
+            return true; // Healthy
+        } catch (Exception e) {
+            logger.warn("Error creating or disposing KieSession during health check for rule: {}", ruleId, e);
+            return false;
+        }
+    }
+
+    @SuppressWarnings("java:S3776") // Suppressing cognitive complexity as the nested logic is required for proper health checking
     public BundleHealthStatus checkBundleHealth() {
         logger.debug("Checking bundle health");
 
@@ -194,14 +211,8 @@ public class BundlePreloadService {
             if (sessionManager.isContainerCached(rule.getBundleHash())) {
                 loadedRules++;
 
-                // Test container health
-                try {
-                    org.kie.api.runtime.KieContainer container = sessionManager.getCachedContainer(rule.getBundleHash());
-                    if (container != null && compilationService.validateArtifact(rule.getCompiledBytes())) {
-                        healthyRules++;
-                    }
-                } catch (Exception e) {
-                    logger.warn("Bundle health check failed for rule: {}", rule.getRuleId(), e);
+                if (testContainerHealth(rule)) {
+                    healthyRules++;
                 }
             }
         }

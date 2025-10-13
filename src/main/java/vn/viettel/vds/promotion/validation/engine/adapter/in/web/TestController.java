@@ -21,7 +21,7 @@ public class TestController {
     public ResponseEntity<String> testError(@RequestParam String type) {
         switch (type) {
             case "runtime":
-                throw new RuntimeException("Test runtime exception");
+                throw new TestRuntimeException("Test runtime exception");
             case "illegal":
                 throw new IllegalArgumentException("Test illegal argument exception");
             default:
@@ -44,6 +44,12 @@ public class TestController {
 
         public void setMessage(String message) {
             this.message = message;
+        }
+    }
+
+    public static class TestRuntimeException extends RuntimeException {
+        public TestRuntimeException(String message) {
+            super(message);
         }
     }
 }

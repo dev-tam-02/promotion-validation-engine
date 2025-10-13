@@ -112,12 +112,19 @@ public class Customer {
         this.loyaltyPoints = loyaltyPoints;
     }
 
-    // Alias method for tier operator compatibility
+    /**
+     * Alias method for tier operator compatibility
+     * @return loyalty tier of the customer
+     */
     public String getTier() {
-        return loyaltyTier;
+        return getLoyaltyTier();
     }
 
+    /**
+     * Alias method for tier operator compatibility
+     * @param tier the tier to set
+     */
     public void setTier(String tier) {
-        this.loyaltyTier = tier;
+        setLoyaltyTier(tier);
     }
 }

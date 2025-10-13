@@ -19,10 +19,12 @@ public class OrderChannelInOperatorTranslator implements OperatorTranslator {
 
         List<String> channels;
         if (channelsParam instanceof List) {
-            channels = (List<String>) channelsParam;
-        } else if (channelsParam instanceof String) {
+            @SuppressWarnings("unchecked")
+            List<String> castedList = (List<String>) channelsParam;
+            channels = castedList;
+        } else if (channelsParam instanceof String str) {
             // Handle single channel as a list
-            channels = List.of((String) channelsParam);
+            channels = List.of(str);
         } else {
             throw new IllegalArgumentException("Parameter 'channels' must be a List<String> or String for order.channel.in operator");
         }

@@ -34,20 +34,10 @@ public class CompileRequest {
     private List<TimeLink> timeLinks;
 
     public CompileRequest() {
+        // Used by frameworks for deserialization.
     }
 
-    public CompileRequest(String tenantId, String ruleId, Integer version, String logic,
-                          List<Map<String, Object>> nodes, String operatorsFingerprint,
-                          Limits limits, List<TimeLink> timeLinks) {
-        this.tenantId = tenantId;
-        this.ruleId = ruleId;
-        this.version = version;
-        this.logic = logic;
-        this.nodes = nodes;
-        this.operatorsFingerprint = operatorsFingerprint;
-        this.limits = limits;
-        this.timeLinks = timeLinks;
-    }
+
 
     // Getters and Setters
     public String getTenantId() {

@@ -89,7 +89,7 @@ public class CachedCompilationService {
 
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not available", e);
+            throw new CompilationException("SHA-256 algorithm not available", e);
         }
     }
 

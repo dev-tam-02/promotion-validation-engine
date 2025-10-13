@@ -16,12 +16,6 @@ public class RulesServiceAdapter implements RulesServicePort {
     private static final Logger logger = LoggerFactory.getLogger(RulesServiceAdapter.class);
     private static final String DEFAULT_VERSION = "1.0.0";
 
-    private final RulesServiceFeignClient rulesServiceFeignClient;
-
-    public RulesServiceAdapter(RulesServiceFeignClient rulesServiceFeignClient) {
-        this.rulesServiceFeignClient = rulesServiceFeignClient;
-    }
-
     @Override
     @Cacheable(value = "rule-bundles", key = "#candidate.type + '_' + #candidate.code")
     public RuleBundle getRuleBundle(Candidate candidate) {
@@ -40,19 +34,6 @@ public class RulesServiceAdapter implements RulesServicePort {
                     DEFAULT_VERSION
             );
 
-            // TODO: Uncomment when rules-service is available
-            /*
-            RulesServiceFeignClient.RuleBundleResponse response = rulesServiceFeignClient.getRuleBundle(
-                candidate.getType(), candidate.getCode());
-            return new RuleBundle(
-                response.getBundleHash(),
-                response.getKieModuleBytes(),
-                response.getDslVersion(),
-                response.getRuleVersion(),
-                response.getAssignmentVersion()
-            );
-            */
-
         } catch (Exception e) {
             logger.error("Failed to fetch rule bundle for candidate: {} {}", candidate.getType(), candidate.getCode(), e);
             return null;
@@ -61,7 +42,7 @@ public class RulesServiceAdapter implements RulesServicePort {
 
     private String generateMockBundleHash(Candidate candidate) {
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
             String input = candidate.getType() + ":" + candidate.getCode();
             byte[] digest = md.digest(input.getBytes());
             StringBuilder sb = new StringBuilder();

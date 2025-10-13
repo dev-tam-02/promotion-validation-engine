@@ -19,7 +19,7 @@ import java.util.Map;
 public class OutboxEventEntity {
 
     @Id
-    @Column(name = "id", nullable = false, length = 100) // ox_xxx format
+    @Column(name = "id", nullable = false, length = 100) // ox_xxx format for event IDs
     private String id;
 
     @Column(name = "tenant_id", nullable = false, length = 50)

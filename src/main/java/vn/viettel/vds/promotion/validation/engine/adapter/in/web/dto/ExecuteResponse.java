@@ -109,6 +109,8 @@ public class ExecuteResponse {
 
         // Constructors
         public Engine() {
+            // This constructor is intentionally empty.
+            // The object is created and then populated using the setters.
         }
 
         // Getters and setters

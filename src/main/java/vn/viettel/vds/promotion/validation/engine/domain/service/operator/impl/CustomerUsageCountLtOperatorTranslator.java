@@ -21,8 +21,8 @@ public class CustomerUsageCountLtOperatorTranslator implements OperatorTranslato
         }
 
         Integer maxUsage;
-        if (maxUsageParam instanceof Integer) {
-            maxUsage = (Integer) maxUsageParam;
+        if (maxUsageParam instanceof Integer integer) {
+            maxUsage = integer;
         } else {
             try {
                 maxUsage = Integer.parseInt(maxUsageParam.toString());

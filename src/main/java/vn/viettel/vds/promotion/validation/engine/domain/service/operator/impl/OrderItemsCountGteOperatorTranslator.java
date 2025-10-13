@@ -16,8 +16,8 @@ public class OrderItemsCountGteOperatorTranslator implements OperatorTranslator 
         }
 
         Integer count;
-        if (countParam instanceof Integer) {
-            count = (Integer) countParam;
+        if (countParam instanceof Integer integer) {
+            count = integer;
         } else {
             try {
                 count = Integer.parseInt(countParam.toString());

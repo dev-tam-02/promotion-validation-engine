@@ -24,7 +24,6 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 public class RuleEngineAdapter implements RuleEnginePort {
@@ -218,8 +217,7 @@ public class RuleEngineAdapter implements RuleEnginePort {
             // Re-throw RuleBundleException with original context
             throw e;
         } catch (Exception e) {
-            String errorMessage = String.format("Failed to load rule bundle with hash '%s': %s",
-                    bundleHash, e.getMessage());
+            String errorMessage = String.format("Failed to load rule bundle with hash '%s'", bundleHash);
             logger.error(errorMessage, e);
             throw new RuleBundleException(errorMessage, e);
         }

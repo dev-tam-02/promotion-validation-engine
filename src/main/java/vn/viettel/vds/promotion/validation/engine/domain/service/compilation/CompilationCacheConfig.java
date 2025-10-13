@@ -14,6 +14,10 @@ public class CompilationCacheConfig {
     private boolean operatorFingerprintEnabled = true;
 
     // Getters and setters
+    /**
+     * Check if cache is enabled
+     * @return true if caching is enabled, false otherwise
+     */
     public boolean isCacheEnabled() {
         return cacheEnabled;
     }
@@ -22,8 +26,12 @@ public class CompilationCacheConfig {
         this.cacheEnabled = cacheEnabled;
     }
 
+    /**
+     * Alias method for configuration compatibility
+     * @return true if caching is enabled, false otherwise
+     */
     public boolean isEnabled() {
-        return cacheEnabled;
+        return isCacheEnabled();
     }
 
     public int getMaxSize() {

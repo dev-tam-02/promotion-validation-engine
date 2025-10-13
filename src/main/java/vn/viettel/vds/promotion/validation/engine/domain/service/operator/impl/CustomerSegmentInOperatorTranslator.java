@@ -19,10 +19,12 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
 
         List<String> segments;
         if (segmentsParam instanceof List) {
-            segments = (List<String>) segmentsParam;
-        } else if (segmentsParam instanceof String) {
+            @SuppressWarnings("unchecked")
+            List<String> castedList = (List<String>) segmentsParam;
+            segments = castedList;
+        } else if (segmentsParam instanceof String str) {
             // Handle single segment as a list
-            segments = List.of((String) segmentsParam);
+            segments = List.of(str);
         } else {
             throw new IllegalArgumentException("Parameter 'segments' must be a List<String> or String for customer.in_segment operator");
         }

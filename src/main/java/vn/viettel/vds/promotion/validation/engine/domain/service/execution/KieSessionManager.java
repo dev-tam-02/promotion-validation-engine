@@ -43,7 +43,7 @@ public class KieSessionManager {
                                 sessionPool.invalidateBundle(bundleHash);
                             }
                         } catch (Exception e) {
-                            logger.warn("Error disposing KieContainer: {}", e.getMessage());
+                            logger.warn("Error disposing KieContainer", e);
                         }
                     }
                 })
@@ -62,10 +62,11 @@ public class KieSessionManager {
             return session;
         } catch (Exception e) {
             logger.error("Failed to create stateless KIE session", e);
-            throw new RuntimeException("Failed to create stateless KIE session: " + e.getMessage(), e);
+            throw new KieSessionCreationException("Failed to create stateless KIE session", e);
         }
     }
 
+    @SuppressWarnings("java:S2095") // Returning session to be managed by caller
     public KieSession createStatefulSession(KieContainer container) {
         try {
             KieSession session = container.newKieSession();
@@ -73,7 +74,7 @@ public class KieSessionManager {
             return session;
         } catch (Exception e) {
             logger.error("Failed to create stateful KIE session", e);
-            throw new RuntimeException("Failed to create stateful KIE session: " + e.getMessage(), e);
+            throw new KieSessionCreationException("Failed to create stateful KIE session", e);
         }
     }
 

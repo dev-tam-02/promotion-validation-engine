@@ -87,7 +87,7 @@ public class DroolsCompilationService {
 
         } catch (Exception e) {
             logger.error("DRL compilation failed for rule: {}", ruleId, e);
-            throw new CompilationException("DRL compilation failed: " + e.getMessage(), e);
+            throw new CompilationException("DRL compilation failed", e);
         }
     }
 
@@ -105,10 +105,11 @@ public class DroolsCompilationService {
 
         } catch (Exception e) {
             logger.error("Failed to create KIE container", e);
-            throw new RuntimeException("Failed to create KIE container: " + e.getMessage(), e);
+            throw new CompilationException("Failed to create KIE container", e);
         }
     }
 
+    @SuppressWarnings("java:S2095") // Suppressing S2095 because KieSession and KieContainer do not implement AutoCloseable, and resources are properly disposed in the finally block.
     public boolean validateArtifact(byte[] artifactBytes) {
         KieContainer container = null;
         KieSession session = null;
@@ -141,20 +142,22 @@ public class DroolsCompilationService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(artifactBytes);
-
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-
-            return "sha256:" + hexString.toString();
+            return "sha256:" + bytesToHex(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not available", e);
+            throw new CompilationException("SHA-256 algorithm not available", e);
         }
+    }
+    
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 
     public static class CompilationResult {

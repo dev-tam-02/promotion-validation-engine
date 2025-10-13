@@ -117,7 +117,7 @@ public class OutboxEventProcessor {
     public void cleanupProcessedEvents() {
         try {
             // Delete successfully sent events older than 24 hours
-            Instant cutoff = Instant.now().minusSeconds(24 * 60 * 60);
+            Instant cutoff = Instant.now().minusSeconds((long) 24 * 60 * 60);
 
             List<OutboxEventEntity> oldEvents = outboxEventRepository
                     .findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus.SENT);
