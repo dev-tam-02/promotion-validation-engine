@@ -72,7 +72,10 @@ public class DroolsCompilationService {
             InternalKieModule kieModule = (InternalKieModule) kieBuilder.getKieModule();
             byte[] artifactBytes = kieModule.getBytes();
 
-            String bundleHash = generateBundleHash(artifactBytes);
+            // Generate deterministic bundleHash from DRL content instead of artifact bytes
+            // This ensures consistency across compilations as Drools may add non-deterministic
+            // metadata (timestamps, build numbers) to the .kjar artifact
+            String bundleHash = generateBundleHashFromDrl(drlContent);
 
             logger.info("DRL compilation successful: bundleHash={}, size={} bytes",
                     bundleHash, artifactBytes.length);
@@ -141,6 +144,24 @@ public class DroolsCompilationService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(artifactBytes);
+            return "sha256:" + bytesToHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CompilationException("SHA-256 algorithm not available", e);
+        }
+    }
+
+    /**
+     * Generate deterministic bundle hash from DRL content.
+     * This ensures consistency across compilations as Drools compiler may add
+     * non-deterministic metadata (timestamps, build numbers) to the .kjar artifact.
+     *
+     * @param drlContent The DRL content to hash
+     * @return SHA-256 hash prefixed with "sha256:"
+     */
+    private String generateBundleHashFromDrl(String drlContent) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(drlContent.getBytes(StandardCharsets.UTF_8));
             return "sha256:" + bytesToHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new CompilationException("SHA-256 algorithm not available", e);
