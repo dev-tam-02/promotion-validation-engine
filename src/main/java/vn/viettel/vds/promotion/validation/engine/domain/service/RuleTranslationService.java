@@ -6,10 +6,7 @@ import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.domain.service.operator.OperatorTranslator;
 import vn.viettel.vds.promotion.validation.engine.domain.service.operator.OperatorTranslatorRegistry;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,10 +23,18 @@ public class RuleTranslationService {
 
     public String translateToDrl(String tenantId, List<Map<String, Object>> nodes) {
 
-        Map<String, Map<String, Object>> nodeMap = nodes.stream()
+        // Sort nodes by ID to ensure deterministic DRL generation
+        List<Map<String, Object>> sortedNodes = nodes.stream()
+                .sorted(Comparator.comparing(node -> (String) node.get("id")))
+                .toList();
+
+        // Use LinkedHashMap to preserve insertion order
+        Map<String, Map<String, Object>> nodeMap = sortedNodes.stream()
                 .collect(Collectors.toMap(
                         node -> (String) node.get("id"),
-                        node -> node
+                        node -> node,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
                 ));
 
         Map<String, Object> rootNode = findRootNode(nodeMap);
@@ -113,9 +118,13 @@ public class RuleTranslationService {
         }
     }
 
-    private void generateAllConditions(StringBuilder drl, List<String> children, 
+    private void generateAllConditions(StringBuilder drl, List<String> children,
                                        Map<String, Map<String, Object>> nodeMap, int indent) {
-        for (String childId : children) {
+        // Sort children to ensure deterministic order
+        List<String> sortedChildren = new ArrayList<>(children);
+        Collections.sort(sortedChildren);
+
+        for (String childId : sortedChildren) {
             Map<String, Object> childNode = nodeMap.get(childId);
             if (childNode != null) {
                 generateConditions(drl, childNode, nodeMap, indent);
@@ -125,9 +134,13 @@ public class RuleTranslationService {
 
     private void generateAnyConditions(StringBuilder drl, List<String> children,
                                        Map<String, Map<String, Object>> nodeMap, int indent, String indentStr) {
+        // Sort children to ensure deterministic order
+        List<String> sortedChildren = new ArrayList<>(children);
+        Collections.sort(sortedChildren);
+
         drl.append(indentStr).append("(\n");
-        for (int i = 0; i < children.size(); i++) {
-            String childId = children.get(i);
+        for (int i = 0; i < sortedChildren.size(); i++) {
+            String childId = sortedChildren.get(i);
             Map<String, Object> childNode = nodeMap.get(childId);
             if (childNode != null) {
                 if (i > 0) {
@@ -141,9 +154,13 @@ public class RuleTranslationService {
 
     private void generateNoneConditions(StringBuilder drl, List<String> children,
                                         Map<String, Map<String, Object>> nodeMap, int indent, String indentStr) {
+        // Sort children to ensure deterministic order
+        List<String> sortedChildren = new ArrayList<>(children);
+        Collections.sort(sortedChildren);
+
         drl.append(indentStr).append("not (\n");
-        for (int i = 0; i < children.size(); i++) {
-            String childId = children.get(i);
+        for (int i = 0; i < sortedChildren.size(); i++) {
+            String childId = sortedChildren.get(i);
             Map<String, Object> childNode = nodeMap.get(childId);
             if (childNode != null) {
                 if (i > 0) {
@@ -196,7 +213,9 @@ public class RuleTranslationService {
 
         if (!allReasonCodes.isEmpty()) {
             drl.append("        reasonCodes.addAll(java.util.Arrays.asList(");
+            // Sort reason codes alphabetically to ensure deterministic order
             String codes = allReasonCodes.stream()
+                    .sorted()
                     .map(code -> "\"" + code + "\"")
                     .collect(Collectors.joining(", "));
             drl.append(codes);
@@ -208,7 +227,8 @@ public class RuleTranslationService {
     }
 
     private Set<String> collectReasonCodes(Map<String, Object> node, Map<String, Map<String, Object>> nodeMap) {
-        Set<String> reasonCodes = new HashSet<>();
+        // Use LinkedHashSet to preserve insertion order
+        Set<String> reasonCodes = new LinkedHashSet<>();
         collectReasonCodesRecursive(node, nodeMap, reasonCodes);
         return reasonCodes;
     }
@@ -225,7 +245,11 @@ public class RuleTranslationService {
         } else if ("GROUP".equals(type)) {
             List<String> children = extractChildIds(node);
             if (!children.isEmpty()) {
-                for (String childId : children) {
+                // Sort children to ensure deterministic collection order
+                List<String> sortedChildren = new ArrayList<>(children);
+                Collections.sort(sortedChildren);
+
+                for (String childId : sortedChildren) {
                     Map<String, Object> childNode = nodeMap.get(childId);
                     if (childNode != null) {
                         collectReasonCodesRecursive(childNode, nodeMap, reasonCodes);
