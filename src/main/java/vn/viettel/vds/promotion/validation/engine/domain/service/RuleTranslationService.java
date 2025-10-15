@@ -77,7 +77,7 @@ public class RuleTranslationService {
     }
 
     private void generateTimeWindowFunction(StringBuilder drl) {
-        drl.append("function boolean checkTimeWindow(String startTime, String endTime, String timezone, boolean spansMidnight, String... daysOfWeek) {\n");
+        drl.append("function boolean checkTimeWindow(String startTime, String endTime, String timezone, boolean spansMidnight, String daysOfWeekCsv) {\n");
         drl.append("    ZonedDateTime zdt = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.of(timezone));\n");
         drl.append("    DayOfWeek currentDay = zdt.getDayOfWeek();\n");
         drl.append("    LocalTime currentTime = zdt.toLocalTime();\n");
@@ -85,10 +85,11 @@ public class RuleTranslationService {
         drl.append("    LocalTime end = LocalTime.parse(endTime);\n");
         drl.append("    \n");
         drl.append("    // Check day of week if specified\n");
-        drl.append("    if (daysOfWeek != null && daysOfWeek.length > 0) {\n");
+        drl.append("    if (daysOfWeekCsv != null && !daysOfWeekCsv.isEmpty()) {\n");
         drl.append("        boolean dayMatches = false;\n");
+        drl.append("        String[] daysOfWeek = daysOfWeekCsv.split(\",\");\n");
         drl.append("        for (String day : daysOfWeek) {\n");
-        drl.append("            if (currentDay.name().equals(day)) {\n");
+        drl.append("            if (currentDay.name().equals(day.trim())) {\n");
         drl.append("                dayMatches = true;\n");
         drl.append("                break;\n");
         drl.append("            }\n");

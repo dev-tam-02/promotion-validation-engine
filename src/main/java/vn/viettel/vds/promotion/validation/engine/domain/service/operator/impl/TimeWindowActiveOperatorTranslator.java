@@ -37,36 +37,33 @@ public class TimeWindowActiveOperatorTranslator implements OperatorTranslator {
         String timezone = timezoneParam != null ? timezoneParam.toString() : "UTC";
         boolean spansMidnight = spansMidnightParam != null && Boolean.parseBoolean(spansMidnightParam.toString());
 
-        // Build days of week array for function call
-        StringBuilder daysArray = new StringBuilder();
+        // Build days of week CSV string for function call
+        String daysOfWeekCsv = "";
         if (daysOfWeekParam != null) {
             logger.debug("daysOfWeekParam type: {}, value: {}", daysOfWeekParam.getClass().getName(), daysOfWeekParam);
 
             if (daysOfWeekParam instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<?> daysList = (List<?>) daysOfWeekParam;
+                StringBuilder csvBuilder = new StringBuilder();
                 for (int i = 0; i < daysList.size(); i++) {
                     Object dayObj = daysList.get(i);
-                    if (i > 0) daysArray.append(", ");
+                    if (i > 0) csvBuilder.append(",");
                     String dayStr = dayObj != null ? dayObj.toString() : "";
-                    daysArray.append("\"").append(dayStr.toUpperCase()).append("\"");
+                    csvBuilder.append(dayStr.toUpperCase());
                 }
+                daysOfWeekCsv = csvBuilder.toString();
             } else {
                 logger.warn("daysOfWeek is not a List, it's: {}", daysOfWeekParam.getClass().getName());
             }
         }
 
-        // Generate function call
+        // Generate function call with CSV string for days
         StringBuilder sb = new StringBuilder();
         sb.append("eval(checkTimeWindow(\"").append(startTime).append("\", \"")
           .append(endTime).append("\", \"").append(timezone).append("\", ")
-          .append(spansMidnight);
-
-        if (daysArray.length() > 0) {
-            sb.append(", ").append(daysArray);
-        }
-
-        sb.append("))");
+          .append(spansMidnight).append(", \"")
+          .append(daysOfWeekCsv).append("\"))");
 
         String result = sb.toString();
         logger.debug("Generated DRL condition: {}", result);
