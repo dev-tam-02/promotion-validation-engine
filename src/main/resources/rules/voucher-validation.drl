@@ -8,7 +8,7 @@ rule "Voucher - Minimum Order Amount"
 agenda-group "voucher-validation"
 when
     $customer : Customer()
-    $order : Order(totalAmount < 50000)
+    $order : Order(total < 50000)
     $result : ValidationResult()
     eval(candidate.isVoucher())
 then
@@ -20,7 +20,7 @@ rule "Voucher - VIP Customer Validation"
 agenda-group "voucher-validation"
 when
     $customer : Customer(segments contains "VIP")
-    $order : Order(totalAmount >= 50000)
+    $order : Order(total >= 50000)
     $result : ValidationResult()
     eval(candidate.isVoucher())
 then
@@ -32,7 +32,7 @@ rule "Voucher - Regular Customer Validation"
 agenda-group "voucher-validation"
 when
     $customer : Customer(segments not contains "VIP")
-    $order : Order(totalAmount >= 100000)
+    $order : Order(total >= 100000)
     $result : ValidationResult()
     eval(candidate.isVoucher())
 then
@@ -44,7 +44,7 @@ rule "Voucher - Regular Customer Insufficient Amount"
 agenda-group "voucher-validation"
 when
     $customer : Customer(segments not contains "VIP")
-    $order : Order(totalAmount >= 50000, totalAmount < 100000)
+    $order : Order(total >= 50000, total < 100000)
     $result : ValidationResult()
     eval(candidate.isVoucher())
 then

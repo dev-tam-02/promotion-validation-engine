@@ -60,14 +60,49 @@ public class RuleTranslationService {
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;\n");
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;\n");
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;\n");
-        drl.append("import vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService;\n");
         drl.append("import java.util.List;\n");
-        drl.append("import java.util.ArrayList;\n\n");
+        drl.append("import java.util.ArrayList;\n");
+        drl.append("import java.time.ZonedDateTime;\n");
+        drl.append("import java.time.Instant;\n");
+        drl.append("import java.time.ZoneId;\n");
+        drl.append("import java.time.DayOfWeek;\n");
+        drl.append("import java.time.LocalTime;\n\n");
 
         drl.append("global ValidationResult result;\n");
         drl.append("global List<String> reasonCodes;\n");
-        drl.append("global TimeWindowService timeWindowService;\n");
         drl.append("global Object usageService;\n\n");
+
+        // Generate time window checking function
+        generateTimeWindowFunction(drl);
+    }
+
+    private void generateTimeWindowFunction(StringBuilder drl) {
+        drl.append("function boolean checkTimeWindow(String startTime, String endTime, String timezone, boolean spansMidnight, String... daysOfWeek) {\n");
+        drl.append("    ZonedDateTime zdt = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.of(timezone));\n");
+        drl.append("    DayOfWeek currentDay = zdt.getDayOfWeek();\n");
+        drl.append("    LocalTime currentTime = zdt.toLocalTime();\n");
+        drl.append("    LocalTime start = LocalTime.parse(startTime);\n");
+        drl.append("    LocalTime end = LocalTime.parse(endTime);\n");
+        drl.append("    \n");
+        drl.append("    // Check day of week if specified\n");
+        drl.append("    if (daysOfWeek != null && daysOfWeek.length > 0) {\n");
+        drl.append("        boolean dayMatches = false;\n");
+        drl.append("        for (String day : daysOfWeek) {\n");
+        drl.append("            if (currentDay.name().equals(day)) {\n");
+        drl.append("                dayMatches = true;\n");
+        drl.append("                break;\n");
+        drl.append("            }\n");
+        drl.append("        }\n");
+        drl.append("        if (!dayMatches) return false;\n");
+        drl.append("    }\n");
+        drl.append("    \n");
+        drl.append("    // Check time range\n");
+        drl.append("    if (spansMidnight) {\n");
+        drl.append("        return currentTime.isAfter(start) || currentTime.equals(start) || currentTime.isBefore(end) || currentTime.equals(end);\n");
+        drl.append("    } else {\n");
+        drl.append("        return (currentTime.isAfter(start) || currentTime.equals(start)) && (currentTime.isBefore(end) || currentTime.equals(end));\n");
+        drl.append("    }\n");
+        drl.append("}\n\n");
     }
 
     private void generateRule(StringBuilder drl, Map<String, Object> rootNode,

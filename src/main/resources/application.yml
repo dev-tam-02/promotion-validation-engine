@@ -173,5 +173,3 @@ logging:
   level:
     root: INFO
     vn.viettel.vds.promotion: INFO
-
-# Note: Liquibase is not used with MongoDB - MongoDB handles schema evolution automatically

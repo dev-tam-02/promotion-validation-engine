@@ -30,6 +30,7 @@ public class DroolsCompilationService {
 
     public CompilationResult compileDrl(String tenantId, String ruleId, Integer version, String drlContent) {
         logger.info("Compiling DRL for rule: {}", ruleId);
+        logger.debug("DRL Content:\n{}", drlContent);
 
         try {
             List<String> logs = new ArrayList<>();

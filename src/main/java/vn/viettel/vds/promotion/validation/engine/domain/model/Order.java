@@ -10,8 +10,6 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
     private DiscountCtx discount;
     private Map<String, Object> metadata;
-    private double totalAmount;
-    private double initialAmount;
     private int itemsQuantity;
     private String channel;
 
@@ -28,22 +26,6 @@ public class Order {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public double getInitialAmount() {
-        return initialAmount;
-    }
-
-    public void setInitialAmount(double initialAmount) {
-        this.initialAmount = initialAmount;
     }
 
     public int getItemsQuantity() {

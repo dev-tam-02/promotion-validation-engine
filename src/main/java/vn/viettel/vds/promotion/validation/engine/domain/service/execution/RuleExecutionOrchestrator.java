@@ -24,19 +24,16 @@ public class RuleExecutionOrchestrator {
     private final FactPreparationService factPreparationService;
     private final ExecutionTracingService tracingService;
     private final ExecutionMetricsService metricsService;
-    private final vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService timeWindowService;
     private final Executor executionExecutor;
 
     public RuleExecutionOrchestrator(KieSessionManager sessionManager,
                                      FactPreparationService factPreparationService,
                                      ExecutionTracingService tracingService,
-                                     ExecutionMetricsService metricsService,
-                                     vn.viettel.vds.promotion.validation.engine.domain.service.TimeWindowService timeWindowService) {
+                                     ExecutionMetricsService metricsService) {
         this.sessionManager = sessionManager;
         this.factPreparationService = factPreparationService;
         this.tracingService = tracingService;
         this.metricsService = metricsService;
-        this.timeWindowService = timeWindowService;
         this.executionExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -69,7 +66,6 @@ public class RuleExecutionOrchestrator {
             // Set globals
             session.setGlobal("result", result);
             session.setGlobal("reasonCodes", reasonCodes);
-            session.setGlobal("timeWindowService", timeWindowService);
 
             // Add result to facts
             facts.add(result);
@@ -260,7 +256,6 @@ public class RuleExecutionOrchestrator {
         // Set globals
         session.setGlobal("result", result);
         session.setGlobal("reasonCodes", reasonCodes);
-        session.setGlobal("timeWindowService", timeWindowService);
 
         facts.add(result);
 

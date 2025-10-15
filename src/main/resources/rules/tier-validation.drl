@@ -8,7 +8,7 @@ rule "Tier - Free Shipping Minimum"
 agenda-group "tier-validation"
 when
     $customer : Customer()
-    $order : Order(totalAmount >= 500000)
+    $order : Order(total >= 500000)
     $result : ValidationResult()
     eval(candidate.isTier() && "free_ship_tier".equals(candidate.getId()))
 then
@@ -20,7 +20,7 @@ rule "Tier - Free Shipping Insufficient Amount"
 agenda-group "tier-validation"
 when
     $customer : Customer()
-    $order : Order(totalAmount < 500000)
+    $order : Order(total < 500000)
     $result : ValidationResult()
     eval(candidate.isTier() && "free_ship_tier".equals(candidate.getId()))
 then
@@ -32,7 +32,7 @@ rule "Tier - Premium Tier Validation"
 agenda-group "tier-validation"
 when
     $customer : Customer(segments contains "PREMIUM")
-    $order : Order(totalAmount >= 200000)
+    $order : Order(total >= 200000)
     $result : ValidationResult()
     eval(candidate.isTier() && "premium_tier".equals(candidate.getId()))
 then

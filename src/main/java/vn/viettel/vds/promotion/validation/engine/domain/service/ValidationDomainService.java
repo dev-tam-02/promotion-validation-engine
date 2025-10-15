@@ -16,7 +16,7 @@ public class ValidationDomainService {
         }
 
         // Basic domain rules can be applied here
-        if (order.getTotalAmount() <= 0) {
+        if (order.getTotal() != null && order.getTotal().doubleValue() <= 0) {
             return new ValidationResult(false, "Order total amount must be positive");
         }
 
@@ -45,7 +45,8 @@ public class ValidationDomainService {
 
         return order.getId() != null &&
                 !order.getId().trim().isEmpty() &&
-                order.getTotalAmount() > 0 &&
+                order.getTotal() != null &&
+                order.getTotal().doubleValue() > 0 &&
                 order.getItems() != null &&
                 !order.getItems().isEmpty();
     }

@@ -82,9 +82,9 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         // Example short-circuit conditions
 
         // Check minimum order amount
-        if (request.order().getTotalAmount() < 10000) { // 10k minimum
+        if (request.order().getTotal() != null && request.order().getTotal().doubleValue() < 10000) { // 10k minimum
             logger.info("Short-circuiting validation: order amount {} below minimum",
-                    request.order().getTotalAmount());
+                    request.order().getTotal());
             return true;
         }
 
@@ -105,9 +105,9 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         for (Candidate candidate : request.candidates()) {
             List<ReasonCode> reasons = new ArrayList<>();
 
-            if (request.order().getTotalAmount() < 10000) {
+            if (request.order().getTotal() != null && request.order().getTotal().doubleValue() < 10000) {
                 reasons.add(new ReasonCode("ORDER_AMOUNT_TOO_LOW",
-                        Map.of("minimum", 10000, "actual", request.order().getTotalAmount())));
+                        Map.of("minimum", 10000, "actual", request.order().getTotal().doubleValue())));
             }
 
             if (request.customer().getSegments() != null &&

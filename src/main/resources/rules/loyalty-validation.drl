@@ -8,7 +8,7 @@ rule "Loyalty - Points Redemption"
 agenda-group "loyalty-validation"
 when
     $customer : Customer(loyaltyTier in ("GOLD", "PLATINUM"))
-    $order : Order(totalAmount >= 100000)
+    $order : Order(total >= 100000)
     $result : ValidationResult()
     eval(candidate.isLoyalty())
 then
@@ -32,7 +32,7 @@ rule "Loyalty - Weekend Bonus"
 agenda-group "loyalty-validation"
 when
     $customer : Customer(loyaltyTier == "PLATINUM")
-    $order : Order(totalAmount >= 50000)
+    $order : Order(total >= 50000)
     $result : ValidationResult()
     eval(candidate.isLoyalty() && "weekend_bonus".equals(candidate.getCode()))
 then

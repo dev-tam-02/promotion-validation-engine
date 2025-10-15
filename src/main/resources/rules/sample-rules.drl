@@ -91,21 +91,21 @@ end
 // Rule 9: Total amount rule
 rule "Total Amount Rule"
 when
-    $order : Order(totalAmount >= 100.0)
+    $order : Order(total >= 100.0)
     $result : ValidationResult()
 then
     $result.setMatched(true);
     $result.setMessage("Order total amount is at least $100");
 end
 
-// Rule 10: Initial amount rule
-rule "Initial Amount Rule"
+// Rule 10: Total amount rule (high value)
+rule "High Value Order Rule"
 when
-    $order : Order(initialAmount >= 120.0)
+    $order : Order(total >= 120.0)
     $result : ValidationResult()
 then
     $result.setMatched(true);
-    $result.setMessage("Order initial amount is at least $120");
+    $result.setMessage("Order total is at least $120");
 end
 
 // Rule 11: Items quantity rule
@@ -204,7 +204,7 @@ end
 rule "Complex Rule"
 when
     $customer : Customer(segment == "VIP", redemptionsPerDay < 3)
-    $order : Order(totalAmount >= 100.0)
+    $order : Order(total >= 100.0)
     $redemption : Redemption(redeemingCodeHolder == true)
     $result : ValidationResult()
 then
