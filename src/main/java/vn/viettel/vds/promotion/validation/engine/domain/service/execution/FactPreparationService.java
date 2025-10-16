@@ -143,6 +143,9 @@ public class FactPreparationService {
         }
         customer.setAttrs(attrs);
 
+        logger.info("CONVERTED CUSTOMER - id={}, segments={}, tier={}, region={}",
+                customer.getId(), customer.getSegments(), customer.getLoyaltyTier(), dto.region());
+
         return customer;
     }
 
@@ -197,6 +200,9 @@ public class FactPreparationService {
         order.setCurrency(dto.currency());
         order.setTotal(dto.total());
         order.setItems(convertOrderItemsFromDto(dto.items()));
+        logger.info("CONVERTED ORDER - id={}, total={}, currency={}, items={}",
+                order.getId(), order.getTotal(), order.getCurrency(),
+                order.getItems() != null ? order.getItems().size() : 0);
         return order;
     }
 

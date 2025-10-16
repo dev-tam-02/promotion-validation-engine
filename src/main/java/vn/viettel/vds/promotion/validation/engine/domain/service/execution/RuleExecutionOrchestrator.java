@@ -71,8 +71,12 @@ public class RuleExecutionOrchestrator {
             facts.add(result);
 
             // Execute rules
+            logger.info("BEFORE EXECUTION - executionId={}, facts={}, result.ok={}, result.decision={}, reasonCodes.size={}",
+                    executionId, facts.size(), result.getOk(), result.getDecision(), reasonCodes.size());
             logger.debug("Executing rules with {} facts for executionId: {}", facts.size(), executionId);
             session.execute(facts);
+            logger.info("AFTER EXECUTION - executionId={}, result.ok={}, result.decision={}, reasonCodes={}",
+                    executionId, result.getOk(), result.getDecision(), reasonCodes);
 
             // Build response
             response = buildSuccessResponse(result, reasonCodes, startTime, tracingListener, input);
@@ -275,11 +279,17 @@ public class RuleExecutionOrchestrator {
                                                  long startTime,
                                                  ExecutionTracingService.TracingAgendaEventListener tracingListener,
                                                  RuleEnginePort.ExecuteInput input) {
+        logger.info("BUILD RESPONSE - result.ok={}, result.decision={}, reasonCodes={}, result.reasonCodes={}",
+                result.getOk(), result.getDecision(), reasonCodes, result.getReasonCodes());
+
         ExecuteResponse response = new ExecuteResponse();
 
         response.setOk(Boolean.TRUE.equals(result.getOk()));
         response.setDecision(result.getDecision() != null ? result.getDecision() : "DENY");
         response.setReasonCodes(determineReasonCodes(reasonCodes, result));
+
+        logger.info("RESPONSE BUILT - ok={}, decision={}, reasonCodes={}",
+                response.getOk(), response.getDecision(), response.getReasonCodes());
 
         // Set explain entries
         if (tracingListener != null) {
