@@ -83,7 +83,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                     result.getArtifactBytes(),
                     result.getSize(),
                     result.getLogs(),
-                    result.getDroolsVersion()
+                    result.getDroolsVersion(),
+                    drlContent
             );
 
         } catch (Exception e) {

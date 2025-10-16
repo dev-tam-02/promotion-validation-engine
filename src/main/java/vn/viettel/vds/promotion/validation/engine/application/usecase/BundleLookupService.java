@@ -11,6 +11,7 @@ import vn.viettel.vds.promotion.validation.engine.application.dto.LatestBundleRe
 import vn.viettel.vds.promotion.validation.engine.application.dto.WarmupRequest;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.BundleLookupUseCase;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.*;
+import vn.viettel.vds.promotion.validation.engine.domain.exception.BundleNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -161,5 +162,20 @@ public class BundleLookupService implements BundleLookupUseCase {
         }
 
         return response;
+    }
+
+    @Override
+    public String getDrlContent(String bundleHash) {
+        Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
+        if (bundle.isEmpty()) {
+            throw new BundleNotFoundException(bundleHash);
+        }
+
+        String drlContent = bundle.get().getDrlContent();
+        if (drlContent == null || drlContent.isEmpty()) {
+            throw new IllegalStateException("DRL content not available for bundle: " + bundleHash);
+        }
+
+        return drlContent;
     }
 }

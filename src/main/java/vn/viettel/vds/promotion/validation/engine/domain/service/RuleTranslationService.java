@@ -119,6 +119,9 @@ public class RuleTranslationService {
         drl.append("        result.setOk(true);\n");
         drl.append("end\n\n");
 
+        // Generate negative rules for each condition to track failures
+        generateConditionFailureRules(drl, rootNode, nodeMap);
+
         generateFailureRule(drl, rootNode, nodeMap);
     }
 
@@ -234,10 +237,57 @@ public class RuleTranslationService {
         }
     }
 
+    private void generateConditionFailureRules(StringBuilder drl, Map<String, Object> rootNode,
+                                               Map<String, Map<String, Object>> nodeMap) {
+        // Collect all COND nodes with reason codes
+        List<Map<String, Object>> condNodes = collectConditionNodes(rootNode, nodeMap);
+
+        // Sort by node ID for deterministic rule generation
+        condNodes.sort(Comparator.comparing(node -> (String) node.get("id")));
+
+        for (Map<String, Object> condNode : condNodes) {
+            String nodeId = (String) condNode.get("id");
+            String reasonCode = (String) condNode.get("reasonCode");
+
+            if (reasonCode == null || reasonCode.isEmpty()) {
+                continue;
+            }
+
+            String operatorName = (String) condNode.get("operatorName");
+            Integer operatorVersion = (Integer) condNode.get("operatorVersion");
+            Map<String, Object> params = (Map<String, Object>) condNode.get("params");
+
+            if (params == null) {
+                params = java.util.Collections.emptyMap();
+            }
+
+            OperatorTranslator translator = translatorRegistry.getTranslator(operatorName, operatorVersion);
+            String condition = translator.translate(nodeId, params, reasonCode);
+
+            // Generate negative rule for this condition
+            drl.append("rule \"failure_tracking_").append(sanitizeRuleName(nodeId)).append("\"\n");
+            drl.append("    salience -10\n");
+            drl.append("    when\n");
+            drl.append("        not ValidationResult(decision == \"ALLOW\")\n");
+            drl.append("        not (\n");
+
+            // Add the condition (indented)
+            String[] lines = condition.split("\n");
+            for (String line : lines) {
+                if (!line.trim().isEmpty()) {
+                    drl.append("            ").append(line.trim()).append("\n");
+                }
+            }
+
+            drl.append("        )\n");
+            drl.append("    then\n");
+            drl.append("        reasonCodes.add(\"").append(reasonCode).append("\");\n");
+            drl.append("end\n\n");
+        }
+    }
+
     private void generateFailureRule(StringBuilder drl, Map<String, Object> rootNode,
                                      Map<String, Map<String, Object>> nodeMap) {
-
-        Set<String> allReasonCodes = collectReasonCodes(rootNode, nodeMap);
 
         drl.append("rule \"promotion_validation_failure\"\n");
         drl.append("    salience -100\n");
@@ -246,20 +296,38 @@ public class RuleTranslationService {
         drl.append("    then\n");
         drl.append("        result.setDecision(\"DENY\");\n");
         drl.append("        result.setOk(false);\n");
-
-        if (!allReasonCodes.isEmpty()) {
-            drl.append("        reasonCodes.addAll(java.util.Arrays.asList(");
-            // Sort reason codes alphabetically to ensure deterministic order
-            String codes = allReasonCodes.stream()
-                    .sorted()
-                    .map(code -> "\"" + code + "\"")
-                    .collect(Collectors.joining(", "));
-            drl.append(codes);
-            drl.append("));\n");
-        }
-
         drl.append("        result.setReasonCodes(reasonCodes);\n");
         drl.append("end\n");
+    }
+
+    private List<Map<String, Object>> collectConditionNodes(Map<String, Object> node,
+                                                             Map<String, Map<String, Object>> nodeMap) {
+        List<Map<String, Object>> condNodes = new ArrayList<>();
+        collectConditionNodesRecursive(node, nodeMap, condNodes);
+        return condNodes;
+    }
+
+    private void collectConditionNodesRecursive(Map<String, Object> node,
+                                                Map<String, Map<String, Object>> nodeMap,
+                                                List<Map<String, Object>> condNodes) {
+        String type = (String) node.get("type");
+
+        if ("COND".equals(type)) {
+            condNodes.add(node);
+        } else if ("GROUP".equals(type)) {
+            List<String> children = extractChildIds(node);
+            for (String childId : children) {
+                Map<String, Object> childNode = nodeMap.get(childId);
+                if (childNode != null) {
+                    collectConditionNodesRecursive(childNode, nodeMap, condNodes);
+                }
+            }
+        }
+    }
+
+    private String sanitizeRuleName(String nodeId) {
+        // Replace any non-alphanumeric characters with underscore
+        return nodeId.replaceAll("[^a-zA-Z0-9]", "_");
     }
 
     private Set<String> collectReasonCodes(Map<String, Object> node, Map<String, Map<String, Object>> nodeMap) {

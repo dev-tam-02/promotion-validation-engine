@@ -11,4 +11,6 @@ public interface BundleLookupUseCase {
     LatestBundleResponse getLatestBundle(String tenantId, String subjectType, String subjectKey);
 
     void warmupBundles(WarmupRequest request);
+
+    String getDrlContent(String bundleHash);
 }

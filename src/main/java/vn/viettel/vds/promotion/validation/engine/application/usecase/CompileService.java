@@ -284,6 +284,9 @@ public class CompileService implements CompileUseCase {
 
         bundle.setCreatedAt(Instant.now());
 
+        // Set DRL content
+        bundle.setDrlContent(result.getDrlContent());
+
         return bundle;
     }
 

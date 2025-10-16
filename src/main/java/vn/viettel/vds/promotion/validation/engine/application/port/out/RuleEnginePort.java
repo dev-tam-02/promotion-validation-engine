@@ -104,13 +104,15 @@ public interface RuleEnginePort {
         private final Long size;
         private final List<String> logs;
         private final String droolsVersion;
+        private final String drlContent;
 
-        public CompileResult(String bundleHash, byte[] artifactBytes, Long size, List<String> logs, String droolsVersion) {
+        public CompileResult(String bundleHash, byte[] artifactBytes, Long size, List<String> logs, String droolsVersion, String drlContent) {
             this.bundleHash = bundleHash;
             this.artifactBytes = artifactBytes;
             this.size = size;
             this.logs = logs;
             this.droolsVersion = droolsVersion;
+            this.drlContent = drlContent;
         }
 
         public String getBundleHash() {
@@ -131,6 +133,10 @@ public interface RuleEnginePort {
 
         public String getDroolsVersion() {
             return droolsVersion;
+        }
+
+        public String getDrlContent() {
+            return drlContent;
         }
     }
 

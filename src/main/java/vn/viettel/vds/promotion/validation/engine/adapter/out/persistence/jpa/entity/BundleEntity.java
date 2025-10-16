@@ -56,6 +56,10 @@ public class BundleEntity {
     @Embedded
     private Source source;
 
+    @Lob
+    @Column(name = "drl_content", columnDefinition = "TEXT")
+    private String drlContent;
+
     @Embeddable
     @Getter
     @Setter
