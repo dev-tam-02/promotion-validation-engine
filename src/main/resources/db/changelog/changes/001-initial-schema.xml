@@ -33,6 +33,7 @@
             </column>
             <column name="validation_rule_version_id" type="VARCHAR(100)"/>
             <column name="snapshot_hash" type="VARCHAR(255)"/>
+            <column name="drl_content" type="TEXT"/>
         </createTable>
 
         <createIndex tableName="bundles" indexName="idx_bundle_hash" unique="true">
