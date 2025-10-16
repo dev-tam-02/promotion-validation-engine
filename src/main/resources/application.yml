@@ -180,6 +180,17 @@ promix:
         max-redirections: 3
         scan-interval: 1000
 
+# Bundle Preload Configuration
+validation:
+  engine:
+    bundle:
+      preload-enabled: true
+      preload-on-startup: true
+      preload-timeout-minutes: 10
+      prewarm-session-pool: true
+      prewarm-session-count: 3
+      health-check-interval-seconds: 300
+
 # Logging Configuration
 logging:
   level:
