@@ -1,5 +1,16 @@
 # validation-engine Service Configuration
 
+# MinIO Object Storage Configuration
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: ${MINIO_BUCKET_NAME:validation-bundles}
+  auto-create-bucket: true
+  connect-timeout: 10000
+  write-timeout: 60000
+  read-timeout: 60000
+
 spring:
   # Exclude Zipkin auto-configuration to prevent connection attempts
   autoconfigure:
