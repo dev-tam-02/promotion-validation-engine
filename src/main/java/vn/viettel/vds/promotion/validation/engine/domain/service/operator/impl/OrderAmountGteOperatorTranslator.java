@@ -33,11 +33,18 @@ public class OrderAmountGteOperatorTranslator implements OperatorTranslator {
         StringBuilder sb = new StringBuilder();
         if (currency != null) {
             // If currency is specified, check both amount and currency
-            sb.append("        $order: Order(total >= ").append(amount)
-                    .append(" && currency == \"").append(currency).append("\")\n");
+            // Use BigDecimal.compareTo() for proper BigDecimal comparison
+            sb.append("        $order: Order(total != null, total.compareTo(new BigDecimal(\"")
+              .append(amount)
+              .append("\")) >= 0, currency == \"")
+              .append(currency)
+              .append("\")\n");
         } else {
             // If currency not specified, only check amount
-            sb.append("        $order: Order(total >= ").append(amount).append(")\n");
+            // Use BigDecimal.compareTo() for proper BigDecimal comparison
+            sb.append("        $order: Order(total != null, total.compareTo(new BigDecimal(\"")
+              .append(amount)
+              .append("\")) >= 0)\n");
         }
 
         return sb.toString();

@@ -62,6 +62,7 @@ public class RuleTranslationService {
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;\n");
         drl.append("import java.util.List;\n");
         drl.append("import java.util.ArrayList;\n");
+        drl.append("import java.math.BigDecimal;\n");
         drl.append("import java.time.ZonedDateTime;\n");
         drl.append("import java.time.Instant;\n");
         drl.append("import java.time.ZoneId;\n");

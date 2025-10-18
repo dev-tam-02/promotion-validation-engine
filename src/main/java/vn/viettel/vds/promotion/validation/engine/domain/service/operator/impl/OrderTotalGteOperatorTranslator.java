@@ -16,7 +16,13 @@ public class OrderTotalGteOperatorTranslator implements OperatorTranslator {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("        $order: Order(total >= ").append(amount).append(")\n");
+        // Use BigDecimal.compareTo() for proper BigDecimal comparison in Drools
+        // total != null check to avoid NullPointerException
+        // compareTo returns: -1 if less, 0 if equal, 1 if greater
+        // So >= 0 means total is greater than or equal to amount
+        sb.append("        $order: Order(total != null, total.compareTo(new BigDecimal(\"")
+          .append(amount)
+          .append("\")) >= 0)\n");
 
         return sb.toString();
     }
