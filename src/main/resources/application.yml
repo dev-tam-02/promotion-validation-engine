@@ -2,7 +2,7 @@
 
 # MinIO Object Storage Configuration
 minio:
-  endpoint: http://minio:9002
+  endpoint: http://minio:9000
   access-key: admin
   secret-key: 123123a@
   bucket-name: validation-bundles

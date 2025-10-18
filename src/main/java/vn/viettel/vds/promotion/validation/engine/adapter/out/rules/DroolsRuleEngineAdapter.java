@@ -5,7 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.ExecuteResponse;
+import vn.viettel.vds.promotion.validation.engine.application.port.out.BundleRepositoryPort;
+import vn.viettel.vds.promotion.validation.engine.application.port.out.ObjectStoragePort;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -36,6 +40,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     private final KieSessionManager sessionManager;
     private final RuleExecutionOrchestrator executionOrchestrator;
     private final ExecutionMetricsService metricsService;
+    private final BundleRepositoryPort bundleRepositoryPort;
+    private final ObjectStoragePort objectStoragePort;
 
     private final ConcurrentHashMap<String, byte[]> bundleArtifacts = new ConcurrentHashMap<>();
 
@@ -43,12 +49,16 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                                    DroolsCompilationService compilationService,
                                    KieSessionManager sessionManager,
                                    RuleExecutionOrchestrator executionOrchestrator,
-                                   ExecutionMetricsService metricsService) {
+                                   ExecutionMetricsService metricsService,
+                                   BundleRepositoryPort bundleRepositoryPort,
+                                   ObjectStoragePort objectStoragePort) {
         this.ruleTranslationService = ruleTranslationService;
         this.compilationService = compilationService;
         this.sessionManager = sessionManager;
         this.executionOrchestrator = executionOrchestrator;
         this.metricsService = metricsService;
+        this.bundleRepositoryPort = bundleRepositoryPort;
+        this.objectStoragePort = objectStoragePort;
     }
 
     @Override
@@ -211,21 +221,102 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     }
 
     private KieContainer getOrCreateContainer(String bundleHash) {
+        // 1. Check if container is already in session cache
         KieContainer container = sessionManager.getCachedContainer(bundleHash);
         if (container != null) {
+            logger.debug("Container found in session cache: bundleHash={}", bundleHash);
             return container;
         }
 
+        // 2. Check if artifact bytes are in memory cache
         byte[] artifactBytes = bundleArtifacts.get(bundleHash);
-        if (artifactBytes == null) {
-            throw new IllegalStateException("Bundle not found: " + bundleHash +
-                    ". Make sure to warm up the bundle before execution.");
+        if (artifactBytes != null) {
+            logger.debug("Artifact found in memory cache: bundleHash={}", bundleHash);
+            container = compilationService.createKieContainer(artifactBytes);
+            sessionManager.cacheContainer(bundleHash, container);
+            return container;
         }
 
-        container = compilationService.createKieContainer(artifactBytes);
-        sessionManager.cacheContainer(bundleHash, container);
+        // 3. Try to load bundle from database and object storage
+        logger.info("Bundle not in cache, attempting to load from database: bundleHash={}", bundleHash);
+        try {
+            artifactBytes = loadBundleFromPersistence(bundleHash);
+            if (artifactBytes != null) {
+                logger.info("Bundle loaded from persistence: bundleHash={}, size={}",
+                        bundleHash, artifactBytes.length);
 
-        return container;
+                // Cache the artifact bytes for future use
+                bundleArtifacts.put(bundleHash, artifactBytes);
+
+                // Create and cache the container
+                container = compilationService.createKieContainer(artifactBytes);
+                sessionManager.cacheContainer(bundleHash, container);
+                return container;
+            }
+        } catch (Exception e) {
+            logger.error("Failed to load bundle from persistence: bundleHash={}, error={}",
+                    bundleHash, e.getMessage(), e);
+        }
+
+        // 4. Bundle not found anywhere
+        throw new IllegalStateException("Bundle not found: " + bundleHash +
+                ". The bundle must be compiled and stored before execution.");
+    }
+
+    /**
+     * Load bundle artifact bytes from database and object storage
+     *
+     * @param bundleHash the bundle hash identifier
+     * @return artifact bytes or null if not found
+     */
+    private byte[] loadBundleFromPersistence(String bundleHash) {
+        // Find bundle entity in database
+        Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);
+        if (bundleOpt.isEmpty()) {
+            logger.warn("Bundle not found in database: bundleHash={}", bundleHash);
+            return null;
+        }
+
+        BundleEntity bundle = bundleOpt.get();
+        logger.debug("Found bundle in database: bundleHash={}, tenantId={}, ruleId={}, version={}",
+                bundleHash, bundle.getTenantId(), bundle.getRuleId(), bundle.getRuleVersion());
+
+        // Try to load artifact bytes from object storage
+        if (bundle.getArtifact() != null && bundle.getArtifact().getKey() != null) {
+            String artifactKey = bundle.getArtifact().getKey();
+            logger.debug("Retrieving artifact from storage: key={}", artifactKey);
+
+            Optional<byte[]> artifactBytesOpt = objectStoragePort.retrieve(artifactKey);
+            if (artifactBytesOpt.isPresent()) {
+                logger.info("Artifact retrieved from storage: key={}, size={}",
+                        artifactKey, artifactBytesOpt.get().length);
+                return artifactBytesOpt.get();
+            } else {
+                logger.warn("Artifact not found in storage: key={}", artifactKey);
+            }
+        }
+
+        // Fallback: compile from DRL content if artifact not available
+        if (bundle.getDrlContent() != null && !bundle.getDrlContent().isEmpty()) {
+            logger.info("Artifact not available, compiling from DRL content: bundleHash={}", bundleHash);
+            try {
+                DroolsCompilationService.CompilationResult result = compilationService.compileDrl(
+                        bundle.getTenantId(),
+                        bundle.getRuleId(),
+                        bundle.getRuleVersion(),
+                        bundle.getDrlContent()
+                );
+                logger.info("DRL compiled successfully: bundleHash={}, size={}",
+                        bundleHash, result.getArtifactBytes().length);
+                return result.getArtifactBytes();
+            } catch (Exception e) {
+                logger.error("Failed to compile DRL from database: bundleHash={}, error={}",
+                        bundleHash, e.getMessage(), e);
+            }
+        }
+
+        logger.error("No artifact or DRL content available for bundle: bundleHash={}", bundleHash);
+        return null;
     }
 
     // Legacy methods - delegate to existing RuleEngineAdapter
