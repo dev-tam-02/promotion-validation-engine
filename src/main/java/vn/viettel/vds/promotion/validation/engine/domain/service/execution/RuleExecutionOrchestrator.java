@@ -67,8 +67,9 @@ public class RuleExecutionOrchestrator {
             session.setGlobal("result", result);
             session.setGlobal("reasonCodes", reasonCodes);
 
-            // Add result to facts
-            facts.add(result);
+            // NOTE: Do NOT add result to facts - it should only be a global variable
+            // If added to facts, the failure rule will check the fact (not the global),
+            // causing it to always fire even when the main rule sets decision=ALLOW
 
             // Execute rules
             logger.info("BEFORE EXECUTION - executionId={}, facts={}, result.ok={}, result.decision={}, reasonCodes.size={}",
@@ -261,7 +262,7 @@ public class RuleExecutionOrchestrator {
         session.setGlobal("result", result);
         session.setGlobal("reasonCodes", reasonCodes);
 
-        facts.add(result);
+        // NOTE: Do NOT add result to facts - it should only be a global variable
 
         // Execute
         session.execute(facts);

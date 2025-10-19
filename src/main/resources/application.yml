@@ -102,7 +102,8 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      enabled: false  # Completely disable Zipkin
+      enabled: true  # Enable Zipkin sender creation (required for Tracer bean)
+      endpoint: "http://localhost:65535/api/v2/spans"  # Fake endpoint - no actual connection
 
 # Promix Platform Configuration - Only essential overrides
 promix:

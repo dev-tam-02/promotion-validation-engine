@@ -8,15 +8,24 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Schema(description = "Order item data")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record OrderItemDto(
-        @Schema(description = "Product identifier", example = "prod123", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "Product ID is required")
+        @Schema(description = "SKU identifier (atomic unit of product)", example = "IPHONE-15-PRO-256GB-BLUE", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank(message = "SKU ID is required")
+        @JsonProperty("skuId")
+        String skuId,
+
+        @Schema(description = "Product identifier", example = "IPHONE-15-PRO")
         @JsonProperty("productId")
         String productId,
+
+        @Schema(description = "Collection identifiers", example = "[\"Premium Phones\", \"Apple Products\"]")
+        @JsonProperty("collectionIds")
+        List<String> collectionIds,
 
         @Schema(description = "Item quantity", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Quantity is required")
