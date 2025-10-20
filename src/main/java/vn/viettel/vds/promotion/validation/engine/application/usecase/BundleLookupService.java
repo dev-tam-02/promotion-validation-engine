@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.viettel.vds.promotion.engine.event.WarmupRequestedEvent;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleSubjectIndexEntity;
 import vn.viettel.vds.promotion.validation.engine.application.dto.BundleMetadataResponse;
@@ -98,8 +99,7 @@ public class BundleLookupService implements BundleLookupUseCase {
         ruleEnginePort.warmupBundle(bundleHash, artifactBytes.get());
 
         // Publish warmup requested event
-        EventPublisherPort.WarmupRequestedEvent event = new EventPublisherPort.WarmupRequestedEvent(
-                tenantId, bundleHash);
+        WarmupRequestedEvent event = new WarmupRequestedEvent(tenantId, bundleHash);
         eventPublisherPort.publishWarmupRequested(event);
     }
 

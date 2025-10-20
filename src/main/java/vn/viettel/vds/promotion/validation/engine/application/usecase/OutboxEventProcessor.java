@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
+import vn.viettel.vds.promotion.engine.event.WarmupRequestedEvent;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.EventPublisherPort;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.OutboxEventRepositoryPort;
@@ -90,7 +92,7 @@ public class OutboxEventProcessor {
     private void publishBundlePublishedEvent(OutboxEventEntity event) {
         Map<String, String> payload = event.getPayload();
 
-        EventPublisherPort.BundlePublishedEvent bundleEvent = new EventPublisherPort.BundlePublishedEvent(
+        BundlePublishedEvent bundleEvent = new BundlePublishedEvent(
                 event.getTenantId(),
                 payload.get("ruleId"),
                 payload.get("ruleVersion") != null ? Integer.parseInt(payload.get("ruleVersion")) : null,
@@ -104,7 +106,7 @@ public class OutboxEventProcessor {
     private void publishWarmupRequestedEvent(OutboxEventEntity event) {
         Map<String, String> payload = event.getPayload();
 
-        EventPublisherPort.WarmupRequestedEvent warmupEvent = new EventPublisherPort.WarmupRequestedEvent(
+        WarmupRequestedEvent warmupEvent = new WarmupRequestedEvent(
                 event.getTenantId(),
                 payload.get("bundleHash")
         );

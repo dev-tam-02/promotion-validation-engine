@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.*;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
@@ -308,7 +309,7 @@ public class CompileService implements CompileUseCase {
         outboxEventRepository.save(outboxEvent);
 
         // Publish event
-        EventPublisherPort.BundlePublishedEvent event = new EventPublisherPort.BundlePublishedEvent(
+        BundlePublishedEvent event = new BundlePublishedEvent(
                 request.getTenantId(), request.getRuleId(), request.getVersion(), null, bundleHash);
         eventPublisherPort.publishBundlePublished(event);
     }
