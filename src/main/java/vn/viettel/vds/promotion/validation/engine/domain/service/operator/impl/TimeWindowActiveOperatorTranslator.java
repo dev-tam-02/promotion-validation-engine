@@ -15,59 +15,74 @@ public class TimeWindowActiveOperatorTranslator implements OperatorTranslator {
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         logger.debug("Translating time.window.active operator for node: {}, params: {}", nodeId, params);
 
-        // Extract time window parameters
-        Object daysOfWeekParam = params.get("daysOfWeek");
+        validateRequiredParameters(params);
+
+        String startTime = extractParameter(params, "startTime").toString();
+        String endTime = extractParameter(params, "endTime").toString();
+        String timezone = extractTimezone(params);
+        boolean spansMidnight = extractSpansMidnight(params);
+        String daysOfWeekCsv = buildDaysOfWeekCsv(params.get("daysOfWeek"));
+
+        String result = buildTimeWindowCondition(startTime, endTime, timezone, spansMidnight, daysOfWeekCsv);
+        logger.debug("Generated DRL condition: {}", result);
+        return result;
+    }
+
+    private void validateRequiredParameters(Map<String, Object> params) {
         Object startTimeParam = params.get("startTime");
         Object endTimeParam = params.get("endTime");
-        Object timezoneParam = params.get("timezone");
-        Object spansMidnightParam = params.get("spansMidnight");
 
-        logger.debug("Extracted params - startTime: {}, endTime: {}, timezone: {}, daysOfWeek: {} (type: {}), spansMidnight: {}",
-            startTimeParam, endTimeParam, timezoneParam, daysOfWeekParam,
-            daysOfWeekParam != null ? daysOfWeekParam.getClass().getName() : "null",
-            spansMidnightParam);
-
-        // Validate required parameters
         if (startTimeParam == null || endTimeParam == null) {
             throw new IllegalArgumentException("Missing required parameters 'startTime' and 'endTime' for time.window.active operator");
         }
+    }
 
-        String startTime = startTimeParam.toString();
-        String endTime = endTimeParam.toString();
-        String timezone = timezoneParam != null ? timezoneParam.toString() : "UTC";
-        boolean spansMidnight = spansMidnightParam != null && Boolean.parseBoolean(spansMidnightParam.toString());
+    private Object extractParameter(Map<String, Object> params, String key) {
+        return params.get(key);
+    }
 
-        // Build days of week CSV string for function call
-        String daysOfWeekCsv = "";
-        if (daysOfWeekParam != null) {
-            logger.debug("daysOfWeekParam type: {}, value: {}", daysOfWeekParam.getClass().getName(), daysOfWeekParam);
+    private String extractTimezone(Map<String, Object> params) {
+        Object timezoneParam = params.get("timezone");
+        return timezoneParam != null ? timezoneParam.toString() : "UTC";
+    }
 
-            if (daysOfWeekParam instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<?> daysList = (List<?>) daysOfWeekParam;
-                StringBuilder csvBuilder = new StringBuilder();
-                for (int i = 0; i < daysList.size(); i++) {
-                    Object dayObj = daysList.get(i);
-                    if (i > 0) csvBuilder.append(",");
-                    String dayStr = dayObj != null ? dayObj.toString() : "";
-                    csvBuilder.append(dayStr.toUpperCase());
-                }
-                daysOfWeekCsv = csvBuilder.toString();
-            } else {
-                logger.warn("daysOfWeek is not a List, it's: {}", daysOfWeekParam.getClass().getName());
-            }
+    private boolean extractSpansMidnight(Map<String, Object> params) {
+        Object spansMidnightParam = params.get("spansMidnight");
+        return spansMidnightParam != null && Boolean.parseBoolean(spansMidnightParam.toString());
+    }
+
+    private String buildDaysOfWeekCsv(Object daysOfWeekParam) {
+        if (daysOfWeekParam == null) {
+            return "";
         }
 
-        // Generate function call with CSV string for days
-        StringBuilder sb = new StringBuilder();
-        sb.append("eval(checkTimeWindow(\"").append(startTime).append("\", \"")
-          .append(endTime).append("\", \"").append(timezone).append("\", ")
-          .append(spansMidnight).append(", \"")
-          .append(daysOfWeekCsv).append("\"))");
+        logger.debug("daysOfWeekParam type: {}, value: {}", daysOfWeekParam.getClass().getName(), daysOfWeekParam);
 
-        String result = sb.toString();
-        logger.debug("Generated DRL condition: {}", result);
-        return result;
+        if (!(daysOfWeekParam instanceof List)) {
+            logger.warn("daysOfWeek is not a List, it's: {}", daysOfWeekParam.getClass().getName());
+            return "";
+        }
+
+        return convertListToCsv((List<?>) daysOfWeekParam);
+    }
+
+    private String convertListToCsv(List<?> daysList) {
+        StringBuilder csvBuilder = new StringBuilder();
+        for (int i = 0; i < daysList.size(); i++) {
+            if (i > 0) {
+                csvBuilder.append(",");
+            }
+            Object dayObj = daysList.get(i);
+            String dayStr = dayObj != null ? dayObj.toString() : "";
+            csvBuilder.append(dayStr.toUpperCase());
+        }
+        return csvBuilder.toString();
+    }
+
+    private String buildTimeWindowCondition(String startTime, String endTime, String timezone,
+                                            boolean spansMidnight, String daysOfWeekCsv) {
+        return String.format("eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))",
+                startTime, endTime, timezone, spansMidnight, daysOfWeekCsv);
     }
 
     @Override
