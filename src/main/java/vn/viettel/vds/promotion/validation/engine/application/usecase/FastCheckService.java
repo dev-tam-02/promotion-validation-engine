@@ -55,15 +55,10 @@ public class FastCheckService implements FastCheckUseCase {
             return FastCheckResponse.allow("No fast check rules configured");
         }
 
-        List<String> failedChecks = new ArrayList<>();
-        List<String> explanations = new ArrayList<>();
-
         // 1. TIME CHECKS (fastest - just timestamp comparison)
         if (config.hasTimeConstraints()) {
             TimeCheckResult timeResult = checkTimeConstraints(config, request);
             if (!timeResult.passed) {
-                failedChecks.add(timeResult.failureCode);
-                explanations.add(timeResult.explanation);
                 return FastCheckResponse.deny(timeResult.failureCode, timeResult.explanation);
             }
         }
@@ -72,8 +67,6 @@ public class FastCheckService implements FastCheckUseCase {
         if (config.hasOrderConstraints()) {
             OrderCheckResult orderResult = checkOrderConstraints(config, request);
             if (!orderResult.passed) {
-                failedChecks.add(orderResult.failureCode);
-                explanations.add(orderResult.explanation);
                 return FastCheckResponse.deny(orderResult.failureCode, orderResult.explanation);
             }
         }
@@ -82,8 +75,6 @@ public class FastCheckService implements FastCheckUseCase {
         if (config.hasBlacklistCheck()) {
             BlacklistCheckResult blacklistResult = checkBlacklist(request);
             if (!blacklistResult.passed) {
-                failedChecks.add(blacklistResult.failureCode);
-                explanations.add(blacklistResult.explanation);
                 return FastCheckResponse.deny(blacklistResult.failureCode, blacklistResult.explanation);
             }
         }
@@ -92,8 +83,6 @@ public class FastCheckService implements FastCheckUseCase {
         if (config.hasRateLimiting()) {
             RateLimitResult rateResult = checkRateLimit(config, request);
             if (!rateResult.passed) {
-                failedChecks.add(rateResult.failureCode);
-                explanations.add(rateResult.explanation);
                 return FastCheckResponse.deny(rateResult.failureCode, rateResult.explanation);
             }
         }
