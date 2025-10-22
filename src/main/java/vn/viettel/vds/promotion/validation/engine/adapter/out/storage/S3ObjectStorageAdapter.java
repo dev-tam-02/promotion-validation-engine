@@ -9,10 +9,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.ObjectSto
 import vn.viettel.vds.promotion.validation.engine.config.MinioProperties;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 /**
