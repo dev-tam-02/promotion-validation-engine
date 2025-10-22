@@ -274,7 +274,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);
         if (bundleOpt.isEmpty()) {
             logger.warn("Bundle not found in database: bundleHash={}", bundleHash);
-            return null;
+            return new byte[0];
         }
 
         BundleEntity bundle = bundleOpt.get();
@@ -316,7 +316,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         }
 
         logger.error("No artifact or DRL content available for bundle: bundleHash={}", bundleHash);
-        return null;
+        return new byte[0];
     }
 
     // Legacy methods - delegate to existing RuleEngineAdapter
