@@ -1,91 +1,62 @@
-version: '3.9'
+version: '3.8'
+
+networks:
+  promix-network:
+    external: true
 
 services:
   validation-engine:
     build:
       context: .
       dockerfile: Dockerfile
-    image: promix/validation-engine:latest
-    container_name: validation-engine
-    environment:
-      # Spring profiles
-      SPRING_PROFILES_ACTIVE: docker
-      SERVER_PORT: 8081
-
-      # Database
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/promixdb
-      SPRING_DATASOURCE_USERNAME: promix
-      SPRING_DATASOURCE_PASSWORD: promix123
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-
-      # Redis cache
-      SPRING_REDIS_HOST: localhost
-      SPRING_REDIS_PORT: 6379
-      SPRING_REDIS_PASSWORD: promix123
-
-      # JVM options for container
-      JAVA_OPTS: >
-        -Xms512m
-        -Xmx1g
-        -XX:+UseG1GC
-        -XX:MaxGCPauseMillis=200
-        -XX:+UseStringDeduplication
-        -XX:+ExitOnOutOfMemoryError
-        -XX:+HeapDumpOnOutOfMemoryError
-        -XX:HeapDumpPath=/tmp/heapdump.hprof
-        -Djava.security.egd=file:/dev/./urandom
-        -Dspring.jmx.enabled=true
-        -Dcom.sun.management.jmxremote
-        -Dcom.sun.management.jmxremote.port=9091
-        -Dcom.sun.management.jmxremote.rmi.port=9091
-        -Dcom.sun.management.jmxremote.authenticate=false
-        -Dcom.sun.management.jmxremote.ssl=false
-
-      # Debug port
-      DEBUG_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5001
-
-    ports:
-      - "8081:8081"    # Application port
-      - "5001:5001"    # Debug port
-      - "9091:9091"    # JMX port
-
-    volumes:
-      - ./logs:/app/logs
-      - ./src/main/resources/rules:/app/rules:ro
-      - heap-dumps:/tmp
-
+    image: validation-engine-service:latest
+    container_name: validation-engine-service
+    restart: unless-stopped
     networks:
       - promix-network
+    environment:
+      # MariaDB Configuration (validation-engine dùng MariaDB)
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/rule_engine?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123123a@
+
+      # MinIO Configuration
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=123123a@
+
+      # Kafka Cluster Configuration
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka-1:9092,kafka-2:9092,kafka-3:9092
+
+      # Redis Cluster Configuration
+      - PROMIX_CACHE_REDISSON_CONFIG_CLUSTER_NODES_ADDRESSES=redis://node1:6379,redis://node2:6380,redis://node3:6381
+
+      # JVM Options
+      - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC
+
+      # Application Configuration
+      - SERVER_PORT=8080
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
+
+      # Logging
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_VN_VIETTEL_VDS=DEBUG
 
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health" ]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "5"
-
-    restart: unless-stopped
-
-volumes:
-  heap-dumps:
-    driver: local
-
-networks:
-  promix-network:
-    external: true
-    name: promix-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.validation-engine.rule=Host(`validation-engine.promixhub.com`)"
+      - "traefik.http.routers.validation-engine.entrypoints=websecure"
+      - "traefik.http.routers.validation-engine.tls=true"
+      - "traefik.http.routers.validation-engine.tls.certresolver=letsencrypt"
+      - "traefik.http.services.validation-engine.loadbalancer.server.port=8080"
+      - "traefik.http.services.validation-engine.loadbalancer.healthcheck.path=/actuator/health"
+      - "traefik.http.routers.validation-engine.middlewares=validation-engine-ratelimit,validation-engine-headers"
+      - "traefik.http.middlewares.validation-engine-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.validation-engine-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
