@@ -15,6 +15,10 @@ public class RuleTranslationService {
     private static final Logger logger = LoggerFactory.getLogger(RuleTranslationService.class);
     private static final String CHILDREN_KEY = "children";
 
+    // Node type constants
+    private static final String NODE_TYPE_GROUP = "GROUP";
+    private static final String NODE_TYPE_COND = "COND";
+
     // Drools DRL syntax constants
     private static final String DRL_WHEN = "    when\n";
     private static final String DRL_THEN = "    then\n";
@@ -163,9 +167,9 @@ public class RuleTranslationService {
 
         String type = (String) node.get("type");
 
-        if ("GROUP".equals(type)) {
+        if (NODE_TYPE_GROUP.equals(type)) {
             generateGroupConditions(drl, node, nodeMap, indent);
-        } else if ("COND".equals(type)) {
+        } else if (NODE_TYPE_COND.equals(type)) {
             generateConditionNode(drl, node, indent);
         }
     }
@@ -349,9 +353,9 @@ public class RuleTranslationService {
                                                 List<Map<String, Object>> condNodes) {
         String type = (String) node.get("type");
 
-        if ("COND".equals(type)) {
+        if (NODE_TYPE_COND.equals(type)) {
             condNodes.add(node);
-        } else if ("GROUP".equals(type)) {
+        } else if (NODE_TYPE_GROUP.equals(type)) {
             List<String> children = extractChildIds(node);
             for (String childId : children) {
                 Map<String, Object> childNode = nodeMap.get(childId);
