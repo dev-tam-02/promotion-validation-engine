@@ -15,6 +15,11 @@ public class RuleTranslationService {
     private static final Logger logger = LoggerFactory.getLogger(RuleTranslationService.class);
     private static final String CHILDREN_KEY = "children";
 
+    // Drools DRL syntax constants
+    private static final String DRL_WHEN = "    when\n";
+    private static final String DRL_THEN = "    then\n";
+    private static final String DRL_END = "end\n\n";
+
     private final OperatorTranslatorRegistry translatorRegistry;
 
     public RuleTranslationService(OperatorTranslatorRegistry translatorRegistry) {
@@ -115,16 +120,16 @@ public class RuleTranslationService {
         generateDebugRule(drl);
 
         drl.append("rule \"promotion_validation_rule\"\n");
-        drl.append("    when\n");
+        drl.append(DRL_WHEN);
 
         generateConditions(drl, rootNode, nodeMap, 2);
 
-        drl.append("    then\n");
+        drl.append(DRL_THEN);
         drl.append("        System.out.println(\"[DROOLS] ✅ Rule MATCHED - All conditions passed\");\n");
         drl.append("        result.setDecision(\"ALLOW\");\n");
         drl.append("        result.setOk(true);\n");
         drl.append("        insert(new RuleMatched());  // Mark rule as matched to prevent failure rules from firing\n");
-        drl.append("end\n\n");
+        drl.append(DRL_END);
 
         // Generate negative rules for each condition to track failures
         generateConditionFailureRules(drl, rootNode, nodeMap);
@@ -135,10 +140,10 @@ public class RuleTranslationService {
     private void generateDebugRule(StringBuilder drl) {
         drl.append("rule \"debug_input_values\"\n");
         drl.append("    salience 1000\n");  // High priority to run first
-        drl.append("    when\n");
+        drl.append(DRL_WHEN);
         drl.append("        $order: Order()\n");
         drl.append("        $customer: Customer()\n");
-        drl.append("    then\n");
+        drl.append(DRL_THEN);
         drl.append("        System.out.println(\"[DROOLS-DEBUG] ==================== INPUT VALUES ====================\");\n");
         drl.append("        System.out.println(\"[DROOLS-DEBUG] Order.id: \" + $order.getId());\n");
         drl.append("        System.out.println(\"[DROOLS-DEBUG] Order.total: \" + $order.getTotal());\n");
@@ -150,7 +155,7 @@ public class RuleTranslationService {
         drl.append("        System.out.println(\"[DROOLS-DEBUG] Customer.segments type: \" + ($customer.getSegments() != null ? $customer.getSegments().getClass().getName() : \"null\"));\n");
         drl.append("        System.out.println(\"[DROOLS-DEBUG] Customer.segments contains VIP: \" + ($customer.getSegments() != null && $customer.getSegments().contains(\"VIP\")));\n");
         drl.append("        System.out.println(\"[DROOLS-DEBUG] ====================================================\");\n");
-        drl.append("end\n\n");
+        drl.append(DRL_END);
     }
 
     private void generateConditions(StringBuilder drl, Map<String, Object> node,
@@ -295,7 +300,7 @@ public class RuleTranslationService {
             // Generate negative rule for this condition
             drl.append("rule \"failure_tracking_").append(sanitizeRuleName(nodeId)).append("\"\n");
             drl.append("    salience -10\n");
-            drl.append("    when\n");
+            drl.append(DRL_WHEN);
             drl.append("        not RuleMatched()  // Only fire if main rule didn't match\n");
             drl.append("        not (\n");
 
@@ -308,14 +313,14 @@ public class RuleTranslationService {
             }
 
             drl.append("        )\n");
-            drl.append("    then\n");
+            drl.append(DRL_THEN);
             drl.append("        System.out.println(\"[DROOLS] ❌ Condition FAILED - nodeId=")
                .append(nodeId)
                .append(", reasonCode=")
                .append(reasonCode)
                .append("\");\n");
             drl.append("        reasonCodes.add(\"").append(reasonCode).append("\");\n");
-            drl.append("end\n\n");
+            drl.append(DRL_END);
         }
     }
 
@@ -324,9 +329,9 @@ public class RuleTranslationService {
 
         drl.append("rule \"promotion_validation_failure\"\n");
         drl.append("    salience -100\n");
-        drl.append("    when\n");
+        drl.append(DRL_WHEN);
         drl.append("        not RuleMatched()  // Only fire if main rule didn't match\n");
-        drl.append("    then\n");
+        drl.append(DRL_THEN);
         drl.append("        System.out.println(\"[DROOLS] 🚫 Overall DENY - reasonCodes=\" + reasonCodes);\n");
         drl.append("        result.setDecision(\"DENY\");\n");
         drl.append("        result.setOk(false);\n");
