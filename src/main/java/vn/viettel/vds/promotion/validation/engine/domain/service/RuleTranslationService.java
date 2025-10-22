@@ -367,39 +367,6 @@ public class RuleTranslationService {
         return nodeId.replaceAll("[^a-zA-Z0-9]", "_");
     }
 
-    private Set<String> collectReasonCodes(Map<String, Object> node, Map<String, Map<String, Object>> nodeMap) {
-        // Use LinkedHashSet to preserve insertion order
-        Set<String> reasonCodes = new LinkedHashSet<>();
-        collectReasonCodesRecursive(node, nodeMap, reasonCodes);
-        return reasonCodes;
-    }
-
-    private void collectReasonCodesRecursive(Map<String, Object> node, Map<String, Map<String, Object>> nodeMap,
-                                             Set<String> reasonCodes) {
-        String type = (String) node.get("type");
-
-        if ("COND".equals(type)) {
-            String reasonCode = (String) node.get("reasonCode");
-            if (reasonCode != null) {
-                reasonCodes.add(reasonCode);
-            }
-        } else if ("GROUP".equals(type)) {
-            List<String> children = extractChildIds(node);
-            if (!children.isEmpty()) {
-                // Sort children to ensure deterministic collection order
-                List<String> sortedChildren = new ArrayList<>(children);
-                Collections.sort(sortedChildren);
-
-                for (String childId : sortedChildren) {
-                    Map<String, Object> childNode = nodeMap.get(childId);
-                    if (childNode != null) {
-                        collectReasonCodesRecursive(childNode, nodeMap, reasonCodes);
-                    }
-                }
-            }
-        }
-    }
-
     private Map<String, Object> findRootNode(Map<String, Map<String, Object>> nodeMap) {
         Set<String> childIds = collectAllChildIds(nodeMap);
         return findNodeNotInChildIds(nodeMap, childIds);
