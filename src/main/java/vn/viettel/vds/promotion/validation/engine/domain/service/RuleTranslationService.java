@@ -134,7 +134,7 @@ public class RuleTranslationService {
         // Generate negative rules for each condition to track failures
         generateConditionFailureRules(drl, rootNode, nodeMap);
 
-        generateFailureRule(drl, rootNode, nodeMap);
+        generateFailureRule(drl);
     }
 
     private void generateDebugRule(StringBuilder drl) {
@@ -324,9 +324,7 @@ public class RuleTranslationService {
         }
     }
 
-    private void generateFailureRule(StringBuilder drl, Map<String, Object> rootNode,
-                                     Map<String, Map<String, Object>> nodeMap) {
-
+    private void generateFailureRule(StringBuilder drl) {
         drl.append("rule \"promotion_validation_failure\"\n");
         drl.append("    salience -100\n");
         drl.append(DRL_WHEN);

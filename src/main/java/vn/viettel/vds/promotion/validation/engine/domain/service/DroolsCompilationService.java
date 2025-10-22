@@ -141,16 +141,6 @@ public class DroolsCompilationService {
         }
     }
 
-    private String generateBundleHash(byte[] artifactBytes) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(artifactBytes);
-            return "sha256:" + bytesToHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CompilationException("SHA-256 algorithm not available", e);
-        }
-    }
-
     /**
      * Generate deterministic bundle hash from DRL content.
      * This ensures consistency across compilations as Drools compiler may add
