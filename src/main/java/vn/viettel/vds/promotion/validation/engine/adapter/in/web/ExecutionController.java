@@ -72,7 +72,7 @@ public class ExecutionController {
             errorResponse.setDecision("DENY");
             errorResponse.setReasonCodes(List.of("EXECUTION_ERROR"));
 
-            return ResponseEntity.ok(errorResponse);
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 
@@ -111,7 +111,7 @@ public class ExecutionController {
         } catch (Exception e) {
             logger.error("Batch execution failed: batchSize={}, error={}",
                     requests.size(), e.getMessage(), e);
-            
+
             // Create error responses for all requests in batch
             List<ExecuteResponse> errorResponses = new ArrayList<>();
             for (int i = 0; i < requests.size(); i++) {
@@ -121,8 +121,8 @@ public class ExecutionController {
                 errorResponse.setReasonCodes(List.of("EXECUTION_ERROR"));
                 errorResponses.add(errorResponse);
             }
-            
-            return ResponseEntity.ok(errorResponses);
+
+            return ResponseEntity.internalServerError().body(errorResponses);
         }
     }
 

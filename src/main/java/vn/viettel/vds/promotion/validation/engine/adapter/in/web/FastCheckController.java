@@ -64,7 +64,7 @@ public class FastCheckController {
             log.error("Fast check failed: {}", e.getMessage(), e);
 
             // Return DENY on error (fail closed for security)
-            return ResponseEntity.ok(FastCheckResponse.deny(
+            return ResponseEntity.internalServerError().body(FastCheckResponse.deny(
                     "FAST_CHECK_ERROR",
                     "Fast check evaluation failed: " + e.getMessage()
             ));

@@ -68,7 +68,7 @@ public class CompilationController {
             errorResponse.setOk(false);
             errorResponse.setErrors(List.of("Compilation failed: " + e.getMessage()));
 
-            return ResponseEntity.ok(errorResponse);
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 
