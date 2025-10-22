@@ -213,6 +213,6 @@ logging:
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    path: ${spring.application.context-path}/v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
+    path: ${spring.application.context-path}/swagger-ui.html
