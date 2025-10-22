@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/performance")
+@RequestMapping("${spring.application.context-path}/api/v1/performance")
 @Tag(name = "Performance Monitoring", description = "Performance monitoring and cache management APIs")
 @ConditionalOnProperty(value = "validation.engine.monitoring.enabled", havingValue = "true", matchIfMissing = true)
 public class PerformanceMonitoringController {

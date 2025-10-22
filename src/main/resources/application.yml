@@ -18,6 +18,7 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
   application:
     name: validation-engine
+    context-path: /promotion/promotion-rule-engine
 
   # DataSource Configuration for MariaDB
   datasource:
@@ -208,3 +209,10 @@ logging:
   level:
     root: INFO
     vn.viettel.vds.promotion: INFO
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

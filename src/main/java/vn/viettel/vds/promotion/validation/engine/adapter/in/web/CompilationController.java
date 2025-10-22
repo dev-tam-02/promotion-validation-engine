@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v1/compile")
+@RequestMapping("${spring.application.context-path}/v1/compile")
 @Tag(name = "Rule Compilation", description = "Rule compilation API")
 public class CompilationController {
 

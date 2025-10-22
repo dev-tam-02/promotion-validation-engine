@@ -12,7 +12,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.in.BundleLook
 import vn.viettel.vds.promotion.validation.engine.domain.exception.BundleNotFoundException;
 
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("${spring.application.context-path}/v1")
 public class BundleController {
 
     @Autowired

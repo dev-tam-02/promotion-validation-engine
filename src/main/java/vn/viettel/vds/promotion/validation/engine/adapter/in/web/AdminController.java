@@ -11,7 +11,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.in.ConfigMana
 import vn.viettel.vds.promotion.validation.engine.application.port.in.HealthCheckUseCase;
 
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("${spring.application.context-path}/v1")
 public class AdminController {
 
     @Autowired

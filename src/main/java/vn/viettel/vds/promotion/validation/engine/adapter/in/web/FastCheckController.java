@@ -29,7 +29,7 @@ import java.util.List;
  * Performance target: < 5ms response time
  */
 @RestController
-@RequestMapping("/v1/fast-check")
+@RequestMapping("${spring.application.context-path}/v1/fast-check")
 @Tag(name = "Fast Rule Check", description = "Quick rule evaluation without Drools engine")
 @Slf4j
 @RequiredArgsConstructor

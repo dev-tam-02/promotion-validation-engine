@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/test")
+@RequestMapping("${spring.application.context-path}/v1/test")
 @Tag(name = "Test", description = "Test endpoints for error handling validation")
 public class TestController {
 

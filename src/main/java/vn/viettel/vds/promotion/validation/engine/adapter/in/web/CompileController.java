@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/compiler")
+@RequestMapping("${spring.application.context-path}/v1/compiler")
 public class CompileController {
 
     @Autowired

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.ManageRulesUseCase;
 
 @RestController
-@RequestMapping("/api/rules")
+@RequestMapping("${spring.application.context-path}/api/rules")
 public class RuleAdminController {
 
     private final ManageRulesUseCase manageRulesUseCase;

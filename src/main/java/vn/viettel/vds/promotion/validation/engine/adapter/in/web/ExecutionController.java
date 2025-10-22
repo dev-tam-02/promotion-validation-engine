@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v1/execute")
+@RequestMapping("${spring.application.context-path}/v1/execute")
 @Tag(name = "Rule Execution", description = "Rule execution API")
 public class ExecutionController {
 

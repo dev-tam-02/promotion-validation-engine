@@ -18,7 +18,7 @@ import vn.viettel.vds.promotion.validation.engine.application.service.Translator
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/operators")
+@RequestMapping("${spring.application.context-path}/v1/operators")
 @Tag(name = "Operator Discovery", description = "Operator translator discovery and validation API")
 public class OperatorDiscoveryController {
 

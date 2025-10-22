@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v1/metrics")
+@RequestMapping("${spring.application.context-path}/v1/metrics")
 @Tag(name = "Rule Execution Metrics", description = "Rule execution metrics and monitoring API")
 public class MetricsController {
 
