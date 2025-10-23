@@ -2,7 +2,6 @@ package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +22,15 @@ public class OutboxEventProcessor {
     private static final int MAX_RETRY_ATTEMPTS = 5;
     private static final int BATCH_SIZE = 50;
 
-    @Autowired
-    private OutboxEventRepositoryPort outboxEventRepository;
+    private final OutboxEventRepositoryPort outboxEventRepository;
+    private final EventPublisherPort eventPublisher;
 
-    @Autowired
-    private EventPublisherPort eventPublisher;
+    public OutboxEventProcessor(
+            OutboxEventRepositoryPort outboxEventRepository,
+            EventPublisherPort eventPublisher) {
+        this.outboxEventRepository = outboxEventRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     @Scheduled(fixedDelay = 5000) // Process events every 5 seconds
     @Transactional

@@ -2,7 +2,6 @@ package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.application.dto.HealthResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.HealthCheckUseCase;
@@ -20,8 +19,11 @@ public class HealthCheckService implements HealthCheckUseCase {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Autowired
-    private ObjectStoragePort objectStoragePort;
+    private final ObjectStoragePort objectStoragePort;
+
+    public HealthCheckService(ObjectStoragePort objectStoragePort) {
+        this.objectStoragePort = objectStoragePort;
+    }
 
     @Override
     public HealthResponse getHealth() {

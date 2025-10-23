@@ -70,8 +70,7 @@ public class MinioConfiguration {
                 logger.info("Bucket '{}' already exists", bucketName);
             }
         } catch (Exception e) {
-            logger.error("Failed to create or check bucket: {}", minioProperties.getBucketName(), e);
-            throw new IllegalStateException("Could not initialize MinIO bucket", e);
+            throw new IllegalStateException("Could not initialize MinIO bucket: " + minioProperties.getBucketName(), e);
         }
     }
 }

@@ -17,8 +17,11 @@ import java.util.Optional;
 @Transactional
 public class ConfigManagementService implements ConfigManagementUseCase {
 
-    @Autowired
-    private EngineConfigRepositoryPort engineConfigRepository;
+    private final EngineConfigRepositoryPort engineConfigRepository;
+
+    public ConfigManagementService(EngineConfigRepositoryPort engineConfigRepository) {
+        this.engineConfigRepository = engineConfigRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)

@@ -26,18 +26,21 @@ public class ExecutionService implements ExecutionUseCase {
 
     private static final String BUNDLE_NOT_FOUND_MSG = "Bundle not found: ";
 
-    @Autowired
-    private BundleRepositoryPort bundleRepository;
+    private final BundleRepositoryPort bundleRepository;
+    private final EngineConfigRepositoryPort engineConfigRepository;
+    private final RuleEnginePort ruleEnginePort;
+    private final ObjectStoragePort objectStoragePort;
 
-    @Autowired
-    private EngineConfigRepositoryPort engineConfigRepository;
-
-    @Autowired
-    @Qualifier("droolsRuleEngineAdapter")
-    private RuleEnginePort ruleEnginePort;
-
-    @Autowired
-    private ObjectStoragePort objectStoragePort;
+    public ExecutionService(
+            BundleRepositoryPort bundleRepository,
+            EngineConfigRepositoryPort engineConfigRepository,
+            @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
+            ObjectStoragePort objectStoragePort) {
+        this.bundleRepository = bundleRepository;
+        this.engineConfigRepository = engineConfigRepository;
+        this.ruleEnginePort = ruleEnginePort;
+        this.objectStoragePort = objectStoragePort;
+    }
 
     @Override
     public ExecuteResponse execute(ExecuteRequest request) {

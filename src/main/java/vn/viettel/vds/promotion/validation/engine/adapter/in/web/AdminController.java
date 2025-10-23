@@ -1,7 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.viettel.vds.promotion.validation.engine.application.dto.EngineConfigResponse;
@@ -14,11 +13,13 @@ import vn.viettel.vds.promotion.validation.engine.application.port.in.HealthChec
 @RequestMapping("${spring.application.context-path}/v1")
 public class AdminController {
 
-    @Autowired
-    private HealthCheckUseCase healthCheckUseCase;
+    private final HealthCheckUseCase healthCheckUseCase;
+    private final ConfigManagementUseCase configManagementUseCase;
 
-    @Autowired
-    private ConfigManagementUseCase configManagementUseCase;
+    public AdminController(HealthCheckUseCase healthCheckUseCase, ConfigManagementUseCase configManagementUseCase) {
+        this.healthCheckUseCase = healthCheckUseCase;
+        this.configManagementUseCase = configManagementUseCase;
+    }
 
     @GetMapping("/health")
     public ResponseEntity<HealthResponse> getHealth() {

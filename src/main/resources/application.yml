@@ -18,7 +18,7 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
   application:
     name: validation-engine
-    context-path: /promotion/promotion-rule-engine
+    context-path: /promotion/promotion-validation-engine
 
   # DataSource Configuration for MariaDB
   datasource:
@@ -67,6 +67,13 @@ spring:
 # Server Configuration
 server:
   port: 16013
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: ${spring.application.context-path}/v3/api-docs
+  swagger-ui:
+    path: ${spring.application.context-path}/swagger-ui.html
 
 # Eureka Configuration
 eureka:
@@ -209,10 +216,3 @@ logging:
   level:
     root: INFO
     vn.viettel.vds.promotion: INFO
-
-# SpringDoc OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: ${spring.application.context-path}/v3/api-docs
-  swagger-ui:
-    path: ${spring.application.context-path}/swagger-ui.html

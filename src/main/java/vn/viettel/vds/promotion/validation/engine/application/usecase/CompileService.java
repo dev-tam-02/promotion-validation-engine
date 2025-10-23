@@ -27,27 +27,30 @@ public class CompileService implements CompileUseCase {
 
     private static final String ENGINE_TYPE_DROOLS = "drools";
 
-    @Autowired
-    private BundleRepositoryPort bundleRepository;
-
-    @Autowired
-    private CompileJobRepositoryPort compileJobRepository;
-
-    @Autowired
-    private OutboxEventRepositoryPort outboxEventRepository;
-
-    @Autowired
-    private ObjectStoragePort objectStoragePort;
-
-    @Autowired
-    private EventPublisherPort eventPublisherPort;
-
-    @Autowired
-    @Qualifier("droolsRuleEngineAdapter")
-    private RuleEnginePort ruleEnginePort;
+    private final BundleRepositoryPort bundleRepository;
+    private final CompileJobRepositoryPort compileJobRepository;
+    private final OutboxEventRepositoryPort outboxEventRepository;
+    private final ObjectStoragePort objectStoragePort;
+    private final EventPublisherPort eventPublisherPort;
+    private final RuleEnginePort ruleEnginePort;
 
     @Value("${validation.engine.object-storage.store-type:s3}")
     private String objectStoreType;
+
+    public CompileService(
+            BundleRepositoryPort bundleRepository,
+            CompileJobRepositoryPort compileJobRepository,
+            OutboxEventRepositoryPort outboxEventRepository,
+            ObjectStoragePort objectStoragePort,
+            EventPublisherPort eventPublisherPort,
+            @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+        this.bundleRepository = bundleRepository;
+        this.compileJobRepository = compileJobRepository;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectStoragePort = objectStoragePort;
+        this.eventPublisherPort = eventPublisherPort;
+        this.ruleEnginePort = ruleEnginePort;
+    }
 
     @Override
     public CompileResponse compile(CompileRequest request) {

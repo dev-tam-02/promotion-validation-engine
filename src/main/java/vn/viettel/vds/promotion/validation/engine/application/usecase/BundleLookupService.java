@@ -1,6 +1,5 @@
 package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,21 +21,24 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class BundleLookupService implements BundleLookupUseCase {
 
-    @Autowired
-    private BundleRepositoryPort bundleRepository;
+    private final BundleRepositoryPort bundleRepository;
+    private final BundleSubjectIndexRepositoryPort bundleSubjectIndexRepository;
+    private final RuleEnginePort ruleEnginePort;
+    private final ObjectStoragePort objectStoragePort;
+    private final EventPublisherPort eventPublisherPort;
 
-    @Autowired
-    private BundleSubjectIndexRepositoryPort bundleSubjectIndexRepository;
-
-    @Autowired
-    @Qualifier("droolsRuleEngineAdapter")
-    private RuleEnginePort ruleEnginePort;
-
-    @Autowired
-    private ObjectStoragePort objectStoragePort;
-
-    @Autowired
-    private EventPublisherPort eventPublisherPort;
+    public BundleLookupService(
+            BundleRepositoryPort bundleRepository,
+            BundleSubjectIndexRepositoryPort bundleSubjectIndexRepository,
+            @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
+            ObjectStoragePort objectStoragePort,
+            EventPublisherPort eventPublisherPort) {
+        this.bundleRepository = bundleRepository;
+        this.bundleSubjectIndexRepository = bundleSubjectIndexRepository;
+        this.ruleEnginePort = ruleEnginePort;
+        this.objectStoragePort = objectStoragePort;
+        this.eventPublisherPort = eventPublisherPort;
+    }
 
     @Override
     public BundleMetadataResponse getBundleMetadata(String bundleHash) {

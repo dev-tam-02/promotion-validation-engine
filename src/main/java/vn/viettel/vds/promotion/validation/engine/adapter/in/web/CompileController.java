@@ -1,7 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +17,13 @@ import java.util.List;
 @RequestMapping("${spring.application.context-path}/v1/compiler")
 public class CompileController {
 
-    @Autowired
-    private CompileUseCase compileUseCase;
+    private final CompileUseCase compileUseCase;
+    private final ObjectStoragePort objectStoragePort;
 
-    @Autowired
-    private ObjectStoragePort objectStoragePort;
+    public CompileController(CompileUseCase compileUseCase, ObjectStoragePort objectStoragePort) {
+        this.compileUseCase = compileUseCase;
+        this.objectStoragePort = objectStoragePort;
+    }
 
     @PostMapping("/compile")
     public ResponseEntity<CompileResponse> compile(@Valid @RequestBody CompileRequest request) {

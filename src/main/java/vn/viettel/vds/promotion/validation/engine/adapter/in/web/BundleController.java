@@ -1,7 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,11 @@ import vn.viettel.vds.promotion.validation.engine.domain.exception.BundleNotFoun
 @RequestMapping("${spring.application.context-path}/v1")
 public class BundleController {
 
-    @Autowired
-    private BundleLookupUseCase bundleLookupUseCase;
+    private final BundleLookupUseCase bundleLookupUseCase;
+
+    public BundleController(BundleLookupUseCase bundleLookupUseCase) {
+        this.bundleLookupUseCase = bundleLookupUseCase;
+    }
 
     @GetMapping("/bundles/{bundleHash}")
     public ResponseEntity<BundleMetadataResponse> getBundleMetadata(@PathVariable String bundleHash) {
