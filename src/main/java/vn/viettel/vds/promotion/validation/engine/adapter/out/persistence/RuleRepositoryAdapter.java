@@ -8,7 +8,6 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.RuleRepos
 import vn.viettel.vds.promotion.validation.engine.domain.model.Rule;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor

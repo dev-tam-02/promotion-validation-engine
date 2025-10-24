@@ -13,11 +13,7 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
 import vn.viettel.vds.promotion.validation.engine.domain.model.OrderItem;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class FactPreparationService {

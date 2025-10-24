@@ -21,8 +21,8 @@ public class OrderTotalGteOperatorTranslator implements OperatorTranslator {
         // compareTo returns: -1 if less, 0 if equal, 1 if greater
         // So >= 0 means total is greater than or equal to amount
         sb.append("        $order: Order(total != null, total.compareTo(new BigDecimal(\"")
-          .append(amount)
-          .append("\")) >= 0)\n");
+                .append(amount)
+                .append("\")) >= 0)\n");
 
         return sb.toString();
     }

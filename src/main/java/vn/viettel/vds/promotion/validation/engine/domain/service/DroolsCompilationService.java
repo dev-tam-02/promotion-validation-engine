@@ -112,7 +112,8 @@ public class DroolsCompilationService {
         }
     }
 
-    @SuppressWarnings("java:S2095") // Suppressing S2095 because KieSession and KieContainer do not implement AutoCloseable, and resources are properly disposed in the finally block.
+    @SuppressWarnings("java:S2095")
+    // Suppressing S2095 because KieSession and KieContainer do not implement AutoCloseable, and resources are properly disposed in the finally block.
     public boolean validateArtifact(byte[] artifactBytes) {
         KieContainer container = null;
         KieSession session = null;
@@ -158,7 +159,7 @@ public class DroolsCompilationService {
             throw new CompilationException("SHA-256 algorithm not available", e);
         }
     }
-    
+
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : bytes) {

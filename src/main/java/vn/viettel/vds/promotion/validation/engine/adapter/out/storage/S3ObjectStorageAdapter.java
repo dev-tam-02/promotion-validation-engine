@@ -1,7 +1,7 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.out.storage;
 
 import io.minio.*;
-import io.minio.errors.*;
+import io.minio.errors.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
         try {
             String bucketName = minioProperties.getBucketName();
             logger.debug("Storing object to MinIO: bucket={}, key={}, size={} bytes",
-                        bucketName, key, data.length);
+                    bucketName, key, data.length);
 
             minioClient.putObject(
                     PutObjectArgs.builder()

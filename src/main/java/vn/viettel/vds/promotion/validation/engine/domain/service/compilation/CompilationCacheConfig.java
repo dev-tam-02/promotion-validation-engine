@@ -14,8 +14,10 @@ public class CompilationCacheConfig {
     private boolean operatorFingerprintEnabled = true;
 
     // Getters and setters
+
     /**
      * Check if cache is enabled
+     *
      * @return true if caching is enabled, false otherwise
      */
     public boolean isCacheEnabled() {
@@ -28,6 +30,7 @@ public class CompilationCacheConfig {
 
     /**
      * Alias method for configuration compatibility
+     *
      * @return true if caching is enabled, false otherwise
      */
     public boolean isEnabled() {

@@ -1,6 +1,5 @@
 package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -19,7 +18,6 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.*;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -126,7 +124,7 @@ public class CompileService implements CompileUseCase {
     }
 
     private CompileResponse handleCompilationSuccess(CompileJobEntity compileJob, CompileRequest request,
-                                                      RuleEnginePort.CompileResult result, BundleEntity bundle) {
+                                                     RuleEnginePort.CompileResult result, BundleEntity bundle) {
         // Update compile job as successful
         compileJob.setStatus(CompileJobEntity.JobStatus.SUCCESS);
         compileJob.setBundleHash(result.getBundleHash());

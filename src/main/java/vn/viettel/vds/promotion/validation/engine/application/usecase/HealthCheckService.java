@@ -16,10 +16,9 @@ import java.util.Map;
 @Service
 public class HealthCheckService implements HealthCheckUseCase {
 
+    private final ObjectStoragePort objectStoragePort;
     @PersistenceContext
     private EntityManager entityManager;
-
-    private final ObjectStoragePort objectStoragePort;
 
     public HealthCheckService(ObjectStoragePort objectStoragePort) {
         this.objectStoragePort = objectStoragePort;

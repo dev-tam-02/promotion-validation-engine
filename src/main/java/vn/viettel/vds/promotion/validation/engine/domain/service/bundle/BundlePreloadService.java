@@ -196,7 +196,8 @@ public class BundlePreloadService {
         }
     }
 
-    @SuppressWarnings("java:S3776") // Suppressing cognitive complexity as the nested logic is required for proper health checking
+    @SuppressWarnings("java:S3776")
+    // Suppressing cognitive complexity as the nested logic is required for proper health checking
     public BundleHealthStatus checkBundleHealth() {
         logger.debug("Checking bundle health");
 

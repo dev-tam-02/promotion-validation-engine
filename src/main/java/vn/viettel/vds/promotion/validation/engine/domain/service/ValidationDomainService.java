@@ -3,7 +3,6 @@ package vn.viettel.vds.promotion.validation.engine.domain.service;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
-
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
 
 @Service

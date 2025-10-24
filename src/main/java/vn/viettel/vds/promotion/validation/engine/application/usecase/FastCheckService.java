@@ -15,9 +15,6 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.FastCheckRule;
 import vn.viettel.vds.promotion.validation.engine.domain.model.RuleConfiguration;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Fast check service implementation using simple if-else logic.

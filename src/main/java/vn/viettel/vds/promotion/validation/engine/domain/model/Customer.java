@@ -114,6 +114,7 @@ public class Customer {
 
     /**
      * Alias method for tier operator compatibility
+     *
      * @return loyalty tier of the customer
      */
     public String getTier() {
@@ -122,6 +123,7 @@ public class Customer {
 
     /**
      * Alias method for tier operator compatibility
+     *
      * @param tier the tier to set
      */
     public void setTier(String tier) {

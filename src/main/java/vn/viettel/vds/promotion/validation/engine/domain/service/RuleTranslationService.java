@@ -23,7 +23,16 @@ public class RuleTranslationService {
     private static final String DRL_WHEN = "    when\n";
     private static final String DRL_THEN = "    then\n";
     private static final String DRL_END = "end\n\n";
-
+    private static final Set<String> JAVA_RESERVED_KEYWORDS = Set.of(
+            "abstract", "assert", "boolean", "break", "byte",
+            "case", "catch", "char", "class", "const", "continue", "default",
+            "do", "double", "else", "enum", "extends", "final", "finally",
+            "float", "for", "goto", "if", "implements", "import", "instanceof",
+            "int", "interface", "long", "native", "new", "package", "private",
+            "protected", "public", "return", "short", "static", "strictfp",
+            "super", "switch", "synchronized", "this", "throw", "throws",
+            "transient", "try", "void", "volatile", "while"
+    );
     private final OperatorTranslatorRegistry translatorRegistry;
 
     public RuleTranslationService(OperatorTranslatorRegistry translatorRegistry) {
@@ -319,10 +328,10 @@ public class RuleTranslationService {
             drl.append("        )\n");
             drl.append(DRL_THEN);
             drl.append("        System.out.println(\"[DROOLS] ❌ Condition FAILED - nodeId=")
-               .append(nodeId)
-               .append(", reasonCode=")
-               .append(reasonCode)
-               .append("\");\n");
+                    .append(nodeId)
+                    .append(", reasonCode=")
+                    .append(reasonCode)
+                    .append("\");\n");
             drl.append("        reasonCodes.add(\"").append(reasonCode).append("\");\n");
             drl.append(DRL_END);
         }
@@ -342,7 +351,7 @@ public class RuleTranslationService {
     }
 
     private List<Map<String, Object>> collectConditionNodes(Map<String, Object> node,
-                                                             Map<String, Map<String, Object>> nodeMap) {
+                                                            Map<String, Map<String, Object>> nodeMap) {
         List<Map<String, Object>> condNodes = new ArrayList<>();
         collectConditionNodesRecursive(node, nodeMap, condNodes);
         return condNodes;
@@ -421,17 +430,6 @@ public class RuleTranslationService {
 
         return sanitized;
     }
-
-    private static final Set<String> JAVA_RESERVED_KEYWORDS = Set.of(
-            "abstract", "assert", "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue", "default",
-            "do", "double", "else", "enum", "extends", "final", "finally",
-            "float", "for", "goto", "if", "implements", "import", "instanceof",
-            "int", "interface", "long", "native", "new", "package", "private",
-            "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws",
-            "transient", "try", "void", "volatile", "while"
-    );
 
     private boolean isReservedKeyword(String word) {
         return JAVA_RESERVED_KEYWORDS.contains(word);

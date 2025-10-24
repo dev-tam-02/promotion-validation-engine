@@ -1,6 +1,5 @@
 package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +45,7 @@ public class ExecutionService implements ExecutionUseCase {
     public ExecuteResponse execute(ExecuteRequest request) {
         String bundleHash = request.getBundle().getHash();
         validateBundleExists(bundleHash);
-        
+
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
 
         // Get tenant configuration
@@ -77,7 +76,7 @@ public class ExecutionService implements ExecutionUseCase {
     public BatchExecuteResponse executeBatch(BatchExecuteRequest request) {
         String bundleHash = request.getBundle().getHash();
         validateBundleExists(bundleHash);
-        
+
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
 
         // Get tenant configuration

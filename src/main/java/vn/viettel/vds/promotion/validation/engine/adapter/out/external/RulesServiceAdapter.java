@@ -58,11 +58,11 @@ public class RulesServiceAdapter implements RulesServicePort {
     private byte[] createMockKieModule(Candidate candidate) {
         String mockDrlContent = String.format("""
                         package vn.viettel.validation.rules.%s
-
+                        
                         import vn.viettel.vds.promotion.validation.engine.domain.model.*
-
+                        
                         global Candidate candidate
-
+                        
                         rule "Validate %s %s"
                         when
                             $customer : Customer()
@@ -72,7 +72,7 @@ public class RulesServiceAdapter implements RulesServicePort {
                             $result.setMatched(true);
                             $result.setMessage("Validation passed for %s %s");
                         end
-
+                        
                         rule "Reject Low Order Value for %s %s"
                         when
                             $customer : Customer()

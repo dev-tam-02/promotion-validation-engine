@@ -1,6 +1,5 @@
 package vn.viettel.vds.promotion.validation.engine.application.usecase;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.EngineConfigEntity;
