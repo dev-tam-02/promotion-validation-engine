@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -58,9 +58,9 @@ public class FastCheckRequest {
     @JsonProperty("orderCategories")
     private List<String> orderCategories;
 
-    @Schema(description = "Evaluation timestamp", example = "2025-01-15T10:30:00")
+    @Schema(description = "Evaluation timestamp", example = "2025-01-15T10:30:00+00:00")
     @JsonProperty("evaluationTime")
-    private LocalDateTime evaluationTime;
+    private OffsetDateTime evaluationTime;
 
     @Schema(description = "Timezone for evaluation", example = "Asia/Ho_Chi_Minh")
     @JsonProperty("timezone")
@@ -151,11 +151,11 @@ public class FastCheckRequest {
         this.orderCategories = orderCategories;
     }
 
-    public LocalDateTime getEvaluationTime() {
+    public OffsetDateTime getEvaluationTime() {
         return evaluationTime;
     }
 
-    public void setEvaluationTime(LocalDateTime evaluationTime) {
+    public void setEvaluationTime(OffsetDateTime evaluationTime) {
         this.evaluationTime = evaluationTime;
     }
 

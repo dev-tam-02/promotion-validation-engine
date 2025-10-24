@@ -96,8 +96,8 @@ public class FastCheckService implements FastCheckUseCase {
      */
     private TimeCheckResult checkTimeConstraints(RuleConfiguration config, FastCheckRequest request) {
 
-        LocalDateTime now = request.getEvaluationTime() != null ?
-                request.getEvaluationTime() : LocalDateTime.now();
+        Instant now = request.getEvaluationTime() != null ?
+                request.getEvaluationTime().toInstant() : Instant.now();
 
         String timezone = request.getTimezone() != null ?
                 request.getTimezone() : "Asia/Ho_Chi_Minh";

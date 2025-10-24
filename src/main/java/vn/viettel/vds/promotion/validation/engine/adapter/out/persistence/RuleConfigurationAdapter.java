@@ -7,7 +7,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.RuleConfi
 import vn.viettel.vds.promotion.validation.engine.domain.model.RuleConfiguration;
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationRuleConfig;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Set;
 
@@ -33,8 +33,8 @@ public class RuleConfigurationAdapter implements RuleConfigurationPort {
         config.setCampaignId(campaignId);
         config.setTenantId(tenantId);
         config.setEnabled(true);
-        config.setCreatedAt(LocalDateTime.now());
-        config.setUpdatedAt(LocalDateTime.now());
+        config.setCreatedAt(Instant.now());
+        config.setUpdatedAt(Instant.now());
 
         // Create default fast check rules
         ValidationRuleConfig.FastCheckRules fastCheckRules = new ValidationRuleConfig.FastCheckRules();

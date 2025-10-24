@@ -1,6 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
@@ -24,8 +24,8 @@ public class ValidationRuleConfig {
     private String droolsRuleContent;
     private String droolsRuleVersion;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     /**
      * Check if this config has fast-checkable rules
@@ -98,19 +98,19 @@ public class ValidationRuleConfig {
         this.droolsRuleVersion = droolsRuleVersion;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -293,14 +293,14 @@ public class ValidationRuleConfig {
 
     public static class BlackoutPeriod {
         private String name;
-        private LocalDateTime startTime;
-        private LocalDateTime endTime;
+        private Instant startTime;
+        private Instant endTime;
         private String reason;
 
         public BlackoutPeriod() {
         }
 
-        public BlackoutPeriod(String name, LocalDateTime startTime, LocalDateTime endTime) {
+        public BlackoutPeriod(String name, Instant startTime, Instant endTime) {
             this.name = name;
             this.startTime = startTime;
             this.endTime = endTime;
@@ -315,19 +315,19 @@ public class ValidationRuleConfig {
             this.name = name;
         }
 
-        public LocalDateTime getStartTime() {
+        public Instant getStartTime() {
             return startTime;
         }
 
-        public void setStartTime(LocalDateTime startTime) {
+        public void setStartTime(Instant startTime) {
             this.startTime = startTime;
         }
 
-        public LocalDateTime getEndTime() {
+        public Instant getEndTime() {
             return endTime;
         }
 
-        public void setEndTime(LocalDateTime endTime) {
+        public void setEndTime(Instant endTime) {
             this.endTime = endTime;
         }
 

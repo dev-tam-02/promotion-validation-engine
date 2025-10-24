@@ -1,6 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class Rule {
     private String id;
@@ -8,7 +8,7 @@ public class Rule {
     private String version;
     private String drlText;
     private boolean enabled;
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     public Rule() {
     }
@@ -18,7 +18,7 @@ public class Rule {
         this.version = version;
         this.drlText = drlText;
         this.enabled = true;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = Instant.now();
     }
 
     public String getId() {
@@ -61,15 +61,15 @@ public class Rule {
         this.enabled = enabled;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 
     public void touch() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = Instant.now();
     }
 }

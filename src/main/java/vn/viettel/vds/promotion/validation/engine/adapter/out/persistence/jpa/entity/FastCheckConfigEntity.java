@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,11 +55,11 @@ public class FastCheckConfigEntity {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     // Embeddable classes for nested structures
     @Embeddable
@@ -103,10 +103,10 @@ public class FastCheckConfigEntity {
         private String name;
 
         @Column(name = "start_time")
-        private LocalDateTime start;
+        private Instant start;
 
         @Column(name = "end_time")
-        private LocalDateTime end;
+        private Instant end;
 
         @Column(name = "reason", length = 500)
         private String reason;

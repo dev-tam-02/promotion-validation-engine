@@ -1,6 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 
 /**
@@ -18,14 +18,14 @@ public class FastCheckRule {
      */
     public static class BlackoutPeriod {
         private String name;
-        private LocalDateTime start;
-        private LocalDateTime end;
+        private Instant start;
+        private Instant end;
         private String reason;
 
         public BlackoutPeriod() {
         }
 
-        public BlackoutPeriod(String name, LocalDateTime start, LocalDateTime end) {
+        public BlackoutPeriod(String name, Instant start, Instant end) {
             this.name = name;
             this.start = start;
             this.end = end;
@@ -40,19 +40,19 @@ public class FastCheckRule {
             this.name = name;
         }
 
-        public LocalDateTime getStart() {
+        public Instant getStart() {
             return start;
         }
 
-        public void setStart(LocalDateTime start) {
+        public void setStart(Instant start) {
             this.start = start;
         }
 
-        public LocalDateTime getEnd() {
+        public Instant getEnd() {
             return end;
         }
 
-        public void setEnd(LocalDateTime end) {
+        public void setEnd(Instant end) {
             this.end = end;
         }
 
