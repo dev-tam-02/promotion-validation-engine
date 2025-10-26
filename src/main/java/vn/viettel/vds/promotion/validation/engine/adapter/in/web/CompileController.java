@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/compiler")
 public class CompileController {
 

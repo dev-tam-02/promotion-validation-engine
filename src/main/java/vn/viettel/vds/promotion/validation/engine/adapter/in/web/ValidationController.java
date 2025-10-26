@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@ResponseWrapper
 public class ValidationController {
 
     private final ValidatePromotionUseCase validatePromotionUseCase;

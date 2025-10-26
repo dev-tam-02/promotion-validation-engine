@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/execute")
 @Tag(name = "Rule Execution", description = "Rule execution API")
 public class ExecutionController {

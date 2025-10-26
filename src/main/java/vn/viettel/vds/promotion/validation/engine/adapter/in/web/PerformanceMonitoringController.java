@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/api/v1/performance")
 @Tag(name = "Performance Monitoring", description = "Performance monitoring and cache management APIs")
 @ConditionalOnProperty(value = "validation.engine.monitoring.enabled", havingValue = "true", matchIfMissing = true)

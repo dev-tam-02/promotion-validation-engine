@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.in.BundleLook
 import vn.viettel.vds.promotion.validation.engine.domain.exception.BundleNotFoundException;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1")
 public class BundleController {
 

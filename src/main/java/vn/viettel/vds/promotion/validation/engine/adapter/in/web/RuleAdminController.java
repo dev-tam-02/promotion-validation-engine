@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.viettel.vds.promotion.validation.engine.application.port.in.ManageRulesUseCase;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/api/rules")
 public class RuleAdminController {
 

@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.in.ConfigMana
 import vn.viettel.vds.promotion.validation.engine.application.port.in.HealthCheckUseCase;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1")
 public class AdminController {
 

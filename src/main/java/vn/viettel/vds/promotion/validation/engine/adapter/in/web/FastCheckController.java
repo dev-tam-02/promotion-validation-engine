@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ import java.util.List;
  * Performance target: < 5ms response time
  */
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/fast-check")
 @Tag(name = "Fast Rule Check", description = "Quick rule evaluation without Drools engine")
 @Slf4j

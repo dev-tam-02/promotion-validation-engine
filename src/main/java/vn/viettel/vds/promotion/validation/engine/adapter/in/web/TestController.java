@@ -1,11 +1,13 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/test")
 @Tag(name = "Test", description = "Test endpoints for error handling validation")
 public class TestController {

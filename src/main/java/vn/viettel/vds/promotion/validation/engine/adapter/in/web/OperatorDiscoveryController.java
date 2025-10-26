@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.adapter.in.web;
 
+import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,6 +19,7 @@ import vn.viettel.vds.promotion.validation.engine.application.service.Translator
 import java.util.List;
 
 @RestController
+@ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/operators")
 @Tag(name = "Operator Discovery", description = "Operator translator discovery and validation API")
 public class OperatorDiscoveryController {
