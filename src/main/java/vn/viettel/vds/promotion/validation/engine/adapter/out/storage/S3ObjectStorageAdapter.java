@@ -19,6 +19,7 @@ import java.util.Optional;
 public class S3ObjectStorageAdapter implements ObjectStoragePort {
 
     private static final Logger logger = LoggerFactory.getLogger(S3ObjectStorageAdapter.class);
+    private static final String ERROR_SEPARATOR = ", error=";
 
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
@@ -48,7 +49,7 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
             return key;
 
         } catch (Exception e) {
-            throw new StorageException("Failed to store object to MinIO: key=" + key + ", error=" + e.getMessage(), e);
+            throw new StorageException("Failed to store object to MinIO: key=" + key + ERROR_SEPARATOR + e.getMessage(), e);
         }
     }
 
@@ -74,10 +75,10 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
                 logger.debug("Object not found in MinIO: key={}", key);
                 return Optional.empty();
             }
-            throw new StorageException("Failed to retrieve object from MinIO: key=" + key + ", error=" + e.errorResponse().message(), e);
+            throw new StorageException("Failed to retrieve object from MinIO: key=" + key + ERROR_SEPARATOR + e.errorResponse().message(), e);
 
         } catch (Exception e) {
-            throw new StorageException("Failed to retrieve object from MinIO: key=" + key + ", error=" + e.getMessage(), e);
+            throw new StorageException("Failed to retrieve object from MinIO: key=" + key + ERROR_SEPARATOR + e.getMessage(), e);
         }
     }
 
@@ -97,10 +98,10 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
             if ("NoSuchKey".equals(e.errorResponse().code())) {
                 return false;
             }
-            throw new StorageException("Failed to check object existence in MinIO: key=" + key + ", error=" + e.errorResponse().message(), e);
+            throw new StorageException("Failed to check object existence in MinIO: key=" + key + ERROR_SEPARATOR + e.errorResponse().message(), e);
 
         } catch (Exception e) {
-            throw new StorageException("Failed to check object existence in MinIO: key=" + key + ", error=" + e.getMessage(), e);
+            throw new StorageException("Failed to check object existence in MinIO: key=" + key + ERROR_SEPARATOR + e.getMessage(), e);
         }
     }
 
@@ -120,7 +121,7 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
             logger.info("Successfully deleted object from MinIO: key={}", key);
 
         } catch (Exception e) {
-            throw new StorageException("Failed to delete object from MinIO: key=" + key + ", error=" + e.getMessage(), e);
+            throw new StorageException("Failed to delete object from MinIO: key=" + key + ERROR_SEPARATOR + e.getMessage(), e);
         }
     }
 
