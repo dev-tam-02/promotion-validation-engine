@@ -140,12 +140,16 @@ public class CompileRequest {
         @NotBlank
         private String mode;
 
+        @Valid
+        private TemporalPolicyData data;  // Actual temporal policy data for DRL generation
+
         public TimeLink() {
         }
 
-        public TimeLink(String policyId, String mode) {
+        public TimeLink(String policyId, String mode, TemporalPolicyData data) {
             this.policyId = policyId;
             this.mode = mode;
+            this.data = data;
         }
 
         public String getPolicyId() {
@@ -162,6 +166,103 @@ public class CompileRequest {
 
         public void setMode(String mode) {
             this.mode = mode;
+        }
+
+        public TemporalPolicyData getData() {
+            return data;
+        }
+
+        public void setData(TemporalPolicyData data) {
+            this.data = data;
+        }
+    }
+
+    /**
+     * Temporal policy data for generating timeframe.drl
+     */
+    public static class TemporalPolicyData {
+        private String timezone;        // e.g., "Asia/Bangkok"
+        private String rrule;           // RFC 5545 RRULE, e.g., "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+        private String startTs;         // ISO 8601, e.g., "2024-01-01T00:00:00Z"
+        private String endTs;           // ISO 8601, e.g., "2024-12-31T23:59:59Z"
+        private List<TimeWindow> windows;  // Time-of-day windows
+
+        public TemporalPolicyData() {
+        }
+
+        public String getTimezone() {
+            return timezone;
+        }
+
+        public void setTimezone(String timezone) {
+            this.timezone = timezone;
+        }
+
+        public String getRrule() {
+            return rrule;
+        }
+
+        public void setRrule(String rrule) {
+            this.rrule = rrule;
+        }
+
+        public String getStartTs() {
+            return startTs;
+        }
+
+        public void setStartTs(String startTs) {
+            this.startTs = startTs;
+        }
+
+        public String getEndTs() {
+            return endTs;
+        }
+
+        public void setEndTs(String endTs) {
+            this.endTs = endTs;
+        }
+
+        public List<TimeWindow> getWindows() {
+            return windows;
+        }
+
+        public void setWindows(List<TimeWindow> windows) {
+            this.windows = windows;
+        }
+    }
+
+    /**
+     * Time window within a day (e.g., 9AM-5PM)
+     */
+    public static class TimeWindow {
+        @NotBlank
+        private String startTime;  // "HH:mm" format, e.g., "09:00"
+
+        @NotBlank
+        private String endTime;    // "HH:mm" format, e.g., "17:00"
+
+        public TimeWindow() {
+        }
+
+        public TimeWindow(String startTime, String endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        public String getStartTime() {
+            return startTime;
+        }
+
+        public void setStartTime(String startTime) {
+            this.startTime = startTime;
+        }
+
+        public String getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(String endTime) {
+            this.endTime = endTime;
         }
     }
 }

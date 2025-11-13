@@ -95,6 +95,89 @@ public class DroolsCompilationService {
         }
     }
 
+    /**
+     * Compile multiple DRL files into a single bundle.
+     * Used for compiling both temporal DRL and validation rule DRL together.
+     *
+     * @param tenantId tenant identifier
+     * @param bundleId bundle identifier (e.g., assignmentId)
+     * @param version bundle version
+     * @param drlFiles map of filename to DRL content
+     * @return compilation result with bundleHash and artifact bytes
+     */
+    public CompilationResult compileMultipleDrls(String tenantId, String bundleId, Integer version,
+                                                  java.util.Map<String, String> drlFiles) {
+        logger.info("Compiling multiple DRLs for bundle: {}, fileCount={}", bundleId, drlFiles.size());
+
+        try {
+            List<String> logs = new ArrayList<>();
+
+            ReleaseId releaseId = kieServices.newReleaseId(
+                    tenantId,
+                    bundleId,
+                    version != null ? version.toString() : "1.0.0"
+            );
+
+            KieFileSystem kfs = kieServices.newKieFileSystem();
+
+            // Write each DRL file to KieFileSystem
+            for (java.util.Map.Entry<String, String> entry : drlFiles.entrySet()) {
+                String filename = entry.getKey();
+                String drlContent = entry.getValue();
+                String resourcePath = "src/main/resources/rules/" + filename;
+
+                logger.debug("Writing DRL file: {} (size={} bytes)", resourcePath, drlContent.length());
+                kfs.write(resourcePath, drlContent.getBytes(StandardCharsets.UTF_8));
+            }
+
+            kfs.generateAndWritePomXML(releaseId);
+
+            KieBuilder kieBuilder = kieServices.newKieBuilder(kfs);
+            kieBuilder.buildAll();
+
+            Results results = kieBuilder.getResults();
+
+            for (Message message : results.getMessages()) {
+                String logMessage = String.format("[%s] %s", message.getLevel(), message.getText());
+                logs.add(logMessage);
+
+                if (message.getLevel() == Message.Level.ERROR) {
+                    logger.error("Compilation error: {}", message.getText());
+                } else if (message.getLevel() == Message.Level.WARNING) {
+                    logger.warn("Compilation warning: {}", message.getText());
+                } else {
+                    logger.debug("Compilation info: {}", message.getText());
+                }
+            }
+
+            if (results.hasMessages(Message.Level.ERROR)) {
+                throw new CompilationException("DRL compilation failed with errors", logs);
+            }
+
+            InternalKieModule kieModule = (InternalKieModule) kieBuilder.getKieModule();
+            byte[] artifactBytes = kieModule.getBytes();
+
+            // Generate deterministic bundleHash from all DRL contents combined
+            String combinedDrl = String.join("\n\n", drlFiles.values());
+            String bundleHash = generateBundleHashFromDrl(combinedDrl);
+
+            logger.info("Multiple DRL compilation successful: bundleHash={}, size={} bytes, files={}",
+                    bundleHash, artifactBytes.length, drlFiles.keySet());
+
+            return new CompilationResult(
+                    bundleHash,
+                    artifactBytes,
+                    (long) artifactBytes.length,
+                    logs,
+                    KieServices.Factory.get().getClass().getPackage().getImplementationVersion()
+            );
+
+        } catch (Exception e) {
+            throw new CompilationException(
+                    String.format("Multiple DRL compilation failed for bundle: %s", bundleId), e);
+        }
+    }
+
     public KieContainer createKieContainer(byte[] artifactBytes) {
         try {
             logger.debug("Creating KIE container from artifact bytes: {} bytes", artifactBytes.length);
