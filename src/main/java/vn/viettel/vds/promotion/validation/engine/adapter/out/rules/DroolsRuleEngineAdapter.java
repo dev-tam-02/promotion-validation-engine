@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.validation.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.BundleRepositoryPort;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.ObjectStoragePort;
@@ -16,6 +17,7 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.Order;
 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
 import vn.viettel.vds.promotion.validation.engine.domain.service.DroolsCompilationService;
 import vn.viettel.vds.promotion.validation.engine.domain.service.RuleTranslationService;
+import vn.viettel.vds.promotion.validation.engine.domain.service.TemporalDrlGenerator;
 import vn.viettel.vds.promotion.validation.engine.domain.service.execution.ExecutionMetricsService;
 import vn.viettel.vds.promotion.validation.engine.domain.service.execution.KieSessionManager;
 import vn.viettel.vds.promotion.validation.engine.domain.service.execution.RuleExecutionOrchestrator;
@@ -38,6 +40,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     private final ExecutionMetricsService metricsService;
     private final BundleRepositoryPort bundleRepositoryPort;
     private final ObjectStoragePort objectStoragePort;
+    private final TemporalDrlGenerator temporalDrlGenerator;
 
     private final ConcurrentHashMap<String, byte[]> bundleArtifacts = new ConcurrentHashMap<>();
 
@@ -47,7 +50,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                                    RuleExecutionOrchestrator executionOrchestrator,
                                    ExecutionMetricsService metricsService,
                                    BundleRepositoryPort bundleRepositoryPort,
-                                   ObjectStoragePort objectStoragePort) {
+                                   ObjectStoragePort objectStoragePort,
+                                   TemporalDrlGenerator temporalDrlGenerator) {
         this.ruleTranslationService = ruleTranslationService;
         this.compilationService = compilationService;
         this.sessionManager = sessionManager;
@@ -55,29 +59,80 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         this.metricsService = metricsService;
         this.bundleRepositoryPort = bundleRepositoryPort;
         this.objectStoragePort = objectStoragePort;
+        this.temporalDrlGenerator = temporalDrlGenerator;
     }
 
     @Override
     public CompileResult compile(CompileInput input) {
-        logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
-                input.getTenantId(), input.getRuleId(), input.getVersion());
+        logger.info("Compiling rule: tenantId={}, ruleId={}, version={}, hasTemporalData={}",
+                input.getTenantId(), input.getRuleId(), input.getVersion(),
+                input.getTimeLinks() != null && !input.getTimeLinks().isEmpty());
 
         long startTime = System.currentTimeMillis();
 
         try {
-            String drlContent = ruleTranslationService.translateToDrl(
+            // Generate business rule DRL
+            String businessRuleDrl = ruleTranslationService.translateToDrl(
                     input.getTenantId(),
                     input.getNodes()
             );
 
-            logger.debug("Generated DRL content:\n{}", drlContent);
+            logger.debug("Generated business rule DRL:\n{}", businessRuleDrl);
 
-            DroolsCompilationService.CompilationResult result = compilationService.compileDrl(
-                    input.getTenantId(),
-                    input.getRuleId(),
-                    input.getVersion(),
-                    drlContent
-            );
+            // Check if temporal policy exists
+            boolean hasTemporalPolicy = input.getTimeLinks() != null
+                    && !input.getTimeLinks().isEmpty()
+                    && input.getTimeLinks().get(0).getData() != null;
+
+            DroolsCompilationService.CompilationResult result;
+            String combinedDrlContent;
+
+            if (hasTemporalPolicy) {
+                logger.info("Temporal policy detected, generating temporal DRL for ruleId={}", input.getRuleId());
+
+                // Get temporal policy data from first timeLink
+                TimeLink timeLink = input.getTimeLinks().get(0);
+                CompileRequest.TemporalPolicyData temporalData = (CompileRequest.TemporalPolicyData) timeLink.getData();
+
+                // Generate temporal DRL
+                String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl(
+                        input.getRuleId(),
+                        temporalData
+                );
+
+                logger.debug("Generated temporal DRL:\n{}", timeframeDrl);
+
+                // Combine 2 DRLs into map
+                Map<String, String> drlFiles = new LinkedHashMap<>();
+                drlFiles.put("timeframe.drl", timeframeDrl);
+                drlFiles.put("validation-rule.drl", businessRuleDrl);
+
+                // Compile multiple DRLs together
+                result = compilationService.compileMultipleDrls(
+                        input.getTenantId(),
+                        input.getRuleId(),
+                        input.getVersion(),
+                        drlFiles
+                );
+
+                // Combine DRL content for storage
+                combinedDrlContent = "=== timeframe.drl ===\n" + timeframeDrl + "\n\n=== validation-rule.drl ===\n" + businessRuleDrl;
+
+                logger.info("Successfully compiled 2 DRLs into bundle: bundleHash={}", result.getBundleHash());
+
+            } else {
+                logger.info("No temporal policy, compiling business rule only for ruleId={}", input.getRuleId());
+
+                // No temporal policy - compile business rule only (existing behavior)
+                result = compilationService.compileDrl(
+                        input.getTenantId(),
+                        input.getRuleId(),
+                        input.getVersion(),
+                        businessRuleDrl
+                );
+
+                combinedDrlContent = businessRuleDrl;
+            }
 
             bundleArtifacts.put(result.getBundleHash(), result.getArtifactBytes());
 
@@ -90,7 +145,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                     result.getSize(),
                     result.getLogs(),
                     result.getDroolsVersion(),
-                    drlContent
+                    combinedDrlContent
             );
 
         } catch (Exception e) {

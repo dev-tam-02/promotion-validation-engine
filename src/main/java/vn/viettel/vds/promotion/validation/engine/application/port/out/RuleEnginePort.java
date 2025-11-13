@@ -35,6 +35,7 @@ public interface RuleEnginePort {
         private List<java.util.Map<String, Object>> nodes;
         private String operatorsFingerprint;
         private String compilerId;
+        private List<TimeLink> timeLinks;
 
         public CompileInput() {
         }
@@ -47,6 +48,17 @@ public interface RuleEnginePort {
             this.nodes = nodes;
             this.operatorsFingerprint = operatorsFingerprint;
             this.compilerId = compilerId;
+        }
+
+        public CompileInput(String tenantId, String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
+                            String operatorsFingerprint, String compilerId, List<TimeLink> timeLinks) {
+            this.tenantId = tenantId;
+            this.ruleId = ruleId;
+            this.version = version;
+            this.nodes = nodes;
+            this.operatorsFingerprint = operatorsFingerprint;
+            this.compilerId = compilerId;
+            this.timeLinks = timeLinks;
         }
 
         public String getTenantId() {
@@ -95,6 +107,53 @@ public interface RuleEnginePort {
 
         public void setCompilerId(String compilerId) {
             this.compilerId = compilerId;
+        }
+
+        public List<TimeLink> getTimeLinks() {
+            return timeLinks;
+        }
+
+        public void setTimeLinks(List<TimeLink> timeLinks) {
+            this.timeLinks = timeLinks;
+        }
+    }
+
+    class TimeLink {
+        private String policyId;
+        private String mode;
+        private Object data;
+
+        public TimeLink() {
+        }
+
+        public TimeLink(String policyId, String mode, Object data) {
+            this.policyId = policyId;
+            this.mode = mode;
+            this.data = data;
+        }
+
+        public String getPolicyId() {
+            return policyId;
+        }
+
+        public void setPolicyId(String policyId) {
+            this.policyId = policyId;
+        }
+
+        public String getMode() {
+            return mode;
+        }
+
+        public void setMode(String mode) {
+            this.mode = mode;
+        }
+
+        public Object getData() {
+            return data;
+        }
+
+        public void setData(Object data) {
+            this.data = data;
         }
     }
 

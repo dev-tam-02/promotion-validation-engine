@@ -77,6 +77,14 @@ public class CompileService implements CompileUseCase {
                     ENGINE_TYPE_DROOLS
             );
 
+            // Map timeLinks from CompileRequest to CompileInput
+            if (request.getTimeLinks() != null && !request.getTimeLinks().isEmpty()) {
+                List<RuleEnginePort.TimeLink> timeLinkInputs = request.getTimeLinks().stream()
+                        .map(tl -> new RuleEnginePort.TimeLink(tl.getPolicyId(), tl.getMode(), tl.getData()))
+                        .toList();
+                compileInput.setTimeLinks(timeLinkInputs);
+            }
+
             RuleEnginePort.CompileResult result = ruleEnginePort.compile(compileInput);
 
             // Store artifact in object storage
