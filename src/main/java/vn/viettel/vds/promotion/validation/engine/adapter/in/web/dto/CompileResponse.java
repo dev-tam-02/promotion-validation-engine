@@ -38,6 +38,10 @@ public class CompileResponse {
     @JsonProperty("errors")
     private List<String> errors;
 
+    @Schema(description = "Generated DRL content")
+    @JsonProperty("drlContent")
+    private String drlContent;
+
     // Constructors
     public CompileResponse() {
     }
@@ -101,5 +105,13 @@ public class CompileResponse {
 
     public void setErrors(List<String> errors) {
         this.errors = errors;
+    }
+
+    public String getDrlContent() {
+        return drlContent;
+    }
+
+    public void setDrlContent(String drlContent) {
+        this.drlContent = drlContent;
     }
 }

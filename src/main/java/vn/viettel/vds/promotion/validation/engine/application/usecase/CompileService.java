@@ -329,6 +329,7 @@ public class CompileService implements CompileUseCase {
         response.setBundleHash(bundle.getId());
         response.setSize(bundle.getArtifact().getSize());
         response.setLogs(logs);
+        response.setDrlContent(bundle.getDrlContent());
 
         CompileResponse.Engine engine = new CompileResponse.Engine();
         engine.setType(bundle.getEngine().getType());

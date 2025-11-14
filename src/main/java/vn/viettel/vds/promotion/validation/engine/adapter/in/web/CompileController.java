@@ -39,6 +39,7 @@ public class CompileController {
             webResponse.setBundleHash(useCaseResponse.getBundleHash());
             webResponse.setArtifactSize(useCaseResponse.getSize());
             webResponse.setLogs(useCaseResponse.getLogs() != null ? useCaseResponse.getLogs() : new ArrayList<>());
+            webResponse.setDrlContent(useCaseResponse.getDrlContent());
 
             if (useCaseResponse.getEngine() != null) {
                 webResponse.setEngineVersion(useCaseResponse.getEngine().getDroolsVersion());

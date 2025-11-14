@@ -196,6 +196,7 @@ public class CompilationController {
         webResponse.setBundleHash(appResponse.getBundleHash());
         webResponse.setArtifactSize(appResponse.getSize());
         webResponse.setLogs(appResponse.getLogs() != null ? appResponse.getLogs() : new ArrayList<>());
+        webResponse.setDrlContent(appResponse.getDrlContent());
 
         // Map engine info
         if (appResponse.getEngine() != null) {

@@ -8,6 +8,7 @@ public class CompileResponse {
     private Engine engine;
     private Long size;
     private List<String> logs;
+    private String drlContent;
 
     public CompileResponse() {
     }
@@ -50,6 +51,14 @@ public class CompileResponse {
 
     public void setLogs(List<String> logs) {
         this.logs = logs;
+    }
+
+    public String getDrlContent() {
+        return drlContent;
+    }
+
+    public void setDrlContent(String drlContent) {
+        this.drlContent = drlContent;
     }
 
     // Nested class
