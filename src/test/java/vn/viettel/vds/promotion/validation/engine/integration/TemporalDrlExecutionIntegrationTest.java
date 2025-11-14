@@ -46,7 +46,7 @@ class TemporalDrlExecutionIntegrationTest {
         );
 
         // Generate and compile temporal DRL
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -79,7 +79,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("09:00", "17:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -114,7 +114,7 @@ class TemporalDrlExecutionIntegrationTest {
 
         CompileRequest.TemporalPolicyData temporalData = createTemporalData("UTC", null, windows);
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -146,7 +146,7 @@ class TemporalDrlExecutionIntegrationTest {
 
         CompileRequest.TemporalPolicyData temporalData = createTemporalData("UTC", null, windows);
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -178,7 +178,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("22:00", "06:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -212,7 +212,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("09:00", "17:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule(); // Would ALLOW if executed
 
         Map<String, String> drlFiles = new LinkedHashMap<>();

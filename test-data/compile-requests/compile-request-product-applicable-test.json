@@ -1,14 +1,14 @@
 {
   "tenantId": "test-tenant",
-  "ruleId": "VIP_WEEKEND_PROMO",
-  "version": 3,
+  "ruleId": "PRODUCT_APPLICABLE_TEST",
+  "version": 1,
   "logic": "ALL",
   "nodes": [
     {
       "id": "root",
       "type": "GROUP",
       "groupLogic": "ALL",
-      "children": ["cond-segment", "cond-product"]
+      "children": ["cond-segment", "cond-product-applicable"]
     },
     {
       "id": "cond-segment",
@@ -21,20 +21,18 @@
       "reasonCode": "CUSTOMER_NOT_VIP"
     },
     {
-      "id": "cond-product",
+      "id": "cond-product-applicable",
       "type": "COND",
-      "operatorName": "order.item.category.in",
+      "operatorName": "order.item.product.applicable",
       "operatorVersion": 1,
       "params": {
-        "categories": ["SE01", "SE02", "SE03"]
+        "includeAll": false,
+        "include": ["PROD-001", "PROD-002", "PROD-003"],
+        "exclude": ["PROD-BAD-001", "PROD-BAD-002"]
       },
-      "reasonCode": "PRODUCT_NOT_ELIGIBLE"
+      "reasonCode": "PRODUCT_NOT_APPLICABLE"
     }
   ],
-  "limits": {
-    "perCustomer": 5,
-    "perDay": 100
-  },
   "timeLinks": [
     {
       "policyId": "weekend-policy",

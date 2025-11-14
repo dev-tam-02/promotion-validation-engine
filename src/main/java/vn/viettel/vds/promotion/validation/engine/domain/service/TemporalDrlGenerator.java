@@ -33,16 +33,17 @@ public class TemporalDrlGenerator {
     /**
      * Generate timeframe.drl from temporal policy data.
      *
-     * @param assignmentId assignment identifier (for package name)
+     * @param tenantId tenant identifier (for package name - to match validation DRL package)
+     * @param assignmentId assignment identifier (for logging)
      * @param temporalData temporal policy data
      * @return DRL string content
      */
-    public String generateTimeframeDrl(String assignmentId, TemporalPolicyData temporalData) {
-        logger.info("Generating timeframe.drl for assignmentId={}", assignmentId);
+    public String generateTimeframeDrl(String tenantId, String assignmentId, TemporalPolicyData temporalData) {
+        logger.info("Generating timeframe.drl for tenantId={}, assignmentId={}", tenantId, assignmentId);
 
         if (temporalData == null) {
             logger.warn("No temporal data provided for assignmentId={}, generating empty temporal DRL", assignmentId);
-            return generateEmptyTemporalDrl(assignmentId);
+            return generateEmptyTemporalDrl(tenantId, assignmentId);
         }
 
         // Extract data
@@ -55,21 +56,22 @@ public class TemporalDrlGenerator {
 
         // Generate DRL content
         StringBuilder drl = new StringBuilder();
-        generateHeader(drl, assignmentId);
+        generateHeader(drl, tenantId);
         generateCheckTimeWindowFunction(drl);
         generateTemporalRules(drl, windows, timezone, daysOfWeekCsv);
 
         String result = drl.toString();
-        logger.info("Generated timeframe.drl for assignmentId={}, size={} bytes", assignmentId, result.length());
+        logger.info("Generated timeframe.drl for tenantId={}, assignmentId={}, size={} bytes",
+                tenantId, assignmentId, result.length());
         return result;
     }
 
     /**
      * Generate empty temporal DRL (always allow) when no temporal constraints.
      */
-    private String generateEmptyTemporalDrl(String assignmentId) {
+    private String generateEmptyTemporalDrl(String tenantId, String assignmentId) {
         StringBuilder drl = new StringBuilder();
-        generateHeader(drl, assignmentId);
+        generateHeader(drl, tenantId);
 
         // Always allow rule (no temporal constraints)
         drl.append("rule \"temporal_always_allow\"\n");
@@ -84,9 +86,10 @@ public class TemporalDrlGenerator {
         return drl.toString();
     }
 
-    private void generateHeader(StringBuilder drl, String assignmentId) {
-        // Sanitize assignmentId for package name
-        String packageName = "promotion.assignment." + assignmentId.replaceAll("[^a-zA-Z0-9]", "_");
+    private void generateHeader(StringBuilder drl, String tenantId) {
+        // Use tenant package name to match validation-rule.drl package
+        // This ensures TemporalAllowed fact type can be shared between DRLs
+        String packageName = sanitizePackageName(tenantId);
 
         drl.append("package ").append(packageName).append(";\n\n");
 
@@ -254,4 +257,42 @@ public class TemporalDrlGenerator {
             return false;
         }
     }
+
+    /**
+     * Sanitize tenant ID to valid Java package name.
+     * Same logic as RuleTranslationService to ensure package consistency.
+     */
+    private String sanitizePackageName(String tenantId) {
+        // Handle reserved Java keywords and invalid package names
+        if (tenantId == null || tenantId.isEmpty() || "default".equalsIgnoreCase(tenantId)) {
+            return "tenant.defaulttenant";
+        }
+
+        // Convert to lowercase and replace invalid characters
+        String sanitized = tenantId.toLowerCase()
+                .replaceAll("[^a-z0-9_.]", "_")
+                .replaceAll("^\\d", "_$0"); // Prefix with _ if starts with number
+
+        // Ensure it doesn't start with a reserved word
+        if (isReservedKeyword(sanitized)) {
+            sanitized = "tenant." + sanitized;
+        }
+
+        return sanitized;
+    }
+
+    private boolean isReservedKeyword(String word) {
+        return JAVA_RESERVED_KEYWORDS.contains(word);
+    }
+
+    private static final java.util.Set<String> JAVA_RESERVED_KEYWORDS = java.util.Set.of(
+            "abstract", "assert", "boolean", "break", "byte",
+            "case", "catch", "char", "class", "const", "continue", "default",
+            "do", "double", "else", "enum", "extends", "final", "finally",
+            "float", "for", "goto", "if", "implements", "import", "instanceof",
+            "int", "interface", "long", "native", "new", "package", "private",
+            "protected", "public", "return", "short", "static", "strictfp",
+            "super", "switch", "synchronized", "this", "throw", "throws",
+            "transient", "try", "void", "volatile", "while"
+    );
 }

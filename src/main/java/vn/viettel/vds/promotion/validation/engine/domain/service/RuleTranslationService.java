@@ -92,8 +92,10 @@ public class RuleTranslationService {
         drl.append("global List<String> reasonCodes;\n");
         drl.append("global Object usageService;\n\n");
 
-        // Generate time window checking function
-        generateTimeWindowFunction(drl);
+        // NOTE: checkTimeWindow function is NO LONGER generated here
+        // When temporal policy exists, it's generated in timeframe.drl
+        // When no temporal policy, time-based operators are not supported
+        // This prevents duplicate function definition when both DRLs are in same package
     }
 
     private void generateTimeWindowFunction(StringBuilder drl) {

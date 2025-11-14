@@ -94,8 +94,9 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                 TimeLink timeLink = input.getTimeLinks().get(0);
                 CompileRequest.TemporalPolicyData temporalData = (CompileRequest.TemporalPolicyData) timeLink.getData();
 
-                // Generate temporal DRL
+                // Generate temporal DRL (pass tenantId to ensure same package as validation DRL)
                 String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl(
+                        input.getTenantId(),
                         input.getRuleId(),
                         temporalData
                 );
