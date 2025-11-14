@@ -18,6 +18,7 @@ import vn.viettel.vds.promotion.validation.engine.application.port.out.*;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -281,7 +282,7 @@ public class CompileService implements CompileUseCase {
                         timeLink.setBundle(bundle);
                         return timeLink;
                     })
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             bundle.setTimeLinks(timeLinks);
         }
 

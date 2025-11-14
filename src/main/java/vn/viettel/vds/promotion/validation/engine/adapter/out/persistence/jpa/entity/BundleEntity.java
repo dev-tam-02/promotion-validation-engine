@@ -41,7 +41,7 @@ public class BundleEntity {
     @Embedded
     private EngineInfo engine;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "bundle")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "bundle")
     private List<TimeLinkEntity> timeLinks;
 
     @Embedded
