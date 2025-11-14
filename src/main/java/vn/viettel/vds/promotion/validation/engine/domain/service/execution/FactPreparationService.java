@@ -210,7 +210,8 @@ public class FactPreparationService {
         List<OrderItem> items = new ArrayList<>();
         for (OrderItemDto itemDto : itemDtos) {
             OrderItem item = new OrderItem();
-            item.setSku(itemDto.productId());
+            item.setProductId(itemDto.productId());  // Map productId to productId field
+            item.setSku(itemDto.skuId());            // Map skuId to sku field
             item.setQuantity(itemDto.quantity());
             item.setPrice(itemDto.price().doubleValue());
             item.setCategory(itemDto.category());
@@ -259,10 +260,10 @@ public class FactPreparationService {
                 Map<String, Object> itemMap = (Map<String, Object>) itemObj;
                 OrderItem item = new OrderItem();
 
-                item.setSku((String) itemMap.get("productId")); // Map productId to sku
+                item.setProductId((String) itemMap.get("productId")); // Map productId to productId field
+                item.setSku((String) itemMap.get("skuId"));           // Map skuId to sku field
                 item.setCategory((String) itemMap.get("category"));
-                item.setProductName((String) itemMap.get("name")); // Set product name if available
-                item.setProductName((String) itemMap.get("name"));
+                item.setProductName((String) itemMap.get("name"));    // Set product name if available
 
                 Object priceObj = itemMap.get("price");
                 if (priceObj instanceof Number number) {
