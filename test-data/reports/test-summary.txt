@@ -1,0 +1,89 @@
+=============================================================================
+                    VALIDATION-ENGINE EXECUTION TEST RESULTS
+=============================================================================
+
+Test Date: 2025-11-14 (Friday - NOT weekend)
+BundleHash: sha256:a85168f235cc7cac4a795b7a7c7646d253fbbfaa55d4282250e3efb215bcac3b
+
+Rules:
+- Temporal: SATURDAY,SUNDAY only (00:00-23:59 Asia/Bangkok)
+- Validation: Customer segment contains VIP AND Product category in (SE01, SE02, SE03)
+
+-----------------------------------------------------------------------------
+TEST CASE 1: VIP Customer + SE01 Product
+-----------------------------------------------------------------------------
+Input:
+  Customer: CUST001, segments=["VIP", "GOLD"]
+  Order: ORD001, items=[{category: "SE01"}]
+  
+Expected Result:
+  ❌ DENY - TIME_WINDOW_NOT_ACTIVE (because today is Friday, not weekend)
+
+Actual Result:
+  ⚠️  ALLOW but reasonCodes=["TIME_WINDOW_NOT_ACTIVE"]
+  
+Analysis:
+  ⚠️  INCONSISTENCY DETECTED!
+  Decision is ALLOW but has reason code TIME_WINDOW_NOT_ACTIVE
+  This indicates temporal rule fired deny but validation rule still passed
+  
+Status: ⚠️  UNEXPECTED BEHAVIOR
+
+-----------------------------------------------------------------------------
+TEST CASE 2: Non-VIP Customer + SE01 Product  
+-----------------------------------------------------------------------------
+Input:
+  Customer: CUST002, segments=["REGULAR", "BRONZE"] (NO VIP)
+  Order: ORD002, items=[{category: "SE01"}]
+  
+Expected Result:
+  ❌ DENY - TIME_WINDOW_NOT_ACTIVE, CUSTOMER_NOT_VIP
+
+Actual Result:
+  ✅ DENY
+  reasonCodes: ["TIME_WINDOW_NOT_ACTIVE", "CUSTOMER_NOT_VIP"]
+  
+Analysis:
+  ✅ CORRECT - Both temporal and customer segment checks failed
+  
+Status: ✅ PASSED
+
+-----------------------------------------------------------------------------
+TEST CASE 3: VIP Customer + Invalid Product
+-----------------------------------------------------------------------------
+Input:
+  Customer: CUST003, segments=["VIP", "PLATINUM"]
+  Order: ORD003, items=[{category: "ELECTRONICS"}] (NOT SE01/SE02/SE03)
+  
+Expected Result:
+  ❌ DENY - TIME_WINDOW_NOT_ACTIVE, PRODUCT_NOT_ELIGIBLE
+
+Actual Result:
+  ✅ DENY
+  reasonCodes: ["TIME_WINDOW_NOT_ACTIVE", "PRODUCT_NOT_ELIGIBLE"]
+  
+Analysis:
+  ✅ CORRECT - Both temporal and product category checks failed
+  
+Status: ✅ PASSED
+
+=============================================================================
+                              OVERALL SUMMARY
+=============================================================================
+
+Test Results: 2/3 PASSED, 1/3 UNEXPECTED
+
+✅ Temporal Rule: Working correctly (detects non-weekend days)
+✅ Customer Segment Validation: Working correctly (detects non-VIP)
+✅ Product Category Validation: Working correctly (detects invalid categories)
+
+⚠️  Issue Found: Test Case 1 returns ALLOW despite temporal denial
+   - This may be a bug in rule execution order or decision logic
+   - Temporal DENY should override validation ALLOW
+   
+Recommendation:
+   - Check RuleExecutionOrchestrator for decision aggregation logic
+   - Verify salience priorities are respected during execution
+   - Ensure temporal_check_deny rule actually sets result.setDecision("DENY")
+   
+=============================================================================
