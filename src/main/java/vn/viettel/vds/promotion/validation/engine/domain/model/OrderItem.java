@@ -1,6 +1,7 @@
 package vn.viettel.vds.promotion.validation.engine.domain.model;
 
 public class OrderItem {
+    private String productId;
     private String productName;
     private String category;
     private String sku;
@@ -17,6 +18,14 @@ public class OrderItem {
         this.sku = sku;
         this.price = price;
         this.quantity = quantity;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
     }
 
     public String getProductName() {

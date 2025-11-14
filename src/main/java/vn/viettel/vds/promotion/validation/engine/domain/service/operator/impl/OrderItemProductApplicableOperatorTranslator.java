@@ -3,6 +3,7 @@ package vn.viettel.vds.promotion.validation.engine.domain.service.operator.impl;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.validation.engine.domain.service.operator.OperatorTranslator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,34 +74,33 @@ public class OrderItemProductApplicableOperatorTranslator implements OperatorTra
         }
 
         StringBuilder sb = new StringBuilder();
+        sb.append("        exists OrderItem(");
 
-        // 1. Exclude check - always processed first if present
-        // Generate: not exists OrderItem(productId in ("PROD-BAD-1", "PROD-BAD-2"))
-        if (excludeList != null && !excludeList.isEmpty()) {
-            String excludeStr = excludeList.stream()
-                    .map(id -> "\"" + id + "\"")
-                    .collect(Collectors.joining(", "));
-            sb.append("        not exists OrderItem(productId in (")
-              .append(excludeStr)
-              .append("))\n");
-        }
+        // Build constraints list
+        List<String> constraints = new ArrayList<>();
 
-        // 2. Include check - only if includeAll=false
-        // Generate: exists OrderItem(productId in ("PROD-1", "PROD-2", "PROD-3"))
+        // Case 1: includeAll=false → must be in include list
         if (!includeAll) {
             String includeStr = includeList.stream()
                     .map(id -> "\"" + id + "\"")
                     .collect(Collectors.joining(", "));
-            sb.append("        exists OrderItem(productId in (")
-              .append(includeStr)
-              .append("))\n");
+            constraints.add("productId in (" + includeStr + ")");
         }
 
-        // If includeAll=true and no exclude list, we need at least one condition
-        // In this case, we just check that OrderItem exists (allow any product)
-        if (includeAll && (excludeList == null || excludeList.isEmpty())) {
-            sb.append("        exists OrderItem()\n");
+        // Case 2: exclude list → must NOT be in exclude list
+        if (excludeList != null && !excludeList.isEmpty()) {
+            String excludeStr = excludeList.stream()
+                    .map(id -> "\"" + id + "\"")
+                    .collect(Collectors.joining(", "));
+            constraints.add("productId not in (" + excludeStr + ")");
         }
+
+        // Join constraints with comma (AND in Drools)
+        if (!constraints.isEmpty()) {
+            sb.append(String.join(", ", constraints));
+        }
+
+        sb.append(")\n");
 
         return sb.toString();
     }
