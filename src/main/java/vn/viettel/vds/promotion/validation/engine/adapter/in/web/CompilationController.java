@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.*;
+import vn.viettel.vds.promotion.validation.engine.application.port.in.CompileUseCase;
 import vn.viettel.vds.promotion.validation.engine.application.port.out.RuleEnginePort;
 
 import java.util.ArrayList;
@@ -28,9 +29,12 @@ public class CompilationController {
 
     private static final Logger logger = LoggerFactory.getLogger(CompilationController.class);
 
+    private final CompileUseCase compileUseCase;
     private final RuleEnginePort ruleEnginePort;
 
-    public CompilationController(@Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+    public CompilationController(CompileUseCase compileUseCase,
+                                @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+        this.compileUseCase = compileUseCase;
         this.ruleEnginePort = ruleEnginePort;
     }
 
@@ -48,14 +52,16 @@ public class CompilationController {
                 request.getTenantId(), request.getRuleId(), request.getVersion());
 
         try {
-            // Convert DTO to domain input
-            RuleEnginePort.CompileInput input = mapToCompileInput(request);
+            // Convert web DTO to application DTO
+            vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest appRequest =
+                    mapToApplicationRequest(request);
 
-            // Compile rule
-            RuleEnginePort.CompileResult result = ruleEnginePort.compile(input);
+            // Compile rule through use case (saves to database and object storage)
+            vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse appResponse =
+                    compileUseCase.compile(appRequest);
 
-            // Convert result to DTO
-            CompileResponse response = mapToCompileResponse(result);
+            // Convert application response to web DTO
+            CompileResponse response = mapToWebResponse(appResponse);
 
             logger.info("Rule compilation completed: bundleHash={}, ok={}",
                     response.getBundleHash(), response.isOk());
@@ -144,11 +150,15 @@ public class CompilationController {
         }
     }
 
-    private RuleEnginePort.CompileInput mapToCompileInput(CompileRequest request) {
-        // Convert DTOs to Map format expected by existing interface
+    /**
+     * Convert web DTO to application DTO
+     */
+    private vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest
+    mapToApplicationRequest(CompileRequest webRequest) {
+        // Convert nodes from web DTO to Map format
         List<Map<String, Object>> nodesMaps = new ArrayList<>();
-        if (request.getNodes() != null) {
-            for (RuleNodeDto node : request.getNodes()) {
+        if (webRequest.getNodes() != null) {
+            for (RuleNodeDto node : webRequest.getNodes()) {
                 Map<String, Object> nodeMap = new HashMap<>();
                 nodeMap.put("id", node.getId());
                 nodeMap.put("type", node.getType());
@@ -163,25 +173,38 @@ public class CompilationController {
             }
         }
 
-        return new RuleEnginePort.CompileInput(
-                request.getTenantId(),
-                request.getRuleId(),
-                request.getVersion(),
-                nodesMaps,
-                request.getOperatorsFingerprint(),
-                "default-compiler"
-        );
+        // Create application DTO
+        vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest appRequest =
+                new vn.viettel.vds.promotion.validation.engine.application.dto.CompileRequest();
+        appRequest.setTenantId(webRequest.getTenantId());
+        appRequest.setRuleId(webRequest.getRuleId());
+        appRequest.setVersion(webRequest.getVersion());
+        appRequest.setLogic(webRequest.getLogic());
+        appRequest.setNodes(nodesMaps);
+        appRequest.setOperatorsFingerprint(webRequest.getOperatorsFingerprint());
+
+        return appRequest;
     }
 
-    private CompileResponse mapToCompileResponse(RuleEnginePort.CompileResult result) {
-        CompileResponse response = new CompileResponse();
-        response.setOk(true);
-        response.setBundleHash(result.getBundleHash());
-        response.setArtifactBytes(result.getArtifactBytes());
-        response.setArtifactSize(result.getSize());
-        response.setLogs(result.getLogs() != null ? result.getLogs() : new ArrayList<>());
-        response.setEngineVersion(result.getDroolsVersion());
-        response.setErrors(new ArrayList<>()); // Initialize errors as empty list for successful compilation
-        return response;
+    /**
+     * Convert application response to web DTO
+     */
+    private CompileResponse mapToWebResponse(
+            vn.viettel.vds.promotion.validation.engine.application.dto.CompileResponse appResponse) {
+        CompileResponse webResponse = new CompileResponse();
+        webResponse.setOk(true);
+        webResponse.setBundleHash(appResponse.getBundleHash());
+        webResponse.setArtifactSize(appResponse.getSize());
+        webResponse.setLogs(appResponse.getLogs() != null ? appResponse.getLogs() : new ArrayList<>());
+
+        // Map engine info
+        if (appResponse.getEngine() != null) {
+            webResponse.setEngineVersion(appResponse.getEngine().getDroolsVersion());
+        }
+
+        webResponse.setErrors(new ArrayList<>()); // No errors for successful compilation
+        // Note: artifactBytes is intentionally NOT returned to reduce response size
+        // Client can retrieve artifact separately if needed
+        return webResponse;
     }
 }

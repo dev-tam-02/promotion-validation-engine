@@ -23,53 +23,25 @@ public class BundleController {
     }
 
     @GetMapping("/bundles/{bundleHash}")
-    public ResponseEntity<BundleMetadataResponse> getBundleMetadata(@PathVariable String bundleHash) {
-        try {
-            BundleMetadataResponse response = bundleLookupUseCase.getBundleMetadata(bundleHash);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public BundleMetadataResponse getBundleMetadata(@PathVariable String bundleHash) {
+        return bundleLookupUseCase.getBundleMetadata(bundleHash);
     }
 
     @GetMapping("/bundles/latest")
-    public ResponseEntity<LatestBundleResponse> getLatestBundle(
+    public LatestBundleResponse getLatestBundle(
             @RequestParam String tenantId,
             @RequestParam String subjectType,
             @RequestParam String subjectKey) {
-        try {
-            LatestBundleResponse response = bundleLookupUseCase.getLatestBundle(tenantId, subjectType, subjectKey);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(500).build();
-        }
+            return bundleLookupUseCase.getLatestBundle(tenantId, subjectType, subjectKey);
     }
 
     @PostMapping("/bundles:warmup")
-    public ResponseEntity<Void> warmupBundles(@Valid @RequestBody WarmupRequest request) {
-        try {
+    public void warmupBundles(@Valid @RequestBody WarmupRequest request) {
             bundleLookupUseCase.warmupBundles(request);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(503).build(); // Service unavailable
-        }
     }
 
     @GetMapping(value = "/bundles/{bundleHash}/drl", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getDrlContent(@PathVariable String bundleHash) {
-        try {
-            String drlContent = bundleLookupUseCase.getDrlContent(bundleHash);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.TEXT_PLAIN)
-                    .body(drlContent);
-        } catch (BundleNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(204).build(); // No content - bundle exists but no DRL stored
-        }
+    public String getDrlContent(@PathVariable String bundleHash) {
+           return bundleLookupUseCase.getDrlContent(bundleHash);
     }
 }
