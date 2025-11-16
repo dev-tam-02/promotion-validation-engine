@@ -10,7 +10,6 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
 import vn.viettel.vds.promotion.validation.engine.domain.service.DroolsCompilationService;
 import vn.viettel.vds.promotion.validation.engine.domain.service.TemporalDrlGenerator;
 
-import java.time.*;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -60,7 +59,7 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When - Execute at 10:00 UTC (within window)
-        ValidationResult result = executeWithMockedTime(container, 10, 0);
+        ValidationResult result = executeWithMockedTime(container);
 
         // Then
         assertNotNull(result);
@@ -93,7 +92,7 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When - Execute at 20:00 UTC (outside window)
-        ValidationResult result = executeWithMockedTime(container, 20, 0);
+        ValidationResult result = executeWithMockedTime(container);
 
         // Then
         assertNotNull(result);
@@ -128,7 +127,7 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When - Execute at 14:00 UTC (matches second window)
-        ValidationResult result = executeWithMockedTime(container, 14, 0);
+        ValidationResult result = executeWithMockedTime(container);
 
         // Then - Should ALLOW
         assertEquals("ALLOW", result.getDecision());
@@ -160,7 +159,7 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When - Execute at 13:00 UTC (in gap between windows)
-        ValidationResult result = executeWithMockedTime(container, 13, 0);
+        ValidationResult result = executeWithMockedTime(container);
 
         // Then - Should DENY
         assertEquals("DENY", result.getDecision());
@@ -192,13 +191,13 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When & Then - Test times before and after midnight
-        ValidationResult resultAt23 = executeWithMockedTime(container, 23, 0); // 23:00
+        ValidationResult resultAt23 = executeWithMockedTime(container); // 23:00
         assertEquals("ALLOW", resultAt23.getDecision(), "Should ALLOW at 23:00");
 
-        ValidationResult resultAt02 = executeWithMockedTime(container, 2, 0); // 02:00
+        ValidationResult resultAt02 = executeWithMockedTime(container); // 02:00
         assertEquals("ALLOW", resultAt02.getDecision(), "Should ALLOW at 02:00");
 
-        ValidationResult resultAt12 = executeWithMockedTime(container, 12, 0); // 12:00
+        ValidationResult resultAt12 = executeWithMockedTime(container); // 12:00
         assertEquals("DENY", resultAt12.getDecision(), "Should DENY at 12:00");
     }
 
@@ -226,7 +225,7 @@ class TemporalDrlExecutionIntegrationTest {
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
 
         // When - Execute outside window (temporal check should DENY before business rule)
-        ValidationResult result = executeWithMockedTime(container, 20, 0);
+        ValidationResult result = executeWithMockedTime(container);
 
         // Then - Temporal DENY should take precedence
         assertEquals("DENY", result.getDecision());
@@ -263,7 +262,7 @@ class TemporalDrlExecutionIntegrationTest {
                 """;
     }
 
-    private ValidationResult executeWithMockedTime(KieContainer container, int hour, int minute) {
+    private ValidationResult executeWithMockedTime(KieContainer container) {
         KieSession session = container.newKieSession();
 
         try {

@@ -98,36 +98,6 @@ public class RuleTranslationService {
         // This prevents duplicate function definition when both DRLs are in same package
     }
 
-    private void generateTimeWindowFunction(StringBuilder drl) {
-        drl.append("function boolean checkTimeWindow(String startTime, String endTime, String timezone, boolean spansMidnight, String daysOfWeekCsv) {\n");
-        drl.append("    ZonedDateTime zdt = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.of(timezone));\n");
-        drl.append("    DayOfWeek currentDay = zdt.getDayOfWeek();\n");
-        drl.append("    LocalTime currentTime = zdt.toLocalTime();\n");
-        drl.append("    LocalTime start = LocalTime.parse(startTime);\n");
-        drl.append("    LocalTime end = LocalTime.parse(endTime);\n");
-        drl.append("    \n");
-        drl.append("    // Check day of week if specified\n");
-        drl.append("    if (daysOfWeekCsv != null && !daysOfWeekCsv.isEmpty()) {\n");
-        drl.append("        boolean dayMatches = false;\n");
-        drl.append("        String[] daysOfWeek = daysOfWeekCsv.split(\",\");\n");
-        drl.append("        for (String day : daysOfWeek) {\n");
-        drl.append("            if (currentDay.name().equals(day.trim())) {\n");
-        drl.append("                dayMatches = true;\n");
-        drl.append("                break;\n");
-        drl.append("            }\n");
-        drl.append("        }\n");
-        drl.append("        if (!dayMatches) return false;\n");
-        drl.append("    }\n");
-        drl.append("    \n");
-        drl.append("    // Check time range\n");
-        drl.append("    if (spansMidnight) {\n");
-        drl.append("        return currentTime.isAfter(start) || currentTime.equals(start) || currentTime.isBefore(end) || currentTime.equals(end);\n");
-        drl.append("    } else {\n");
-        drl.append("        return (currentTime.isAfter(start) || currentTime.equals(start)) && (currentTime.isBefore(end) || currentTime.equals(end));\n");
-        drl.append("    }\n");
-        drl.append("}\n\n");
-    }
-
     private void generateRule(StringBuilder drl, Map<String, Object> rootNode,
                               Map<String, Map<String, Object>> nodeMap) {
 

@@ -54,14 +54,12 @@ public class OrderItemProductApplicableOperatorTranslator implements OperatorTra
     @Override
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         // Extract parameters
-        Boolean includeAll = (Boolean) params.get("includeAll");
+        Boolean includeAllObj = (Boolean) params.get("includeAll");
         Object includeParam = params.get("include");
         Object excludeParam = params.get("exclude");
 
         // Default includeAll to false if not specified
-        if (includeAll == null) {
-            includeAll = false;
-        }
+        boolean includeAll = includeAllObj != null && includeAllObj;
 
         // Convert to lists
         List<?> includeList = includeParam instanceof List ? (List<?>) includeParam : null;

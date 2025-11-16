@@ -30,6 +30,13 @@ public class TemporalDrlGenerator {
     private static final Logger logger = LoggerFactory.getLogger(TemporalDrlGenerator.class);
     private static final Pattern BYDAY_PATTERN = Pattern.compile("BYDAY=([A-Z,]+)");
 
+    // DRL template constants
+    private static final String SALIENCE_1000 = "    salience 1000\n";
+    private static final String WHEN = "    when\n";
+    private static final String THEN = "    then\n";
+    private static final String INSERT_TEMPORAL_ALLOWED = "        insert(new TemporalAllowed());\n";
+    private static final String END = "end\n";
+
     /**
      * Generate timeframe.drl from temporal policy data.
      *
@@ -43,7 +50,7 @@ public class TemporalDrlGenerator {
 
         if (temporalData == null) {
             logger.warn("No temporal data provided for assignmentId={}, generating empty temporal DRL", assignmentId);
-            return generateEmptyTemporalDrl(tenantId, assignmentId);
+            return generateEmptyTemporalDrl(tenantId);
         }
 
         // Extract data
@@ -69,19 +76,19 @@ public class TemporalDrlGenerator {
     /**
      * Generate empty temporal DRL (always allow) when no temporal constraints.
      */
-    private String generateEmptyTemporalDrl(String tenantId, String assignmentId) {
+    private String generateEmptyTemporalDrl(String tenantId) {
         StringBuilder drl = new StringBuilder();
         generateHeader(drl, tenantId);
 
         // Always allow rule (no temporal constraints)
         drl.append("rule \"temporal_always_allow\"\n");
-        drl.append("    salience 1000\n");
-        drl.append("    when\n");
+        drl.append(SALIENCE_1000);
+        drl.append(WHEN);
         drl.append("        // No temporal constraints - always allow\n");
-        drl.append("    then\n");
-        drl.append("        insert(new TemporalAllowed());\n");
+        drl.append(THEN);
+        drl.append(INSERT_TEMPORAL_ALLOWED);
         drl.append("        System.out.println(\"[TEMPORAL] ✅ No temporal constraints - ALLOWED\");\n");
-        drl.append("end\n\n");
+        drl.append(END).append("\n");
 
         return drl.toString();
     }
@@ -152,14 +159,14 @@ public class TemporalDrlGenerator {
 
         // Generate allow rule with time window checks
         drl.append("rule \"temporal_check_allow\"\n");
-        drl.append("    salience 1000\n");
-        drl.append("    when\n");
+        drl.append(SALIENCE_1000);
+        drl.append(WHEN);
 
         // Generate conditions for each window (OR logic)
         if (windows.size() == 1) {
             TimeWindow window = windows.get(0);
             boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
-            drl.append(String.format("        eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))\n",
+            drl.append(String.format("        eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))%n",
                     window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
         } else {
             drl.append("        (\n");
@@ -170,17 +177,17 @@ public class TemporalDrlGenerator {
                 if (i > 0) {
                     drl.append("            or\n");
                 }
-                drl.append(String.format("            eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))\n",
+                drl.append(String.format("            eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))%n",
                         window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
             }
             drl.append("        )\n");
         }
 
-        drl.append("    then\n");
-        drl.append("        insert(new TemporalAllowed());\n");
-        drl.append(String.format("        System.out.println(\"[TEMPORAL] ✅ Time window ACTIVE - tz=%s, days=%s\");\n",
+        drl.append(THEN);
+        drl.append(INSERT_TEMPORAL_ALLOWED);
+        drl.append(String.format("        System.out.println(\"[TEMPORAL] ✅ Time window ACTIVE - tz=%s, days=%s\");%n",
                 timezone, daysOfWeekCsv));
-        drl.append("end\n\n");
+        drl.append(END).append("\n");
 
         // Generate deny rule (fallback when temporal check fails)
         generateDenyRule(drl);
@@ -188,22 +195,22 @@ public class TemporalDrlGenerator {
 
     private void generateAlwaysAllowRule(StringBuilder drl) {
         drl.append("rule \"temporal_check_allow_24_7\"\n");
-        drl.append("    salience 1000\n");
-        drl.append("    when\n");
+        drl.append(SALIENCE_1000);
+        drl.append(WHEN);
         drl.append("        // No time windows defined - allow 24/7\n");
-        drl.append("    then\n");
-        drl.append("        insert(new TemporalAllowed());\n");
+        drl.append(THEN);
+        drl.append(INSERT_TEMPORAL_ALLOWED);
         drl.append("        System.out.println(\"[TEMPORAL] ✅ 24/7 ACTIVE (no time restrictions)\");\n");
-        drl.append("end\n\n");
+        drl.append(END).append("\n");
     }
 
     private void generateDenyRule(StringBuilder drl) {
         drl.append("rule \"temporal_check_deny\"\n");
         drl.append("    salience 999\n");
         drl.append("    no-loop\n");
-        drl.append("    when\n");
+        drl.append(WHEN);
         drl.append("        not TemporalAllowed()\n");
-        drl.append("    then\n");
+        drl.append(THEN);
         drl.append("        result.setDecision(\"DENY\");\n");
         drl.append("        result.setOk(false);\n");
         drl.append("        reasonCodes.add(\"TIME_WINDOW_NOT_ACTIVE\");\n");

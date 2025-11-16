@@ -188,6 +188,7 @@ public class CompileRequest {
         private List<TimeWindow> windows;  // Time-of-day windows
 
         public TemporalPolicyData() {
+            // Empty constructor for JSON deserialization
         }
 
         public String getTimezone() {

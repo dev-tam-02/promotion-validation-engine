@@ -3,8 +3,6 @@ package vn.viettel.vds.promotion.validation.engine.domain.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.kie.api.KieServices;
-import org.kie.api.builder.KieFileSystem;
 import org.kie.api.runtime.KieContainer;
 
 import java.util.LinkedHashMap;
