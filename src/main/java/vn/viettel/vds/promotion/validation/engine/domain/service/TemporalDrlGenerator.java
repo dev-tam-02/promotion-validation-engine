@@ -36,6 +36,9 @@ public class TemporalDrlGenerator {
     private static final String THEN = "    then\n";
     private static final String INSERT_TEMPORAL_ALLOWED = "        insert(new TemporalAllowed());\n";
     private static final String END = "end\n";
+    private static final String INDENT_4_NEWLINE = "    \n";
+    private static final String INDENT_8_CLOSE_BRACE = "        }\n";
+    private static final String INDENT_4_CLOSE_BRACE = "    }\n";
 
     /**
      * Generate timeframe.drl from temporal policy data.
@@ -128,25 +131,25 @@ public class TemporalDrlGenerator {
     private void generateCheckDateRangeFunction(StringBuilder drl) {
         drl.append("function boolean checkDateRange(String startTs, String endTs) {\n");
         drl.append("    Instant now = Instant.now();\n");
-        drl.append("    \n");
+        drl.append(INDENT_4_NEWLINE);
         drl.append("    // Check start timestamp\n");
         drl.append("    if (startTs != null && !startTs.isEmpty()) {\n");
         drl.append("        Instant start = Instant.parse(startTs);\n");
         drl.append("        if (now.isBefore(start)) {\n");
         drl.append("            System.out.println(\"[TEMPORAL] Date check: now=\" + now + \" is BEFORE startTs=\" + start);\n");
         drl.append("            return false;\n");
-        drl.append("        }\n");
-        drl.append("    }\n");
-        drl.append("    \n");
+        drl.append(INDENT_8_CLOSE_BRACE);
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append(INDENT_4_NEWLINE);
         drl.append("    // Check end timestamp\n");
         drl.append("    if (endTs != null && !endTs.isEmpty()) {\n");
         drl.append("        Instant end = Instant.parse(endTs);\n");
         drl.append("        if (now.isAfter(end)) {\n");
         drl.append("            System.out.println(\"[TEMPORAL] Date check: now=\" + now + \" is AFTER endTs=\" + end);\n");
         drl.append("            return false;\n");
-        drl.append("        }\n");
-        drl.append("    }\n");
-        drl.append("    \n");
+        drl.append(INDENT_8_CLOSE_BRACE);
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append(INDENT_4_NEWLINE);
         drl.append("    return true;\n");
         drl.append("}\n\n");
     }
@@ -158,7 +161,7 @@ public class TemporalDrlGenerator {
         drl.append("    LocalTime currentTime = zdt.toLocalTime();\n");
         drl.append("    LocalTime start = LocalTime.parse(startTime);\n");
         drl.append("    LocalTime end = LocalTime.parse(endTime);\n");
-        drl.append("    \n");
+        drl.append(INDENT_4_NEWLINE);
         drl.append("    // Check day of week if specified\n");
         drl.append("    if (daysOfWeekCsv != null && !daysOfWeekCsv.isEmpty()) {\n");
         drl.append("        boolean dayMatches = false;\n");
@@ -168,16 +171,16 @@ public class TemporalDrlGenerator {
         drl.append("                dayMatches = true;\n");
         drl.append("                break;\n");
         drl.append("            }\n");
-        drl.append("        }\n");
+        drl.append(INDENT_8_CLOSE_BRACE);
         drl.append("        if (!dayMatches) return false;\n");
-        drl.append("    }\n");
-        drl.append("    \n");
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append(INDENT_4_NEWLINE);
         drl.append("    // Check time range\n");
         drl.append("    if (spansMidnight) {\n");
         drl.append("        return currentTime.isAfter(start) || currentTime.equals(start) || currentTime.isBefore(end) || currentTime.equals(end);\n");
         drl.append("    } else {\n");
         drl.append("        return (currentTime.isAfter(start) || currentTime.equals(start)) && (currentTime.isBefore(end) || currentTime.equals(end));\n");
-        drl.append("    }\n");
+        drl.append(INDENT_4_CLOSE_BRACE);
         drl.append("}\n\n");
     }
 
@@ -199,62 +202,77 @@ public class TemporalDrlGenerator {
         String startTsParam = startTs != null ? startTs : "";
         String endTsParam = endTs != null ? endTs : "";
 
-        // Generate allow rule with date range AND time window checks
+        // Create context object
+        TemporalRuleContext context = new TemporalRuleContext(
+                windows, timezone, daysOfWeekCsv,
+                hasDateRange, hasTimeWindows,
+                startTsParam, endTsParam
+        );
+
+        // Generate allow and deny rules
+        generateAllowRule(drl, context);
+        generateDenyRule(drl, hasDateRange, startTsParam, endTsParam);
+    }
+
+    private void generateAllowRule(StringBuilder drl, TemporalRuleContext context) {
         drl.append("rule \"temporal_check_allow\"\n");
         drl.append(SALIENCE_1000);
         drl.append(WHEN);
 
-        // Build conditions list
-        java.util.List<String> conditions = new java.util.ArrayList<>();
+        // Build and add conditions
+        java.util.List<String> conditions = buildConditions(context);
 
-        // Add date range check if startTs or endTs is defined
-        if (hasDateRange) {
-            conditions.add(String.format("eval(checkDateRange(\"%s\", \"%s\"))", startTsParam, endTsParam));
-        }
-
-        // Add time window checks if defined
-        if (hasTimeWindows) {
-            if (windows.size() == 1) {
-                TimeWindow window = windows.get(0);
-                boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
-                conditions.add(String.format("eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))",
-                        window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
-            } else {
-                // Multiple windows - OR logic
-                StringBuilder windowCondition = new StringBuilder("(\n");
-                for (int i = 0; i < windows.size(); i++) {
-                    TimeWindow window = windows.get(i);
-                    boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
-                    if (i > 0) {
-                        windowCondition.append("            or\n");
-                    }
-                    windowCondition.append(String.format("            eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))\n",
-                            window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
-                }
-                windowCondition.append("        )");
-                conditions.add(windowCondition.toString());
-            }
-        }
-
-        // Combine all conditions with AND logic
-        for (int i = 0; i < conditions.size(); i++) {
-            String condition = conditions.get(i);
-            if (condition.startsWith("(")) {
-                // Multi-line condition (window OR group)
-                drl.append("        ").append(condition).append("\n");
-            } else {
-                drl.append("        ").append(condition).append("\n");
-            }
+        for (String condition : conditions) {
+            drl.append("        ").append(condition).append("\n");
         }
 
         drl.append(THEN);
         drl.append(INSERT_TEMPORAL_ALLOWED);
         drl.append(String.format("        System.out.println(\"[TEMPORAL] ✅ Temporal check PASSED - tz=%s, days=%s, startTs=%s, endTs=%s\");%n",
-                timezone, daysOfWeekCsv, startTsParam, endTsParam));
+                context.timezone, context.daysOfWeekCsv, context.startTsParam, context.endTsParam));
         drl.append(END).append("\n");
+    }
 
-        // Generate deny rule (fallback when temporal check fails)
-        generateDenyRule(drl, hasDateRange, startTsParam, endTsParam);
+    private java.util.List<String> buildConditions(TemporalRuleContext context) {
+        java.util.List<String> conditions = new java.util.ArrayList<>();
+
+        if (context.hasDateRange) {
+            conditions.add(String.format("eval(checkDateRange(\"%s\", \"%s\"))", context.startTsParam, context.endTsParam));
+        }
+
+        if (context.hasTimeWindows) {
+            conditions.add(buildTimeWindowCondition(context.windows, context.timezone, context.daysOfWeekCsv));
+        }
+
+        return conditions;
+    }
+
+    private String buildTimeWindowCondition(List<TimeWindow> windows, String timezone, String daysOfWeekCsv) {
+        if (windows.size() == 1) {
+            return buildSingleWindowCondition(windows.get(0), timezone, daysOfWeekCsv);
+        }
+        return buildMultipleWindowsCondition(windows, timezone, daysOfWeekCsv);
+    }
+
+    private String buildSingleWindowCondition(TimeWindow window, String timezone, String daysOfWeekCsv) {
+        boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
+        return String.format("eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))",
+                window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv);
+    }
+
+    private String buildMultipleWindowsCondition(List<TimeWindow> windows, String timezone, String daysOfWeekCsv) {
+        StringBuilder windowCondition = new StringBuilder("(\n");
+        for (int i = 0; i < windows.size(); i++) {
+            TimeWindow window = windows.get(i);
+            boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
+            if (i > 0) {
+                windowCondition.append("            or\n");
+            }
+            windowCondition.append(String.format("            eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))%n",
+                    window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
+        }
+        windowCondition.append("        )");
+        return windowCondition.toString();
     }
 
     private void generateAlwaysAllowRule(StringBuilder drl) {
@@ -375,4 +393,29 @@ public class TemporalDrlGenerator {
             "super", "switch", "synchronized", "this", "throw", "throws",
             "transient", "try", "void", "volatile", "while"
     );
+
+    /**
+     * Parameter object to reduce method parameter count.
+     */
+    private static class TemporalRuleContext {
+        private final List<TimeWindow> windows;
+        private final String timezone;
+        private final String daysOfWeekCsv;
+        private final boolean hasDateRange;
+        private final boolean hasTimeWindows;
+        private final String startTsParam;
+        private final String endTsParam;
+
+        TemporalRuleContext(List<TimeWindow> windows, String timezone, String daysOfWeekCsv,
+                           boolean hasDateRange, boolean hasTimeWindows,
+                           String startTsParam, String endTsParam) {
+            this.windows = windows;
+            this.timezone = timezone;
+            this.daysOfWeekCsv = daysOfWeekCsv;
+            this.hasDateRange = hasDateRange;
+            this.hasTimeWindows = hasTimeWindows;
+            this.startTsParam = startTsParam;
+            this.endTsParam = endTsParam;
+        }
+    }
 }
