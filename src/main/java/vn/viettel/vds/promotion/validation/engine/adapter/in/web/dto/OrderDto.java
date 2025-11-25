@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,6 +22,7 @@ public record OrderDto(
 
         @Schema(description = "Order total amount", example = "500000", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Total is required")
+        @Positive(message = "Total must be positive")
         @JsonProperty("total")
         BigDecimal total,
 
