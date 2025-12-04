@@ -22,7 +22,7 @@ spring:
 
   # DataSource Configuration for MariaDB
   datasource:
-    url: jdbc:mariadb://${DB_HOST:promotion-mariadb}:${DB_PORT:3306}/${DB_NAME:promotion_rule_engine}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8mb4
+    url: jdbc:mariadb://${DB_HOST:promotion-mariadb}:${DB_PORT:3306}/${DB_NAME:rule_engine}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8mb4
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:123123a@}
     driver-class-name: org.mariadb.jdbc.Driver
@@ -40,7 +40,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate # Use 'update' for development, 'validate' for production
+      ddl-auto: none # Use 'update' for development, 'validate' for production
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDB106Dialect
@@ -59,10 +59,10 @@ spring:
 
   # Liquibase Configuration
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
-    default-schema: ${DB_NAME:promotion_rule_engine}
-    liquibase-schema: ${DB_NAME:promotion_rule_engine}
+    default-schema: ${DB_NAME:rule_engine}
+    liquibase-schema: ${DB_NAME:rule_engine}
 
 # Server Configuration
 server:
