@@ -107,6 +107,9 @@ public class RuleTranslationService {
         drl.append("rule \"promotion_validation_rule\"\n");
         drl.append(DRL_WHEN);
 
+        // Require temporal check to pass first (TemporalAllowed is inserted by timeframe.drl)
+        drl.append("        TemporalAllowed()\n");
+
         generateConditions(drl, rootNode, nodeMap, 2);
 
         drl.append(DRL_THEN);

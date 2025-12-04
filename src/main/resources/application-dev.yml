@@ -40,7 +40,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate # Use 'update' for development, 'validate' for production
+      ddl-auto: none # Use 'update' for development, 'validate' for production
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDB106Dialect
