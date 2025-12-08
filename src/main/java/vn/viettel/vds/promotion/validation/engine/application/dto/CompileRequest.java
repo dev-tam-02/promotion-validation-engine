@@ -186,6 +186,8 @@ public class CompileRequest {
         private String startTs;         // ISO 8601, e.g., "2024-01-01T00:00:00Z"
         private String endTs;           // ISO 8601, e.g., "2024-12-31T23:59:59Z"
         private List<TimeWindow> windows;  // Time-of-day windows
+        private String duration;        // ISO 8601 Duration, e.g., "PT1H" (1 hour active window)
+        private String interval;        // ISO 8601 Duration, e.g., "P1D" (repeat every 1 day)
 
         public TemporalPolicyData() {
             // Empty constructor for JSON deserialization
@@ -229,6 +231,22 @@ public class CompileRequest {
 
         public void setWindows(List<TimeWindow> windows) {
             this.windows = windows;
+        }
+
+        public String getDuration() {
+            return duration;
+        }
+
+        public void setDuration(String duration) {
+            this.duration = duration;
+        }
+
+        public String getInterval() {
+            return interval;
+        }
+
+        public void setInterval(String interval) {
+            this.interval = interval;
         }
     }
 
