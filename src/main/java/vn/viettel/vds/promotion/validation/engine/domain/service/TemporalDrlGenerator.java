@@ -39,6 +39,10 @@ public class TemporalDrlGenerator {
     private static final String INDENT_4_NEWLINE = "    \n";
     private static final String INDENT_8_CLOSE_BRACE = "        }\n";
     private static final String INDENT_4_CLOSE_BRACE = "    }\n";
+    private static final String END_DOUBLE_NEWLINE = "end\n\n";
+    private static final String RETURN_FALSE_INDENT_12 = "            return false;\n";
+    private static final String CLOSE_BRACE_DOUBLE_NEWLINE = "}\n\n";
+    private static final String ELSE_BLOCK = "    } else {\n";
 
     /**
      * Generate timeframe.drl from temporal policy data.
@@ -81,7 +85,7 @@ public class TemporalDrlGenerator {
             // Duration/Interval mode: recurring time windows based on startTs
             logger.info("Using Duration/Interval mode: duration={}, interval={}, startTs={}", duration, interval, startTs);
             generateDurationIntervalCheckFunction(drl);
-            generateDurationIntervalRules(drl, startTs, endTs, duration, interval, timezone);
+            generateDurationIntervalRules(drl, startTs, endTs, duration, interval);
         } else {
             // Legacy mode: fixed time windows
             generateCheckDateRangeFunction(drl);
@@ -137,7 +141,7 @@ public class TemporalDrlGenerator {
 
         // Fact class for temporal state
         drl.append("declare TemporalAllowed\n");
-        drl.append("end\n\n");
+        drl.append(END_DOUBLE_NEWLINE);
     }
 
     /**
@@ -153,7 +157,7 @@ public class TemporalDrlGenerator {
         drl.append("        Instant start = Instant.parse(startTs);\n");
         drl.append("        if (now.isBefore(start)) {\n");
         drl.append("            System.out.println(\"[TEMPORAL] Date check: now=\" + now + \" is BEFORE startTs=\" + start);\n");
-        drl.append("            return false;\n");
+        drl.append(RETURN_FALSE_INDENT_12);
         drl.append(INDENT_8_CLOSE_BRACE);
         drl.append(INDENT_4_CLOSE_BRACE);
         drl.append(INDENT_4_NEWLINE);
@@ -162,12 +166,12 @@ public class TemporalDrlGenerator {
         drl.append("        Instant end = Instant.parse(endTs);\n");
         drl.append("        if (now.isAfter(end)) {\n");
         drl.append("            System.out.println(\"[TEMPORAL] Date check: now=\" + now + \" is AFTER endTs=\" + end);\n");
-        drl.append("            return false;\n");
+        drl.append(RETURN_FALSE_INDENT_12);
         drl.append(INDENT_8_CLOSE_BRACE);
         drl.append(INDENT_4_CLOSE_BRACE);
         drl.append(INDENT_4_NEWLINE);
         drl.append("    return true;\n");
-        drl.append("}\n\n");
+        drl.append(CLOSE_BRACE_DOUBLE_NEWLINE);
     }
 
     private void generateCheckTimeWindowFunction(StringBuilder drl) {
@@ -194,10 +198,10 @@ public class TemporalDrlGenerator {
         drl.append("    // Check time range\n");
         drl.append("    if (spansMidnight) {\n");
         drl.append("        return currentTime.isAfter(start) || currentTime.equals(start) || currentTime.isBefore(end) || currentTime.equals(end);\n");
-        drl.append("    } else {\n");
+        drl.append(ELSE_BLOCK);
         drl.append("        return (currentTime.isAfter(start) || currentTime.equals(start)) && (currentTime.isBefore(end) || currentTime.equals(end));\n");
         drl.append(INDENT_4_CLOSE_BRACE);
-        drl.append("}\n\n");
+        drl.append(CLOSE_BRACE_DOUBLE_NEWLINE);
     }
 
     /**
@@ -230,7 +234,7 @@ public class TemporalDrlGenerator {
         drl.append("        long endTs = java.time.Instant.parse(endTsStr).toEpochMilli();\n");
         drl.append("        if (now > endTs) {\n");
         drl.append("            System.out.println(\"[TEMPORAL] Campaign ended: endTs=\" + endTsStr + \", now=\" + now);\n");
-        drl.append("            return false;\n");
+        drl.append(RETURN_FALSE_INDENT_12);
         drl.append(INDENT_8_CLOSE_BRACE);
         drl.append(INDENT_4_CLOSE_BRACE);
         drl.append(INDENT_4_NEWLINE);
@@ -238,7 +242,7 @@ public class TemporalDrlGenerator {
         drl.append("    long durationMs;\n");
         drl.append("    if (isoDuration.contains(\"T\")) {\n");
         drl.append("        durationMs = java.time.Duration.parse(isoDuration).toMillis();\n");
-        drl.append("    } else {\n");
+        drl.append(ELSE_BLOCK);
         drl.append("        java.time.Period p = java.time.Period.parse(isoDuration);\n");
         drl.append("        durationMs = (p.getDays() * 24L * 60L * 60L * 1000L) + (p.getMonths() * 30L * 24L * 60L * 60L * 1000L) + (p.getYears() * 365L * 24L * 60L * 60L * 1000L);\n");
         drl.append(INDENT_4_CLOSE_BRACE);
@@ -247,7 +251,7 @@ public class TemporalDrlGenerator {
         drl.append("    long intervalMs;\n");
         drl.append("    if (isoInterval.contains(\"T\")) {\n");
         drl.append("        intervalMs = java.time.Duration.parse(isoInterval).toMillis();\n");
-        drl.append("    } else {\n");
+        drl.append(ELSE_BLOCK);
         drl.append("        java.time.Period p = java.time.Period.parse(isoInterval);\n");
         drl.append("        intervalMs = (p.getDays() * 24L * 60L * 60L * 1000L) + (p.getMonths() * 30L * 24L * 60L * 60L * 1000L) + (p.getYears() * 365L * 24L * 60L * 60L * 1000L);\n");
         drl.append(INDENT_4_CLOSE_BRACE);
@@ -260,14 +264,14 @@ public class TemporalDrlGenerator {
         drl.append("    System.out.println(\"[TEMPORAL] Duration/Interval check: elapsed=\" + elapsed + \"ms, cycle=\" + (elapsed / intervalMs) + \", positionInCycle=\" + positionInCycle + \"ms, duration=\" + durationMs + \"ms, interval=\" + intervalMs + \"ms, isActive=\" + isActive);\n");
         drl.append(INDENT_4_NEWLINE);
         drl.append("    return isActive;\n");
-        drl.append("}\n\n");
+        drl.append(CLOSE_BRACE_DOUBLE_NEWLINE);
     }
 
     /**
      * Generate rules for Duration/Interval mode.
      */
     private void generateDurationIntervalRules(StringBuilder drl, String startTs, String endTs,
-                                                String duration, String interval, String timezone) {
+                                                String duration, String interval) {
         String endTsParam = endTs != null ? endTs : "";
 
         // Allow rule
@@ -294,7 +298,7 @@ public class TemporalDrlGenerator {
         drl.append("        reasonCodes.add(\"OUTSIDE_ACTIVE_WINDOW\");\n");
         drl.append(String.format("        System.out.println(\"[TEMPORAL] ❌ Outside active window (duration=%s, interval=%s) - DENY\");%n",
                 duration, interval));
-        drl.append("end\n\n");
+        drl.append(END_DOUBLE_NEWLINE);
     }
 
     private void generateTemporalRules(StringBuilder drl, List<TimeWindow> windows,
@@ -419,7 +423,7 @@ public class TemporalDrlGenerator {
             drl.append("        System.out.println(\"[TEMPORAL] ❌ Time window INACTIVE - DENY\");\n");
         }
 
-        drl.append("end\n\n");
+        drl.append(END_DOUBLE_NEWLINE);
     }
 
     /**
