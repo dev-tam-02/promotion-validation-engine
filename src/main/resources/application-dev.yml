@@ -135,9 +135,9 @@ promix:
   messaging:
     kafka:
       bootstrap-servers:
-        - kafka-1:9092
-        - kafka-2:9093
-        - kafka-3:9094
+        - kafka-1:19092
+        - kafka-2:19093
+        - kafka-3:19094
       client-id: validation-engine
 
       # Security Configuration
