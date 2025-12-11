@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.validation.engine.application.port.out;
 
+import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
 import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
 import vn.viettel.vds.promotion.engine.event.WarmupRequestedEvent;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
@@ -15,4 +16,10 @@ public interface EventPublisherPort {
     void publishWarmupRequested(WarmupRequestedEvent event);
 
     void publishOutboxEvent(OutboxEventEntity outboxEvent);
+
+    /**
+     * Publish cache invalidation event to all validation-engine instances.
+     * Uses Kafka broadcast pattern (unique group-id per instance).
+     */
+    void publishCacheInvalidation(BundleCacheInvalidationEvent event);
 }

@@ -68,6 +68,12 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
+        <!-- Spring Kafka for event publishing and broadcast pattern -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <!-- Schema Module for shared DTOs -->
         <dependency>
             <groupId>vn.viettel.vds.promotion</groupId>

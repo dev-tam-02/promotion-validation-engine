@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
 import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
 import vn.viettel.vds.promotion.validation.engine.adapter.out.persistence.jpa.entity.*;
 import vn.viettel.vds.promotion.validation.engine.application.dto.CompileJobResponse;
@@ -318,10 +319,21 @@ public class CompileService implements CompileUseCase {
 
         outboxEventRepository.save(outboxEvent);
 
-        // Publish event
+        // Publish bundle published event
         BundlePublishedEvent event = new BundlePublishedEvent(
                 request.getTenantId(), request.getRuleId(), request.getVersion(), null, bundleHash);
         eventPublisherPort.publishBundlePublished(event);
+
+        // Publish cache invalidation event to all instances (broadcast pattern)
+        BundleCacheInvalidationEvent cacheInvalidationEvent = new BundleCacheInvalidationEvent(
+                request.getTenantId(),
+                bundleHash,
+                request.getRuleId(),
+                request.getVersion(),
+                BundleCacheInvalidationEvent.InvalidationType.BUNDLE_UPDATED,
+                null  // sourceInstanceId will be set by KafkaEventPublisherAdapter
+        );
+        eventPublisherPort.publishCacheInvalidation(cacheInvalidationEvent);
     }
 
     private CompileResponse mapToCompileResponse(BundleEntity bundle, List<String> logs) {

@@ -211,6 +211,15 @@ validation:
       prewarm-session-count: 3
       health-check-interval-seconds: 300
 
+# Kafka Topics Configuration
+kafka:
+  topics:
+    # Bundle events
+    bundle-published: promotion_bundle_published
+    warmup-requested: promotion_warmup_requested
+    # Cache invalidation topic (broadcast pattern - all instances receive)
+    bundle-cache-invalidation: promotion_bundle_cache_invalidation
+
 # Logging Configuration
 logging:
   level:
