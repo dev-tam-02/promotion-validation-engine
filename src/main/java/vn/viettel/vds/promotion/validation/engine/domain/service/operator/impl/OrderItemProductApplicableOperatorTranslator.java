@@ -68,7 +68,7 @@ public class OrderItemProductApplicableOperatorTranslator implements OperatorTra
         // Validation
         if (!includeAll && (includeList == null || includeList.isEmpty())) {
             throw new IllegalArgumentException(
-                "Parameter 'include' is required and must not be empty when includeAll=false for operator: order.item.product.applicable");
+                    "Parameter 'include' is required and must not be empty when includeAll=false for operator: order.item.product.applicable");
         }
 
         StringBuilder sb = new StringBuilder();

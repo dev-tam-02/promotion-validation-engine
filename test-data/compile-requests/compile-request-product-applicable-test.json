@@ -8,7 +8,10 @@
       "id": "root",
       "type": "GROUP",
       "groupLogic": "ALL",
-      "children": ["cond-segment", "cond-product-applicable"]
+      "children": [
+        "cond-segment",
+        "cond-product-applicable"
+      ]
     },
     {
       "id": "cond-segment",
@@ -16,7 +19,9 @@
       "operatorName": "customer.in_segment",
       "operatorVersion": 1,
       "params": {
-        "segments": ["VIP"]
+        "segments": [
+          "VIP"
+        ]
       },
       "reasonCode": "CUSTOMER_NOT_VIP"
     },
@@ -27,8 +32,15 @@
       "operatorVersion": 1,
       "params": {
         "includeAll": false,
-        "include": ["PROD-001", "PROD-002", "PROD-003"],
-        "exclude": ["PROD-BAD-001", "PROD-BAD-002"]
+        "include": [
+          "PROD-001",
+          "PROD-002",
+          "PROD-003"
+        ],
+        "exclude": [
+          "PROD-BAD-001",
+          "PROD-BAD-002"
+        ]
       },
       "reasonCode": "PRODUCT_NOT_APPLICABLE"
     }

@@ -33,7 +33,7 @@ public class CompilationController {
     private final RuleEnginePort ruleEnginePort;
 
     public CompilationController(CompileUseCase compileUseCase,
-                                @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+                                 @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
         this.compileUseCase = compileUseCase;
         this.ruleEnginePort = ruleEnginePort;
     }

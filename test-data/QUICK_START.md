@@ -3,6 +3,7 @@
 ## 📋 Tóm tắt
 
 Thư mục này chứa tất cả test data để kiểm tra validation-engine với rule:
+
 - **Customer**: VIP segment
 - **Product**: Category trong (SE01, SE02, SE03)
 - **Temporal**: Chỉ cho phép Thứ 7 & Chủ Nhật (Asia/Bangkok)
@@ -22,6 +23,7 @@ curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/com
 ```
 
 **Expected Output**:
+
 ```json
 {
   "data": {
@@ -42,6 +44,7 @@ curl http://localhost:16013/promotion/promotion-validation-engine/v1/bundles/${B
 ```
 
 **Output**: 2 DRL files
+
 - `timeframe.drl`: Temporal validation (SATURDAY, SUNDAY)
 - `validation-rule.drl`: Business rules (VIP + SE01/SE02/SE03)
 
@@ -50,6 +53,7 @@ curl http://localhost:16013/promotion/promotion-validation-engine/v1/bundles/${B
 ### 3. Test Execution
 
 #### Test Case 1: VIP + SE01 (Should DENY due to temporal)
+
 ```bash
 curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/execute \
   -H 'Content-Type: application/json' \
@@ -57,6 +61,7 @@ curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/exe
 ```
 
 #### Test Case 2: Non-VIP + SE01 (Should DENY)
+
 ```bash
 curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/execute \
   -H 'Content-Type: application/json' \
@@ -64,6 +69,7 @@ curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/exe
 ```
 
 #### Test Case 3: VIP + Invalid Product (Should DENY)
+
 ```bash
 curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/execute \
   -H 'Content-Type: application/json' \
@@ -82,11 +88,11 @@ curl -X POST http://localhost:16013/promotion/promotion-validation-engine/v1/exe
 
 ## 📊 Kết quả mong đợi
 
-| Test Case | Customer | Product | Temporal | Expected Result |
-|-----------|----------|---------|----------|-----------------|
-| TC1 | VIP | SE01 | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE |
-| TC2 | Non-VIP | SE01 | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE, CUSTOMER_NOT_VIP |
-| TC3 | VIP | Invalid | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE, PRODUCT_NOT_ELIGIBLE |
+| Test Case | Customer | Product | Temporal   | Expected Result                                     |
+|-----------|----------|---------|------------|-----------------------------------------------------|
+| TC1       | VIP      | SE01    | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE                       |
+| TC2       | Non-VIP  | SE01    | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE, CUSTOMER_NOT_VIP     |
+| TC3       | VIP      | Invalid | ❌ (Friday) | DENY - TIME_WINDOW_NOT_ACTIVE, PRODUCT_NOT_ELIGIBLE |
 
 ---
 
@@ -135,6 +141,7 @@ cat test-data/responses/drl-formatted.txt
 ## ⚠️ Known Issues
 
 **Test Case 1**: Decision = ALLOW nhưng có reason code TIME_WINDOW_NOT_ACTIVE
+
 - Đây là hành vi không mong đợi
 - Cần review decision aggregation logic
 - Chi tiết xem `reports/final-report.md`
@@ -144,6 +151,7 @@ cat test-data/responses/drl-formatted.txt
 ## 📞 Support
 
 Nếu có vấn đề, kiểm tra:
+
 1. Service có đang chạy? `curl http://localhost:16013/actuator/health`
 2. Port có đúng 16013? Check `application.yml`
 3. Database có sẵn sàng? Check logs

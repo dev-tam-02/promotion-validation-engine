@@ -8,7 +8,10 @@
       "id": "root",
       "type": "GROUP",
       "groupLogic": "ALL",
-      "children": ["cond-segment", "cond-product"]
+      "children": [
+        "cond-segment",
+        "cond-product"
+      ]
     },
     {
       "id": "cond-segment",
@@ -16,7 +19,9 @@
       "operatorName": "customer.in_segment",
       "operatorVersion": 1,
       "params": {
-        "segments": ["VIP"]
+        "segments": [
+          "VIP"
+        ]
       },
       "reasonCode": "CUSTOMER_NOT_VIP"
     },
@@ -26,7 +31,11 @@
       "operatorName": "order.item.category.in",
       "operatorVersion": 1,
       "params": {
-        "categories": ["SE01", "SE02", "SE03"]
+        "categories": [
+          "SE01",
+          "SE02",
+          "SE03"
+        ]
       },
       "reasonCode": "PRODUCT_NOT_ELIGIBLE"
     }

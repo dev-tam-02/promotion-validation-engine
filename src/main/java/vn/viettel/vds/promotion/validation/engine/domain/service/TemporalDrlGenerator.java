@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 
 /**
  * Service to generate temporal DRL (timeframe.drl) from temporal policy data.
- *
+ * <p>
  * Responsible for:
  * - Generating Drools DRL syntax for temporal validation
  * - Converting RFC 5545 RRULE to Drools conditions
  * - Creating time window checking logic
- *
+ * <p>
  * Generated DRL structure:
  * 1. checkTimeWindow() function for time validation
  * 2. temporal_check_allow rule (salience 1000) - checks if current time is within allowed windows
@@ -43,11 +43,21 @@ public class TemporalDrlGenerator {
     private static final String RETURN_FALSE_INDENT_12 = "            return false;\n";
     private static final String CLOSE_BRACE_DOUBLE_NEWLINE = "}\n\n";
     private static final String ELSE_BLOCK = "    } else {\n";
+    private static final java.util.Set<String> JAVA_RESERVED_KEYWORDS = java.util.Set.of(
+            "abstract", "assert", "boolean", "break", "byte",
+            "case", "catch", "char", "class", "const", "continue", "default",
+            "do", "double", "else", "enum", "extends", "final", "finally",
+            "float", "for", "goto", "if", "implements", "import", "instanceof",
+            "int", "interface", "long", "native", "new", "package", "private",
+            "protected", "public", "return", "short", "static", "strictfp",
+            "super", "switch", "synchronized", "this", "throw", "throws",
+            "transient", "try", "void", "volatile", "while"
+    );
 
     /**
      * Generate timeframe.drl from temporal policy data.
      *
-     * @param tenantId tenant identifier (for package name - to match validation DRL package)
+     * @param tenantId     tenant identifier (for package name - to match validation DRL package)
      * @param assignmentId assignment identifier (for logging)
      * @param temporalData temporal policy data
      * @return DRL string content
@@ -78,8 +88,8 @@ public class TemporalDrlGenerator {
 
         // Check if duration/interval mode is enabled
         boolean hasDurationInterval = duration != null && !duration.isEmpty()
-                                   && interval != null && !interval.isEmpty()
-                                   && startTs != null && !startTs.isEmpty();
+                && interval != null && !interval.isEmpty()
+                && startTs != null && !startTs.isEmpty();
 
         if (hasDurationInterval) {
             // Duration/Interval mode: recurring time windows based on startTs
@@ -206,17 +216,17 @@ public class TemporalDrlGenerator {
 
     /**
      * Generate checkDurationInterval function for recurring time windows.
-     *
+     * <p>
      * Logic: Campaign starts at startTs, active for 'duration' every 'interval'.
      * Example: duration=PT1H, interval=P1D, startTs=2025-12-08T09:00:00Z
-     *   - Day 1: 09:00-10:00 ACTIVE
-     *   - Day 2: 09:00-10:00 ACTIVE
-     *   - etc.
-     *
+     * - Day 1: 09:00-10:00 ACTIVE
+     * - Day 2: 09:00-10:00 ACTIVE
+     * - etc.
+     * <p>
      * Formula:
-     *   elapsed = now - startTs
-     *   positionInCycle = elapsed % intervalMs
-     *   isActive = positionInCycle < durationMs
+     * elapsed = now - startTs
+     * positionInCycle = elapsed % intervalMs
+     * isActive = positionInCycle < durationMs
      */
     private void generateDurationIntervalCheckFunction(StringBuilder drl) {
         drl.append("function boolean checkDurationInterval(String startTsStr, String endTsStr, String isoDuration, String isoInterval) {\n");
@@ -271,7 +281,7 @@ public class TemporalDrlGenerator {
      * Generate rules for Duration/Interval mode.
      */
     private void generateDurationIntervalRules(StringBuilder drl, String startTs, String endTs,
-                                                String duration, String interval) {
+                                               String duration, String interval) {
         String endTsParam = endTs != null ? endTs : "";
 
         // Allow rule
@@ -500,17 +510,6 @@ public class TemporalDrlGenerator {
         return JAVA_RESERVED_KEYWORDS.contains(word);
     }
 
-    private static final java.util.Set<String> JAVA_RESERVED_KEYWORDS = java.util.Set.of(
-            "abstract", "assert", "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue", "default",
-            "do", "double", "else", "enum", "extends", "final", "finally",
-            "float", "for", "goto", "if", "implements", "import", "instanceof",
-            "int", "interface", "long", "native", "new", "package", "private",
-            "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws",
-            "transient", "try", "void", "volatile", "while"
-    );
-
     /**
      * Parameter object to reduce method parameter count.
      */
@@ -524,8 +523,8 @@ public class TemporalDrlGenerator {
         private final String endTsParam;
 
         TemporalRuleContext(List<TimeWindow> windows, String timezone, String daysOfWeekCsv,
-                           boolean hasDateRange, boolean hasTimeWindows,
-                           String startTsParam, String endTsParam) {
+                            boolean hasDateRange, boolean hasTimeWindows,
+                            String startTsParam, String endTsParam) {
             this.windows = windows;
             this.timezone = timezone;
             this.daysOfWeekCsv = daysOfWeekCsv;

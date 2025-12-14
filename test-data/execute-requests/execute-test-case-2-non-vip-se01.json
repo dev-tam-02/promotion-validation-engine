@@ -2,7 +2,10 @@
   "bundleHash": "sha256:a85168f235cc7cac4a795b7a7c7646d253fbbfaa55d4282250e3efb215bcac3b",
   "customer": {
     "id": "CUST002",
-    "segments": ["REGULAR", "BRONZE"],
+    "segments": [
+      "REGULAR",
+      "BRONZE"
+    ],
     "region": "HN",
     "tier": 1
   },

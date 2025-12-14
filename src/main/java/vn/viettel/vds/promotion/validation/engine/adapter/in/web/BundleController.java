@@ -30,16 +30,16 @@ public class BundleController {
             @RequestParam String tenantId,
             @RequestParam String subjectType,
             @RequestParam String subjectKey) {
-            return bundleLookupUseCase.getLatestBundle(tenantId, subjectType, subjectKey);
+        return bundleLookupUseCase.getLatestBundle(tenantId, subjectType, subjectKey);
     }
 
     @PostMapping("/bundles:warmup")
     public void warmupBundles(@Valid @RequestBody WarmupRequest request) {
-            bundleLookupUseCase.warmupBundles(request);
+        bundleLookupUseCase.warmupBundles(request);
     }
 
     @GetMapping(value = "/bundles/{bundleHash}/drl", produces = MediaType.TEXT_PLAIN_VALUE)
     public String getDrlContent(@PathVariable String bundleHash) {
-           return bundleLookupUseCase.getDrlContent(bundleHash);
+        return bundleLookupUseCase.getDrlContent(bundleHash);
     }
 }

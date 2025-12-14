@@ -3,6 +3,7 @@
 ## 📋 TRẠNG THÁI HIỆN TẠI
 
 ### ✅ ĐÃ HOÀN THÀNH:
+
 1. ✅ **CompileRequest.TemporalPolicyData** - DTO cho temporal data
 2. ✅ **TemporalDrlGenerator** - Service generate timeframe.drl từ TemporalPolicyData
 3. ✅ **DroolsCompilationService.compileMultipleDrls()** - Compile nhiều DRL vào 1 bundle
@@ -18,34 +19,35 @@
 **File**: `src/main/java/vn/viettel/vds/promotion/validation/engine/adapter/out/rules/DroolsRuleEngineAdapter.java`
 
 **Yêu cầu:**
+
 1. Inject `TemporalDrlGenerator` vào constructor
 2. Update `compile()` method:
-   - Check if `request.getTimeLinks()` not null và not empty
-   - If YES → Generate temporal DRL:
-     ```java
-     // Get first timeLink (assumption: 1 policy per assignment)
-     TimeLink timeLink = request.getTimeLinks().get(0);
-     TemporalPolicyData temporalData = timeLink.getData();
-
-     // Generate temporal DRL
-     String assignmentId = request.getRuleId(); // Or pass explicitly
-     String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl(assignmentId, temporalData);
-     ```
-   - Generate business rule DRL (existing logic)
-   - Combine 2 DRLs:
-     ```java
-     Map<String, String> drlFiles = new LinkedHashMap<>();
-     drlFiles.put("timeframe.drl", timeframeDrl);
-     drlFiles.put("validation-rule.drl", businessRuleDrl);
-
-     // Use compileMultipleDrls instead of compileDrl
-     CompilationResult result = droolsCompilationService.compileMultipleDrls(
-         request.getTenantId(),
-         request.getRuleId(),
-         request.getVersion(),
-         drlFiles
-     );
-     ```
+    - Check if `request.getTimeLinks()` not null và not empty
+    - If YES → Generate temporal DRL:
+      ```java
+      // Get first timeLink (assumption: 1 policy per assignment)
+      TimeLink timeLink = request.getTimeLinks().get(0);
+      TemporalPolicyData temporalData = timeLink.getData();
+ 
+      // Generate temporal DRL
+      String assignmentId = request.getRuleId(); // Or pass explicitly
+      String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl(assignmentId, temporalData);
+      ```
+    - Generate business rule DRL (existing logic)
+    - Combine 2 DRLs:
+      ```java
+      Map<String, String> drlFiles = new LinkedHashMap<>();
+      drlFiles.put("timeframe.drl", timeframeDrl);
+      drlFiles.put("validation-rule.drl", businessRuleDrl);
+ 
+      // Use compileMultipleDrls instead of compileDrl
+      CompilationResult result = droolsCompilationService.compileMultipleDrls(
+          request.getTenantId(),
+          request.getRuleId(),
+          request.getVersion(),
+          drlFiles
+      );
+      ```
 
 **Code template:**
 
@@ -119,6 +121,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 ```
 
 **Testing checklist:**
+
 - [ ] Service compiles successfully
 - [ ] No temporal data → single DRL compiled (existing behavior)
 - [ ] With temporal data → 2 DRLs compiled into 1 bundle
@@ -131,39 +134,41 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
 ### **Task 6: Update RulePublishingService**
 
-**File**: `/Users/hoanglam/promix/validation/src/main/java/vn/viettel/vds/promotion/validation/domain/service/RulePublishingService.java`
+**File**:
+`/Users/hoanglam/promix/validation/src/main/java/vn/viettel/vds/promotion/validation/domain/service/RulePublishingService.java`
 
 **Yêu cầu:**
+
 1. Update `buildCompileRequest()` method:
-   - Accept `assignmentId` parameter
-   - Query `RuleTemporalLinkJpaRepository.findByAssignmentId(assignmentId)`
-   - If temporal links exist:
-     ```java
-     // Get temporal policy data
-     RuleTemporalLinkEntity link = temporalLinks.get(0);
-     TemporalPolicyEntity policy = link.getTemporalPolicy();
-     List<TemporalPolicyWindowEntity> windows = policy.getTimeOfDayWindows();
-
-     // Build TemporalPolicyData DTO
-     TemporalPolicyData data = new TemporalPolicyData();
-     data.setTimezone(policy.getTz());
-     data.setRrule(policy.getRrule());
-     data.setStartTs(policy.getStartTs() != null ? policy.getStartTs().toString() : null);
-     data.setEndTs(policy.getEndTs() != null ? policy.getEndTs().toString() : null);
-
-     List<TimeWindow> windowDtos = windows.stream()
-         .map(w -> new TimeWindow(w.getStart(), w.getEnd()))
-         .toList();
-     data.setWindows(windowDtos);
-
-     // Add to timeLinks
-     TimeLink timeLink = new TimeLink(policy.getId(), link.getMode(), data);
-     compileRequest.setTimeLinks(List.of(timeLink));
-     ```
+    - Accept `assignmentId` parameter
+    - Query `RuleTemporalLinkJpaRepository.findByAssignmentId(assignmentId)`
+    - If temporal links exist:
+      ```java
+      // Get temporal policy data
+      RuleTemporalLinkEntity link = temporalLinks.get(0);
+      TemporalPolicyEntity policy = link.getTemporalPolicy();
+      List<TemporalPolicyWindowEntity> windows = policy.getTimeOfDayWindows();
+ 
+      // Build TemporalPolicyData DTO
+      TemporalPolicyData data = new TemporalPolicyData();
+      data.setTimezone(policy.getTz());
+      data.setRrule(policy.getRrule());
+      data.setStartTs(policy.getStartTs() != null ? policy.getStartTs().toString() : null);
+      data.setEndTs(policy.getEndTs() != null ? policy.getEndTs().toString() : null);
+ 
+      List<TimeWindow> windowDtos = windows.stream()
+          .map(w -> new TimeWindow(w.getStart(), w.getEnd()))
+          .toList();
+      data.setWindows(windowDtos);
+ 
+      // Add to timeLinks
+      TimeLink timeLink = new TimeLink(policy.getId(), link.getMode(), data);
+      compileRequest.setTimeLinks(List.of(timeLink));
+      ```
 
 2. Update `deployRuleToEngine()` in SettingValidationRuleCommandHandler:
-   - Pass assignmentId to publishRule()
-   - Store returned bundleHash to `AssignmentEntity.temporalBundleHash`
+    - Pass assignmentId to publishRule()
+    - Store returned bundleHash to `AssignmentEntity.temporalBundleHash`
 
 **Code template:**
 
@@ -219,55 +224,63 @@ private TemporalPolicyData buildTemporalPolicyData(TemporalPolicyEntity policy) 
 ## 🧪 TESTING PLAN
 
 ### **Unit Tests:**
+
 1. TemporalDrlGenerator:
-   - [ ] Generate DRL with single time window
-   - [ ] Generate DRL with multiple time windows
-   - [ ] Generate DRL with day-of-week filtering
-   - [ ] Generate DRL with midnight-spanning range
-   - [ ] Generate empty DRL when no temporal data
+    - [ ] Generate DRL with single time window
+    - [ ] Generate DRL with multiple time windows
+    - [ ] Generate DRL with day-of-week filtering
+    - [ ] Generate DRL with midnight-spanning range
+    - [ ] Generate empty DRL when no temporal data
 
 2. DroolsCompilationService:
-   - [ ] Compile single DRL (existing)
-   - [ ] Compile multiple DRLs
-   - [ ] Generate correct bundleHash from combined content
+    - [ ] Compile single DRL (existing)
+    - [ ] Compile multiple DRLs
+    - [ ] Generate correct bundleHash from combined content
 
 3. DroolsRuleEngineAdapter:
-   - [ ] Compile with temporal data
-   - [ ] Compile without temporal data
-   - [ ] Correct DRL files written to KieFileSystem
+    - [ ] Compile with temporal data
+    - [ ] Compile without temporal data
+    - [ ] Correct DRL files written to KieFileSystem
 
 ### **Integration Tests:**
+
 1. End-to-end flow:
-   - [ ] Send SettingValidationRuleCommand with timeframe
-   - [ ] Verify temporal_policies created
-   - [ ] Verify temporal_policy_windows created
-   - [ ] Verify rule_temporal_links created
-   - [ ] Verify bundle compiled with 2 DRLs
-   - [ ] Verify temporalBundleHash stored in AssignmentEntity
+    - [ ] Send SettingValidationRuleCommand with timeframe
+    - [ ] Verify temporal_policies created
+    - [ ] Verify temporal_policy_windows created
+    - [ ] Verify rule_temporal_links created
+    - [ ] Verify bundle compiled with 2 DRLs
+    - [ ] Verify temporalBundleHash stored in AssignmentEntity
 
 2. Execution tests:
-   - [ ] Execute bundle with time in allowed window → ALLOW
-   - [ ] Execute bundle with time outside window → DENY with TIME_WINDOW_NOT_ACTIVE
-   - [ ] Verify temporal check runs before business rules (salience)
+    - [ ] Execute bundle with time in allowed window → ALLOW
+    - [ ] Execute bundle with time outside window → DENY with TIME_WINDOW_NOT_ACTIVE
+    - [ ] Verify temporal check runs before business rules (salience)
 
 ---
 
 ## 📁 FILES CẦN XEM THÊM
 
 ### Validation Engine:
-- `src/main/java/vn/viettel/vds/promotion/validation/engine/adapter/out/rules/DroolsRuleEngineAdapter.java` - **CẦN UPDATE**
+
+- `src/main/java/vn/viettel/vds/promotion/validation/engine/adapter/out/rules/DroolsRuleEngineAdapter.java` - **CẦN
+  UPDATE**
 - `src/main/java/vn/viettel/vds/promotion/validation/engine/domain/service/TemporalDrlGenerator.java` - **ĐÃ TẠO**
-- `src/main/java/vn/viettel/vds/promotion/validation/engine/domain/service/DroolsCompilationService.java` - **ĐÃ UPDATE**
+- `src/main/java/vn/viettel/vds/promotion/validation/engine/domain/service/DroolsCompilationService.java` - **ĐÃ UPDATE
+  **
 
 ### Validation Service:
+
 - `src/main/java/vn/viettel/vds/promotion/validation/domain/service/RulePublishingService.java` - **CẦN UPDATE**
-- `src/main/java/vn/viettel/vds/promotion/validation/application/service/SettingValidationRuleCommandHandler.java` - **CẦN UPDATE**
+- `src/main/java/vn/viettel/vds/promotion/validation/application/service/SettingValidationRuleCommandHandler.java` - *
+  *CẦN UPDATE**
 
 ---
 
 ## 🎯 ACCEPTANCE CRITERIA
 
 ### Khi hoàn thành, system phải:
+
 1. ✅ Nhận Kafka command với timeframe data
 2. ✅ Lưu temporal_policies + windows + links vào database
 3. ✅ Gọi validation-engine với TemporalPolicyData

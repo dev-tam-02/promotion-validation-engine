@@ -10,14 +10,17 @@ import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
 import vn.viettel.vds.promotion.validation.engine.domain.service.DroolsCompilationService;
 import vn.viettel.vds.promotion.validation.engine.domain.service.TemporalDrlGenerator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for temporal DRL execution
  * Tests the complete flow: DRL generation → Compilation → Execution → Validation
- *
+ * <p>
  * NOTE: These tests are currently disabled because they require time mocking capability.
  * Temporal DRL rules use System.currentTimeMillis() at runtime which cannot be easily mocked.
  * For production validation, use end-to-end tests with real time windows or deploy-time verification.
@@ -245,12 +248,12 @@ class TemporalDrlExecutionIntegrationTest {
     private String createSimpleBusinessRule() {
         return """
                 package tenant1;
-
+                
                 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-
+                
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-
+                
                 rule "simple_allow_rule"
                     salience 0
                 when

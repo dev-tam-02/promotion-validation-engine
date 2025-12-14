@@ -31,12 +31,12 @@ class DroolsCompilationServiceTest {
         Integer version = 1;
         String drlContent = """
                 package tenant1;
-
+                
                 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-
+                
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-
+                
                 rule "test_rule"
                 when
                     eval(true)
@@ -73,20 +73,20 @@ class DroolsCompilationServiceTest {
 
         String temporalDrl = """
                 package promotion.assignment.test_assignment;
-
+                
                 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
                 import java.time.*;
-
+                
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-
+                
                 declare TemporalAllowed
                 end
-
+                
                 function boolean checkTimeWindow(String start, String end, String tz, boolean spans, String days) {
                     return true; // Simplified for test
                 }
-
+                
                 rule "temporal_check_allow"
                     salience 1000
                 when
@@ -94,7 +94,7 @@ class DroolsCompilationServiceTest {
                 then
                     insert(new TemporalAllowed());
                 end
-
+                
                 rule "temporal_check_deny"
                     salience 999
                     no-loop
@@ -109,12 +109,12 @@ class DroolsCompilationServiceTest {
 
         String businessRuleDrl = """
                 package tenant1;
-
+                
                 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-
+                
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-
+                
                 rule "business_rule"
                     salience 0
                 when
@@ -201,11 +201,11 @@ class DroolsCompilationServiceTest {
         Integer version = 1;
         String drlContent = """
                 package tenant1;
-
+                
                 import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;
-
+                
                 global ValidationResult result;
-
+                
                 rule "test_rule"
                 when
                     eval(true)
