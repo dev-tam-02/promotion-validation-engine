@@ -153,6 +153,7 @@ promix:
         password: 123123a@
       consumer:
         group-id: validation-engine-group
+        concurrency: 12
 
   # Cache Configuration
   cache:
