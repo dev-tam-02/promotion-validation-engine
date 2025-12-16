@@ -133,17 +133,19 @@ promix:
 
   # Kafka Configuration
   messaging:
+    enabled: true
     kafka:
       bootstrap-servers:
         - kafka-1:19092
         - kafka-2:19093
         - kafka-3:19094
       client-id: validation-engine
+      enable-avro: false
 
       # Security Configuration
       security:
         protocol: SASL_PLAINTEXT
-      #
+
       # SASL Authentication Configuration
       sasl:
         enabled: true
@@ -151,9 +153,41 @@ promix:
         security-protocol: SASL_PLAINTEXT
         username: admin
         password: 123123a@
+
+      # Consumer Configuration
       consumer:
         group-id: validation-engine-group
+        auto-offset-reset: latest
+        enable-auto-commit: false
+        max-poll: 500
+        max-poll-interval: 300000
+        isolation-level: read_committed
         concurrency: 12
+        batch-listener: false
+        ack-mode: MANUAL_IMMEDIATE
+        session-timeout: 30000
+        heartbeat-interval: 10000
+        use-avro: false
+
+        # JsonDeserializer Configuration
+        properties:
+          spring.json.trusted.packages: "vn.viettel.vds.promotion.*"
+          spring.json.use.type.headers: true
+
+        # Retry Configuration
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 1.5
+          max-interval: 5000
+
+        # Error Handling
+        error-handling:
+          enable-dlq: true
+          dlq-topic-suffix: _dlq
+          max-failures: 3
+          include-headers: true
 
   # Cache Configuration
   cache:
