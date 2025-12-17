@@ -17,7 +17,6 @@ import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,8 +33,8 @@ public class BroadcastKafkaConfig {
     @Value("${spring.application.name:validation-engine}")
     private String applicationName;
 
-    @Value("${promix.messaging.kafka.bootstrap-servers:localhost:9092}")
-    private List<String> bootstrapServers;
+    @Value("${promix.messaging.kafka.bootstrap-servers:kafka-1:19092,kafka-2:19093,kafka-3:19094}")
+    private String bootstrapServers;
 
     @Value("${promix.messaging.kafka.security.protocol:PLAINTEXT}")
     private String securityProtocol;
@@ -85,9 +84,10 @@ public class BroadcastKafkaConfig {
     public ConsumerFactory<String, BundleCacheInvalidationEvent> broadcastConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
 
-        // Basic Kafka properties - join list to comma-separated string
-        String bootstrapServersStr = String.join(",", bootstrapServers);
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersStr);
+        // Basic Kafka properties
+        logger.info("BroadcastKafkaConfig - bootstrap-servers: {}", bootstrapServers);
+        logger.info("BroadcastKafkaConfig - security.protocol: {}, sasl.enabled: {}", securityProtocol, saslEnabled);
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
         // UNIQUE GROUP ID PER INSTANCE - Key for broadcast pattern
         String uniqueGroupId = applicationName + "-broadcast-" + instanceId;

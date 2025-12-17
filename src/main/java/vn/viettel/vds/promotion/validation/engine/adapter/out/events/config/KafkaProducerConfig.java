@@ -13,7 +13,6 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +23,8 @@ public class KafkaProducerConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaProducerConfig.class);
 
-    @Value("${promix.messaging.kafka.bootstrap-servers:localhost:9092}")
-    private List<String> bootstrapServers;
+    @Value("${promix.messaging.kafka.bootstrap-servers:kafka-1:19092,kafka-2:19093,kafka-3:19094}")
+    private String bootstrapServers;
 
     @Value("${promix.messaging.kafka.client-id:validation-engine}")
     private String clientId;
@@ -49,9 +48,8 @@ public class KafkaProducerConfig {
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> props = new HashMap<>();
 
-        // Basic Kafka properties - join list to comma-separated string
-        String bootstrapServersStr = String.join(",", bootstrapServers);
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersStr);
+        // Basic Kafka properties
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId + "-producer");
 
         // Serializers

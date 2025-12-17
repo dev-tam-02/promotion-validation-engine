@@ -136,9 +136,9 @@ promix:
     enabled: true
     kafka:
       bootstrap-servers:
-        - localhost:19092
-        - localhost:19093
-        - localhost:19094
+        - kafka-1:19092
+        - kafka-2:19093
+        - kafka-3:19094
       client-id: validation-engine
       enable-avro: false
 
