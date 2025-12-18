@@ -29,29 +29,21 @@ import java.util.UUID;
 public class BroadcastKafkaConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(BroadcastKafkaConfig.class);
-
+    private final String instanceId;
     @Value("${spring.application.name:validation-engine}")
     private String applicationName;
-
     @Value("${promix.messaging.kafka.bootstrap-servers:kafka-1:19092,kafka-2:19093,kafka-3:19094}")
     private String bootstrapServers;
-
     @Value("${promix.messaging.kafka.security.protocol:PLAINTEXT}")
     private String securityProtocol;
-
     @Value("${promix.messaging.kafka.sasl.mechanism:PLAIN}")
     private String saslMechanism;
-
     @Value("${promix.messaging.kafka.sasl.username:}")
     private String saslUsername;
-
     @Value("${promix.messaging.kafka.sasl.password:}")
     private String saslPassword;
-
     @Value("${promix.messaging.kafka.sasl.enabled:false}")
     private boolean saslEnabled;
-
-    private final String instanceId;
 
     public BroadcastKafkaConfig() {
         this.instanceId = generateInstanceId();
