@@ -1,0 +1,211 @@
+package vn.viettel.vds.promotion.rule.engine.adapter.in.web;
+
+import com.promix.platform.web.annotation.ResponseWrapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.*;
+import vn.viettel.vds.promotion.rule.engine.application.port.in.CompileUseCase;
+import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@ResponseWrapper
+@RequestMapping("${spring.application.context-path}/v1/compile")
+@Tag(name = "Rule Compilation", description = "Rule compilation API")
+public class CompilationController {
+
+    private static final Logger logger = LoggerFactory.getLogger(CompilationController.class);
+
+    private final CompileUseCase compileUseCase;
+    private final RuleEnginePort ruleEnginePort;
+
+    public CompilationController(CompileUseCase compileUseCase,
+                                 @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+        this.compileUseCase = compileUseCase;
+        this.ruleEnginePort = ruleEnginePort;
+    }
+
+    @Operation(summary = "Compile rule to Drools artifact",
+            description = "Compile rule nodes into executable Drools bundle")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Rule compiled successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Compilation failed")
+    })
+    @PostMapping
+    public ResponseEntity<CompileResponse> compileRule(@Valid @RequestBody CompileRequest request) {
+
+        logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
+                request.getTenantId(), request.getRuleId(), request.getVersion());
+
+        try {
+            // Convert web DTO to application DTO
+            vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest appRequest =
+                    mapToApplicationRequest(request);
+
+            // Compile rule through use case (saves to database and object storage)
+            vn.viettel.vds.promotion.rule.engine.application.dto.CompileResponse appResponse =
+                    compileUseCase.compile(appRequest);
+
+            // Convert application response to web DTO
+            CompileResponse response = mapToWebResponse(appResponse);
+
+            logger.info("Rule compilation completed: bundleHash={}, ok={}",
+                    response.getBundleHash(), response.isOk());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Rule compilation failed: tenantId={}, ruleId={}, error={}",
+                    request.getTenantId(), request.getRuleId(), e.getMessage(), e);
+
+            CompileResponse errorResponse = new CompileResponse();
+            errorResponse.setOk(false);
+            errorResponse.setErrors(List.of("Compilation failed: " + e.getMessage()));
+
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Warm up compiled bundle")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bundle warmed up successfully"),
+            @ApiResponse(responseCode = "500", description = "Warmup failed")
+    })
+    @PostMapping("/warmup")
+    public ResponseEntity<WarmupResponse> warmupBundle(@Valid @RequestBody WarmupRequest request) {
+
+        logger.info("Warming up bundle: bundleHash={}", request.getBundleHash());
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            ruleEnginePort.warmupBundle(request.getBundleHash(), request.getArtifactBytes());
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            logger.info("Bundle warmup completed: bundleHash={}, durationMs={}",
+                    request.getBundleHash(), duration);
+
+            WarmupResponse response = new WarmupResponse(
+                    true,
+                    "Bundle warmed up successfully",
+                    duration
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Bundle warmup failed: bundleHash={}, error={}",
+                    request.getBundleHash(), e.getMessage(), e);
+
+            WarmupResponse errorResponse = new WarmupResponse(
+                    false,
+                    "Warmup failed: " + e.getMessage()
+            );
+
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Get bundle status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bundle status retrieved"),
+            @ApiResponse(responseCode = "404", description = "Bundle not found"),
+            @ApiResponse(responseCode = "500", description = "Status check failed")
+    })
+    @GetMapping("/bundle/{bundleHash}/status")
+    public ResponseEntity<BundleStatusResponse> getBundleStatus(
+            @Parameter(description = "Bundle hash") @PathVariable String bundleHash) {
+
+        logger.debug("Getting bundle status: bundleHash={}", bundleHash);
+
+        try {
+            boolean isLoaded = ruleEnginePort.isRuleBundleLoaded(bundleHash);
+
+            BundleStatusResponse response = new BundleStatusResponse();
+            response.setBundleHash(bundleHash);
+            response.setLoaded(isLoaded);
+            response.setHealth(isLoaded ? "HEALTHY" : "NOT_LOADED");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Bundle status check failed: bundleHash={}, error={}",
+                    bundleHash, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Convert web DTO to application DTO
+     */
+    private vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest
+    mapToApplicationRequest(CompileRequest webRequest) {
+        // Convert nodes from web DTO to Map format
+        List<Map<String, Object>> nodesMaps = new ArrayList<>();
+        if (webRequest.getNodes() != null) {
+            for (RuleNodeDto node : webRequest.getNodes()) {
+                Map<String, Object> nodeMap = new HashMap<>();
+                nodeMap.put("id", node.getId());
+                nodeMap.put("type", node.getType());
+                nodeMap.put("groupLogic", node.getGroupLogic());
+                nodeMap.put("operatorName", node.getOperatorName());
+                nodeMap.put("operatorVersion", node.getOperatorVersion());
+                nodeMap.put("params", node.getParams());
+                nodeMap.put("reasonCode", node.getReasonCode());
+                nodeMap.put("children", node.getChildren());
+                nodeMap.put("order", node.getOrder());
+                nodesMaps.add(nodeMap);
+            }
+        }
+
+        // Create application DTO
+        vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest appRequest =
+                new vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest();
+        appRequest.setTenantId(webRequest.getTenantId());
+        appRequest.setRuleId(webRequest.getRuleId());
+        appRequest.setVersion(webRequest.getVersion());
+        appRequest.setLogic(webRequest.getLogic());
+        appRequest.setNodes(nodesMaps);
+        appRequest.setOperatorsFingerprint(webRequest.getOperatorsFingerprint());
+
+        return appRequest;
+    }
+
+    /**
+     * Convert application response to web DTO
+     */
+    private CompileResponse mapToWebResponse(
+            vn.viettel.vds.promotion.rule.engine.application.dto.CompileResponse appResponse) {
+        CompileResponse webResponse = new CompileResponse();
+        webResponse.setOk(true);
+        webResponse.setBundleHash(appResponse.getBundleHash());
+        webResponse.setArtifactSize(appResponse.getSize());
+        webResponse.setLogs(appResponse.getLogs() != null ? appResponse.getLogs() : new ArrayList<>());
+        webResponse.setDrlContent(appResponse.getDrlContent());
+
+        // Map engine info
+        if (appResponse.getEngine() != null) {
+            webResponse.setEngineVersion(appResponse.getEngine().getDroolsVersion());
+        }
+
+        webResponse.setErrors(new ArrayList<>()); // No errors for successful compilation
+        // Note: artifactBytes is intentionally NOT returned to reduce response size
+        // Client can retrieve artifact separately if needed
+        return webResponse;
+    }
+}

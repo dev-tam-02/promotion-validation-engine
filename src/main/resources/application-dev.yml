@@ -1,4 +1,4 @@
-# validation-engine Service Configuration
+# rule-engine Service Configuration
 
 # MinIO Object Storage Configuration
 minio:
@@ -17,8 +17,8 @@ spring:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
   application:
-    name: validation-engine
-    context-path: /promotion/promotion-validation-engine
+    name: rule-engine
+    context-path: /promotion/promotion-rule-engine
 
   # DataSource Configuration for MariaDB
   datasource:
@@ -32,7 +32,7 @@ spring:
       minimum-idle: 5
       maximum-pool-size: 20
       idle-timeout: 600000
-      pool-name: ValidationEngineHikariPool
+      pool-name: RuleEngineHikariPool
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
@@ -139,7 +139,7 @@ promix:
         - kafka-1:19092
         - kafka-2:19093
         - kafka-3:19094
-      client-id: validation-engine
+      client-id: rule-engine
       enable-avro: false
 
       # Security Configuration
@@ -156,7 +156,7 @@ promix:
 
       # Consumer Configuration
       consumer:
-        group-id: validation-engine-group
+        group-id: rule-engine-group
         auto-offset-reset: latest
         enable-auto-commit: false
         max-poll: 500

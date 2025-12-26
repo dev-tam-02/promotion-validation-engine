@@ -10,10 +10,10 @@
         <relativePath/>
     </parent>
 
-    <artifactId>validation-engine</artifactId>
+    <artifactId>rule-engine</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>validation-engine</name>
-    <description>validation-engine</description>
+    <name>rule-engine</name>
+    <description>rule-engine</description>
 
     <properties>
         <drools.version>10.1.0</drools.version>

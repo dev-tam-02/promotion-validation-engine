@@ -5,17 +5,17 @@ networks:
     external: true
 
 services:
-  validation-engine:
+  rule-engine:
     build:
       context: .
       dockerfile: Dockerfile
-    image: validation-engine-service:latest
-    container_name: validation-engine-service
+    image: rule-engine-service:latest
+    container_name: rule-engine-service
     restart: unless-stopped
     networks:
       - promix-network
     environment:
-      # MariaDB Configuration (validation-engine dùng MariaDB)
+      # MariaDB Configuration (rule-engine dùng MariaDB)
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/rule_engine?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=123123a@
@@ -59,12 +59,12 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.validation-engine.rule=Host(`validation-engine.promixhub.com`)"
-      - "traefik.http.routers.validation-engine.entrypoints=websecure"
-      - "traefik.http.routers.validation-engine.tls=true"
-      - "traefik.http.routers.validation-engine.tls.certresolver=myresolver"
-      - "traefik.http.services.validation-engine.loadbalancer.server.port=8080"
-      - "traefik.http.services.validation-engine.loadbalancer.healthcheck.path=/actuator/health"
-      - "traefik.http.routers.validation-engine.middlewares=validation-engine-ratelimit,validation-engine-headers"
-      - "traefik.http.middlewares.validation-engine-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.validation-engine-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
+      - "traefik.http.routers.rule-engine.rule=Host(`rule-engine.promixhub.com`)"
+      - "traefik.http.routers.rule-engine.entrypoints=websecure"
+      - "traefik.http.routers.rule-engine.tls=true"
+      - "traefik.http.routers.rule-engine.tls.certresolver=myresolver"
+      - "traefik.http.services.rule-engine.loadbalancer.server.port=8080"
+      - "traefik.http.services.rule-engine.loadbalancer.healthcheck.path=/actuator/health"
+      - "traefik.http.routers.rule-engine.middlewares=rule-engine-ratelimit,rule-engine-headers"
+      - "traefik.http.middlewares.rule-engine-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.rule-engine-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
