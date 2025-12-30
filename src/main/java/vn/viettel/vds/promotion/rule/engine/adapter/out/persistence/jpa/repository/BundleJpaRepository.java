@@ -31,4 +31,8 @@ public interface BundleJpaRepository extends JpaRepository<BundleEntity, String>
 
     @Query("SELECT COUNT(b) FROM BundleEntity b WHERE b.tenantId = :tenantId")
     long countByTenantId(@Param("tenantId") String tenantId);
+    
+    List<BundleEntity> findByEnabledTrue();
+    
+    List<BundleEntity> findByEnabled(boolean enabled);
 }

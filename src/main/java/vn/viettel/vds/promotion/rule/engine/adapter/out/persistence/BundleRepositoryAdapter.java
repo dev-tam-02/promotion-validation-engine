@@ -6,6 +6,7 @@ import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.B
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.repository.BundleJpaRepository;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.BundleRepositoryPort;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -32,5 +33,16 @@ public class BundleRepositoryAdapter implements BundleRepositoryPort {
     @Override
     public boolean existsById(String bundleHash) {
         return bundleJpaRepository.existsById(bundleHash);
+    }
+
+    @Override
+    public List<BundleEntity> findActiveBundles() {
+        return bundleJpaRepository.findByEnabledTrue();
+    }
+
+    @Override
+    public List<BundleEntity> findBundlesByStatus(String status) {
+        boolean enabled = "ACTIVE".equalsIgnoreCase(status);
+        return bundleJpaRepository.findByEnabled(enabled);
     }
 }

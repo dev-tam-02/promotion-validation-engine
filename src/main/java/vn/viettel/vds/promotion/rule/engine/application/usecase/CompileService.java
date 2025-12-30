@@ -125,9 +125,7 @@ public class CompileService implements CompileUseCase {
     private CompileResponse buildResponseFromExistingJob(CompileJobEntity job) {
         Optional<BundleEntity> bundle = bundleRepository.findById(job.getBundleHash());
         if (bundle.isPresent()) {
-            List<String> logMessages = job.getLogs().stream()
-                    .map(LogEntryEntity::getMsg)
-                    .toList();
+            List<String> logMessages = job.getLogs(); // Already strings
             return mapToCompileResponse(bundle.get(), logMessages);
         }
         return null;
@@ -151,14 +149,7 @@ public class CompileService implements CompileUseCase {
     }
 
     private void addLogEntries(CompileJobEntity compileJob, List<String> logs) {
-        for (String log : logs) {
-            LogEntryEntity logEntry = new LogEntryEntity();
-            logEntry.setLevel("INFO");
-            logEntry.setMsg(log);
-            logEntry.setTimestamp(Instant.now());
-            logEntry.setCompileJob(compileJob);
-            compileJob.getLogs().add(logEntry);
-        }
+        compileJob.getLogs().addAll(logs);
     }
 
     private void handleCompilationFailure(CompileJobEntity compileJob, Exception e) {
@@ -167,13 +158,7 @@ public class CompileService implements CompileUseCase {
 
         String errorMessage = getErrorMessage(e);
         compileJob.getErrors().add(errorMessage);
-
-        LogEntryEntity errorLog = new LogEntryEntity();
-        errorLog.setLevel("ERROR");
-        errorLog.setMsg(errorMessage);
-        errorLog.setTimestamp(Instant.now());
-        errorLog.setCompileJob(compileJob);
-        compileJob.getLogs().add(errorLog);
+        compileJob.getLogs().add("ERROR: " + errorMessage);
 
         compileJobRepository.save(compileJob);
     }
@@ -353,7 +338,7 @@ public class CompileService implements CompileUseCase {
 
     private CompileJobResponse mapToCompileJobResponse(CompileJobEntity job) {
         List<CompileJobResponse.LogEntry> logs = job.getLogs().stream()
-                .map(log -> new CompileJobResponse.LogEntry(log.getLevel(), log.getMsg(), log.getTimestamp()))
+                .map(log -> new CompileJobResponse.LogEntry("INFO", log, null))
                 .toList();
 
         return new CompileJobResponse(

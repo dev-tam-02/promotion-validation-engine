@@ -1,0 +1,61 @@
+{
+  "tenantId": "tenant1",
+  "ruleId": "new-operators-test",
+  "version": 1,
+  "nodes": [
+    {
+      "id": "root",
+      "type": "GROUP",
+      "operator": "AND",
+      "children": ["brand_check", "lifetime_check", "metadata_check"]
+    },
+    {
+      "id": "brand_check",
+      "type": "COND",
+      "operator": "order.item.brand.in",
+      "version": 1,
+      "params": {
+        "brands": ["Nike", "Adidas", "Puma"]
+      },
+      "reasonCode": "BRAND_NOT_ALLOWED"
+    },
+    {
+      "id": "lifetime_check", 
+      "type": "COND",
+      "operator": "customer.lifetime.value.gte",
+      "version": 1,
+      "params": {
+        "minValue": 1000000
+      },
+      "reasonCode": "LIFETIME_VALUE_TOO_LOW"
+    },
+    {
+      "id": "metadata_check",
+      "type": "GROUP", 
+      "operator": "OR",
+      "children": ["customer_metadata", "order_metadata"]
+    },
+    {
+      "id": "customer_metadata",
+      "type": "COND",
+      "operator": "customer.metadata.equals",
+      "version": 1,
+      "params": {
+        "key": "region",
+        "value": "HCM"
+      },
+      "reasonCode": "REGION_NOT_ALLOWED"
+    },
+    {
+      "id": "order_metadata",
+      "type": "COND",
+      "operator": "order.metadata.equals", 
+      "version": 1,
+      "params": {
+        "key": "channel",
+        "value": "MOBILE"
+      },
+      "reasonCode": "CHANNEL_NOT_ALLOWED"
+    }
+  ]
+}

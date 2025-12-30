@@ -1,0 +1,116 @@
+package tenant1;
+
+import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
+import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
+import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;
+import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
+import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
+
+global ValidationResult result;
+global java.util.List reasonCodes;
+
+// Rule using new brand operator
+rule "Brand_Validation_Rule"
+    when
+        $customer: Customer()
+        $order: Order()
+        $candidate: Candidate()
+        exists(OrderItem(brand in ("Nike", "Adidas", "Puma")) from $order.items)
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new collection operator  
+rule "Collection_Validation_Rule"
+    when
+        $customer: Customer()
+        $order: Order()
+        $candidate: Candidate()
+        exists(OrderItem(collection in ("Summer2024", "NewArrivals", "Bestsellers")) from $order.items)
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new price range operator
+rule "Price_Range_Validation_Rule"
+    when
+        $customer: Customer()
+        $order: Order()
+        $candidate: Candidate()
+        exists(OrderItem(price >= 100000 && price <= 500000) from $order.items)
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new customer lifetime value operator
+rule "Customer_Lifetime_Value_Rule"
+    when
+        $customer: Customer(lifetimeValue >= 1000000)
+        $order: Order()
+        $candidate: Candidate()
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new customer metadata operator
+rule "Customer_Metadata_Rule"
+    when
+        $customer: Customer(attrs["region"] == "HCM")
+        $order: Order()
+        $candidate: Candidate()
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new order metadata operator
+rule "Order_Metadata_Rule"
+    when
+        $customer: Customer()
+        $order: Order(metadata["shipping_method"] == "EXPRESS")
+        $candidate: Candidate()
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Rule using new initial amount operator
+rule "Initial_Amount_Rule"
+    when
+        $customer: Customer()
+        $order: Order(initialAmount >= 500000)
+        $candidate: Candidate()
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Complex rule combining multiple new operators
+rule "Complex_Validation_Rule"
+    when
+        $customer: Customer(lifetimeValue >= 500000, attrs["region"] == "HCM")
+        $order: Order(initialAmount >= 200000, metadata["channel"] == "MOBILE")
+        $candidate: Candidate()
+        exists(OrderItem(brand in ("Nike", "Adidas") && price >= 100000) from $order.items)
+    then
+        result.setDecision("ALLOW");
+        result.setOk(true);
+end
+
+// Failure rule - fires when no other rule matches
+rule "Default_Failure_Rule"
+    salience -1000
+    when
+        $customer: Customer()
+        $order: Order()
+        $candidate: Candidate()
+        result: ValidationResult(decision == null || decision == "")
+    then
+        result.setDecision("DENY");
+        result.setOk(false);
+        reasonCodes.add("NO_RULE_MATCHED");
+end

@@ -208,6 +208,12 @@ public interface RuleEnginePort {
         public ExecuteInput() {
         }
 
+        public ExecuteInput(String bundleHash, java.util.Map<String, Object> context, ExecuteOptions options) {
+            this.bundleHash = bundleHash;
+            this.context = context;
+            this.options = options;
+        }
+
         public ExecuteInput(String tenantId, String bundleHash, java.util.Map<String, Object> context, ExecuteOptions options) {
             this.tenantId = tenantId;
             this.bundleHash = bundleHash;

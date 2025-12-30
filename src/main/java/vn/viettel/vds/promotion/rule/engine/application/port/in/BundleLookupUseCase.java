@@ -6,9 +6,11 @@ import vn.viettel.vds.promotion.rule.engine.application.dto.WarmupRequest;
 
 public interface BundleLookupUseCase {
 
-    BundleMetadataResponse getBundleMetadata(String bundleHash);
+    LatestBundleResponse getLatestBundle(String ruleId);
 
     LatestBundleResponse getLatestBundle(String tenantId, String subjectType, String subjectKey);
+
+    BundleMetadataResponse getBundleMetadata(String bundleHash);
 
     void warmupBundles(WarmupRequest request);
 

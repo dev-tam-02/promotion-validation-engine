@@ -2,14 +2,14 @@
 
 # MinIO Object Storage Configuration
 minio:
-  endpoint: http://minio:9000
-  access-key: admin
-  secret-key: 123123a@
-  bucket-name: validation-bundles
-  auto-create-bucket: true
-  connect-timeout: 10000
-  write-timeout: 60000
-  read-timeout: 60000
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+  access-key: ${MINIO_ACCESS_KEY:admin}
+  secret-key: ${MINIO_SECRET_KEY:123123a@}
+  bucket-name: ${MINIO_BUCKET_NAME:validation-bundles}
+  auto-create-bucket: ${MINIO_AUTO_CREATE_BUCKET:true}
+  connect-timeout: ${MINIO_CONNECT_TIMEOUT:10000}
+  write-timeout: ${MINIO_WRITE_TIMEOUT:60000}
+  read-timeout: ${MINIO_READ_TIMEOUT:60000}
 
 spring:
   # Exclude Zipkin auto-configuration to prevent connection attempts
@@ -148,11 +148,11 @@ promix:
 
       # SASL Authentication Configuration
       sasl:
-        enabled: true
-        mechanism: PLAIN
-        security-protocol: SASL_PLAINTEXT
-        username: admin
-        password: 123123a@
+        enabled: ${KAFKA_SASL_ENABLED:true}
+        mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+        security-protocol: ${KAFKA_SASL_SECURITY_PROTOCOL:SASL_PLAINTEXT}
+        username: ${KAFKA_SASL_USERNAME:admin}
+        password: ${KAFKA_SASL_PASSWORD:123123a@}
 
       # Consumer Configuration
       consumer:
@@ -207,16 +207,16 @@ promix:
 
     # Enable Redisson for distributed caching (secondary cache manager if needed)
     redisson:
-      enabled: true
-      mode: CLUSTER
-      password: 123123a@
-      connection-timeout: 3000
-      timeout: 3000
-      retry-attempts: 3
-      retry-interval: 1500
-      default-ttl: 30m
-      max-idle-time: 15m
-      default-max-size: 1000
+      enabled: ${REDIS_ENABLED:true}
+      mode: ${REDIS_MODE:CLUSTER}
+      password: ${REDIS_PASSWORD:123123a@}
+      connection-timeout: ${REDIS_CONNECTION_TIMEOUT:3000}
+      timeout: ${REDIS_TIMEOUT:3000}
+      retry-attempts: ${REDIS_RETRY_ATTEMPTS:3}
+      retry-interval: ${REDIS_RETRY_INTERVAL:1500}
+      default-ttl: ${REDIS_DEFAULT_TTL:30m}
+      max-idle-time: ${REDIS_MAX_IDLE_TIME:15m}
+      default-max-size: ${REDIS_DEFAULT_MAX_SIZE:1000}
 
       # Use JSON codec for better compatibility with Drools objects
       codec: org.redisson.codec.JsonJacksonCodec
@@ -245,6 +245,13 @@ validation:
       prewarm-session-pool: true
       prewarm-session-count: 3
       health-check-interval-seconds: 300
+
+# Rule Engine Tenant Configuration
+rule-engine:
+  tenant:
+    default-id: "default"
+    single-tenant-mode: true
+    enable-tenant-migration: false
 
 # Kafka Topics Configuration
 kafka:

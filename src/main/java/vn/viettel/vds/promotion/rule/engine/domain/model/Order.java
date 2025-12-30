@@ -7,6 +7,7 @@ public class Order {
     private String id;
     private String currency;
     private BigDecimal total;
+    private BigDecimal initialAmount;
     private List<OrderItem> items = new ArrayList<>();
     private DiscountCtx discount;
     private Map<String, Object> metadata;
@@ -60,6 +61,14 @@ public class Order {
         this.total = total;
     }
 
+    public BigDecimal getInitialAmount() {
+        return initialAmount;
+    }
+
+    public void setInitialAmount(BigDecimal initialAmount) {
+        this.initialAmount = initialAmount;
+    }
+
     public DiscountCtx getDiscount() {
         return discount;
     }
@@ -97,6 +106,28 @@ public class Order {
     public boolean hasNoItemInCategory(String category) {
         if (category == null) return true;
         return items.stream().noneMatch(i -> category.equals(i.getCategory()));
+    }
+
+    public boolean hasAnyItemInBrand(String brand) {
+        if (brand == null) return false;
+        return items.stream().anyMatch(i -> brand.equals(i.getBrand()));
+    }
+
+    public boolean hasEveryItemInBrand(String brand) {
+        if (items.isEmpty()) return false;
+        if (brand == null) return false;
+        return items.stream().allMatch(i -> brand.equals(i.getBrand()));
+    }
+
+    public boolean hasAnyItemInCollection(String collection) {
+        if (collection == null) return false;
+        return items.stream().anyMatch(i -> collection.equals(i.getCollection()));
+    }
+
+    public boolean hasEveryItemInCollection(String collection) {
+        if (items.isEmpty()) return false;
+        if (collection == null) return false;
+        return items.stream().allMatch(i -> collection.equals(i.getCollection()));
     }
 
     public OrderItem getMostExpensiveItem() {

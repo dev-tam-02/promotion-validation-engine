@@ -56,8 +56,10 @@ public class CompileJobEntity {
     @Column(name = "bundle_hash", length = 300)
     private String bundleHash;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "compileJob")
-    private List<LogEntryEntity> logs = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(name = "compile_job_logs", joinColumns = @JoinColumn(name = "compile_job_id"))
+    @Column(name = "log_message", length = 2000)
+    private List<String> logs = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "compile_job_errors", joinColumns = @JoinColumn(name = "compile_job_id"))

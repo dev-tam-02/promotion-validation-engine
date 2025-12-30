@@ -15,6 +15,7 @@ public class Customer {
     private int redemptionsPerIncentive;
     private String acquisitionChannel;
     private int loyaltyPoints;
+    private double lifetimeValue;
 
     public Customer() {
     }
@@ -110,6 +111,14 @@ public class Customer {
 
     public void setLoyaltyPoints(int loyaltyPoints) {
         this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public double getLifetimeValue() {
+        return lifetimeValue;
+    }
+
+    public void setLifetimeValue(double lifetimeValue) {
+        this.lifetimeValue = lifetimeValue;
     }
 
     /**
