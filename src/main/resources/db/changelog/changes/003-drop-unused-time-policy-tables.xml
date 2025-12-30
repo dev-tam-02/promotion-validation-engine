@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="003-drop-unused-time-policy-tables" author="harley">
+        <comment>
+            Remove unused time_policies and time_windows tables.
+            Time policy data comes from validation service via compile request.
+            time_links table is KEPT - used by bundles to store policy references.
+        </comment>
+
+        <!-- Drop time_windows first (if it has foreign key to time_policies) -->
+        <dropTable tableName="time_windows" cascadeConstraints="true"/>
+
+        <!-- Drop time_policies -->
+        <dropTable tableName="time_policies" cascadeConstraints="true"/>
+    </changeSet>
+
+</databaseChangeLog>
