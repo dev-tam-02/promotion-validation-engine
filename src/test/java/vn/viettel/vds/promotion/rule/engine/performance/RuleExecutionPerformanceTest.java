@@ -25,23 +25,33 @@ class RuleExecutionPerformanceTest {
     @Mock
     private SingleRuleExecutor singleExecutor;
 
+    @Mock
+    private vn.viettel.vds.promotion.rule.engine.domain.service.execution.ExecutionResponseBuilder responseBuilder;
+
+    @Mock
+    private vn.viettel.vds.promotion.rule.engine.domain.service.execution.ExecutionMetricsService metricsService;
+
     @Test
     void batchExecution_ShouldCompleteWithinTimeLimit() {
         // Given
         int batchSize = 1000;
         List<RuleEnginePort.ExecuteInput> inputs = createTestInputs(batchSize);
-        
+
         ExecuteResponse mockResponse = new ExecuteResponse();
         mockResponse.setOk(true);
         mockResponse.setDecision("ALLOW");
-        
+
         when(singleExecutor.execute(any(), any())).thenReturn(mockResponse);
-        
-        BatchRuleExecutor batchExecutor = new BatchRuleExecutor(singleExecutor, null, null);
-        
+
+        BatchRuleExecutor batchExecutor = new BatchRuleExecutor(singleExecutor, responseBuilder, metricsService);
+
+        // Create a container map with mock container
+        org.kie.api.runtime.KieContainer mockContainer = org.mockito.Mockito.mock(org.kie.api.runtime.KieContainer.class);
+        Map<String, org.kie.api.runtime.KieContainer> containerMap = Map.of("bundle1", mockContainer);
+
         // When
         long startTime = System.nanoTime();
-        List<ExecuteResponse> results = batchExecutor.executeOptimized(inputs, Map.of());
+        List<ExecuteResponse> results = batchExecutor.executeOptimized(inputs, containerMap);
         long endTime = System.nanoTime();
         
         // Then

@@ -31,6 +31,8 @@ class SingleRuleExecutorTest {
     @Mock
     private ExecutionResponseBuilder responseBuilder;
     @Mock
+    private ExecutionErrorHandler errorHandler;
+    @Mock
     private KieContainer container;
     @Mock
     private StatelessKieSession session;
@@ -39,7 +41,7 @@ class SingleRuleExecutorTest {
 
     @BeforeEach
     void setUp() {
-        executor = new SingleRuleExecutor(sessionManager, factPreparationService, tracingService, responseBuilder);
+        executor = new SingleRuleExecutor(sessionManager, factPreparationService, tracingService, responseBuilder, errorHandler);
     }
 
     @Test
@@ -60,7 +62,7 @@ class SingleRuleExecutorTest {
         assertNotNull(result);
         assertTrue(result.getOk());
         assertEquals("ALLOW", result.getDecision());
-        verify(session).execute(any());
+        verify(session).execute(any(Iterable.class));
     }
 
     @Test

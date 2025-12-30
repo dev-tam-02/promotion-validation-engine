@@ -10,7 +10,6 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.operator.impl.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,15 +33,15 @@ class NewOperatorsDrlGenerationTest {
     void testBrandOperatorDrlGeneration() {
         // Given
         OrderItemBrandInOperatorTranslator brandTranslator = new OrderItemBrandInOperatorTranslator();
-        when(translatorRegistry.findTranslator(eq("order.item.brand.in"), any()))
-                .thenReturn(Optional.of(brandTranslator));
+        when(translatorRegistry.getTranslator(eq("order.item.brand.in"), any()))
+                .thenReturn(brandTranslator);
 
         List<Map<String, Object>> nodes = List.of(
                 Map.of(
                         "id", "node1",
                         "type", "COND",
-                        "operator", "order.item.brand.in",
-                        "version", 1,
+                        "operatorName", "order.item.brand.in",
+                        "operatorVersion", 1,
                         "params", Map.of("brands", List.of("Nike", "Adidas")),
                         "reasonCode", "BRAND_NOT_ALLOWED"
                 )
@@ -63,15 +62,15 @@ class NewOperatorsDrlGenerationTest {
     void testCollectionOperatorDrlGeneration() {
         // Given
         OrderItemCollectionInOperatorTranslator collectionTranslator = new OrderItemCollectionInOperatorTranslator();
-        when(translatorRegistry.findTranslator(eq("order.item.collection.in"), any()))
-                .thenReturn(Optional.of(collectionTranslator));
+        when(translatorRegistry.getTranslator(eq("order.item.collection.in"), any()))
+                .thenReturn(collectionTranslator);
 
         List<Map<String, Object>> nodes = List.of(
                 Map.of(
                         "id", "node1",
                         "type", "COND",
-                        "operator", "order.item.collection.in",
-                        "version", 1,
+                        "operatorName", "order.item.collection.in",
+                        "operatorVersion", 1,
                         "params", Map.of("collections", List.of("Summer2024", "NewArrivals")),
                         "reasonCode", "COLLECTION_NOT_ALLOWED"
                 )
@@ -91,15 +90,15 @@ class NewOperatorsDrlGenerationTest {
     void testPriceRangeOperatorDrlGeneration() {
         // Given
         OrderItemPriceBetweenOperatorTranslator priceTranslator = new OrderItemPriceBetweenOperatorTranslator();
-        when(translatorRegistry.findTranslator(eq("order.item.price.between"), any()))
-                .thenReturn(Optional.of(priceTranslator));
+        when(translatorRegistry.getTranslator(eq("order.item.price.between"), any()))
+                .thenReturn(priceTranslator);
 
         List<Map<String, Object>> nodes = List.of(
                 Map.of(
                         "id", "node1",
                         "type", "COND",
-                        "operator", "order.item.price.between",
-                        "version", 1,
+                        "operatorName", "order.item.price.between",
+                        "operatorVersion", 1,
                         "params", Map.of("minPrice", 100000, "maxPrice", 500000),
                         "reasonCode", "PRICE_OUT_OF_RANGE"
                 )
@@ -119,15 +118,15 @@ class NewOperatorsDrlGenerationTest {
     void testCustomerMetadataOperatorDrlGeneration() {
         // Given
         CustomerMetadataEqualsOperatorTranslator metadataTranslator = new CustomerMetadataEqualsOperatorTranslator();
-        when(translatorRegistry.findTranslator(eq("customer.metadata.equals"), any()))
-                .thenReturn(Optional.of(metadataTranslator));
+        when(translatorRegistry.getTranslator(eq("customer.metadata.equals"), any()))
+                .thenReturn(metadataTranslator);
 
         List<Map<String, Object>> nodes = List.of(
                 Map.of(
                         "id", "node1",
                         "type", "COND",
-                        "operator", "customer.metadata.equals",
-                        "version", 1,
+                        "operatorName", "customer.metadata.equals",
+                        "operatorVersion", 1,
                         "params", Map.of("key", "region", "value", "HCM"),
                         "reasonCode", "REGION_NOT_ALLOWED"
                 )
@@ -146,41 +145,41 @@ class NewOperatorsDrlGenerationTest {
     @Test
     void testComplexRuleWithMultipleNewOperators() {
         // Given - Setup all translators
-        when(translatorRegistry.findTranslator(eq("order.item.brand.in"), any()))
-                .thenReturn(Optional.of(new OrderItemBrandInOperatorTranslator()));
-        when(translatorRegistry.findTranslator(eq("customer.lifetime.value.gte"), any()))
-                .thenReturn(Optional.of(new CustomerLifetimeValueGteOperatorTranslator()));
-        when(translatorRegistry.findTranslator(eq("order.metadata.equals"), any()))
-                .thenReturn(Optional.of(new OrderMetadataEqualsOperatorTranslator()));
+        when(translatorRegistry.getTranslator(eq("order.item.brand.in"), any()))
+                .thenReturn(new OrderItemBrandInOperatorTranslator());
+        when(translatorRegistry.getTranslator(eq("customer.lifetime.value.gte"), any()))
+                .thenReturn(new CustomerLifetimeValueGteOperatorTranslator());
+        when(translatorRegistry.getTranslator(eq("order.metadata.equals"), any()))
+                .thenReturn(new OrderMetadataEqualsOperatorTranslator());
 
         List<Map<String, Object>> nodes = List.of(
                 Map.of(
                         "id", "group1",
                         "type", "GROUP",
-                        "operator", "AND",
+                        "groupLogic", "ALL",
                         "children", List.of("node1", "node2", "node3")
                 ),
                 Map.of(
                         "id", "node1",
                         "type", "COND",
-                        "operator", "order.item.brand.in",
-                        "version", 1,
+                        "operatorName", "order.item.brand.in",
+                        "operatorVersion", 1,
                         "params", Map.of("brands", List.of("Nike", "Adidas")),
                         "reasonCode", "BRAND_NOT_ALLOWED"
                 ),
                 Map.of(
                         "id", "node2",
                         "type", "COND",
-                        "operator", "customer.lifetime.value.gte",
-                        "version", 1,
+                        "operatorName", "customer.lifetime.value.gte",
+                        "operatorVersion", 1,
                         "params", Map.of("minValue", 1000000),
                         "reasonCode", "LIFETIME_VALUE_TOO_LOW"
                 ),
                 Map.of(
                         "id", "node3",
                         "type", "COND",
-                        "operator", "order.metadata.equals",
-                        "version", 1,
+                        "operatorName", "order.metadata.equals",
+                        "operatorVersion", 1,
                         "params", Map.of("key", "channel", "value", "MOBILE"),
                         "reasonCode", "CHANNEL_NOT_ALLOWED"
                 )
