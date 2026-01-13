@@ -75,28 +75,6 @@ springdoc:
   swagger-ui:
     path: ${spring.application.context-path}/swagger-ui.html
 
-# Eureka Configuration
-eureka:
-  client:
-    enabled: true
-    healthcheck:
-      enabled: true
-    fetch-registry: true
-    register-with-eureka: true
-    instance-info-replication-interval-seconds: 10
-    registry-fetch-interval-seconds: 10
-    service-url:
-      defaultZone: http://service-registry:8761/eureka
-  instance:
-    appname: promotion-${spring.application.name}
-    instanceId: promotion-${spring.application.name}:${spring.application.instance-id:${random.value}}
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 10
-    status-page-url-path: ${management.endpoints.web.base-path}/info
-    health-check-url-path: ${management.endpoints.web.base-path}/health
-    virtual-host-name: promotion-${spring.application.name}
-
 # Management Configuration
 management:
   endpoints:
@@ -137,8 +115,6 @@ promix:
     kafka:
       bootstrap-servers:
         - kafka-1:19092
-        - kafka-2:19093
-        - kafka-3:19094
       client-id: rule-engine
       enable-avro: false
 
