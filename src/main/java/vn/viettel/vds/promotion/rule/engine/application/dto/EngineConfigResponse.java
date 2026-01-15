@@ -5,7 +5,6 @@ import java.util.Map;
 
 public class EngineConfigResponse {
 
-    private String tenantId;
     private ExecuteConfig execute;
     private CompileConfig compile;
     private Instant createdAt;
@@ -14,9 +13,8 @@ public class EngineConfigResponse {
     public EngineConfigResponse() {
     }
 
-    public EngineConfigResponse(String tenantId, ExecuteConfig execute, CompileConfig compile,
+    public EngineConfigResponse(ExecuteConfig execute, CompileConfig compile,
                                 Instant createdAt, Instant updatedAt) {
-        this.tenantId = tenantId;
         this.execute = execute;
         this.compile = compile;
         this.createdAt = createdAt;
@@ -24,14 +22,6 @@ public class EngineConfigResponse {
     }
 
     // Getters and Setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public ExecuteConfig getExecute() {
         return execute;
     }

@@ -14,11 +14,15 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class RuleExecutionOrchestrator {
 
     private static final Logger logger = LoggerFactory.getLogger(RuleExecutionOrchestrator.class);
+    private static final int DEFAULT_TIMEOUT_MS = 30000; // 30 seconds default timeout
+    private static final int MIN_TIMEOUT_MS = 100; // Minimum timeout to prevent misuse
 
     private final KieSessionManager sessionManager;
     private final FactPreparationService factPreparationService;
@@ -71,11 +75,14 @@ public class RuleExecutionOrchestrator {
             // If added to facts, the failure rule will check the fact (not the global),
             // causing it to always fire even when the main rule sets decision=ALLOW
 
-            // Execute rules
-            logger.info("BEFORE EXECUTION - executionId={}, facts={}, result.ok={}, result.decision={}, reasonCodes.size={}",
-                    executionId, facts.size(), result.getOk(), result.getDecision(), reasonCodes.size());
+            // Execute rules with timeout enforcement
+            int timeoutMs = getTimeoutMs(input.getOptions());
+            logger.info("BEFORE EXECUTION - executionId={}, facts={}, result.ok={}, result.decision={}, reasonCodes.size={}, timeoutMs={}",
+                    executionId, facts.size(), result.getOk(), result.getDecision(), reasonCodes.size(), timeoutMs);
             logger.debug("Executing rules with {} facts for executionId: {}", facts.size(), executionId);
-            session.execute(facts);
+
+            executeWithTimeout(session, facts, timeoutMs, executionId);
+
             logger.info("AFTER EXECUTION - executionId={}, result.ok={}, result.decision={}, reasonCodes={}",
                     executionId, result.getOk(), result.getDecision(), reasonCodes);
 
@@ -96,6 +103,9 @@ public class RuleExecutionOrchestrator {
             logger.info("Single rule execution completed: executionId={}, decision={}, latency={}ms",
                     executionId, response.getDecision(), response.getEngine().getLatencyMs());
 
+        } catch (RuleExecutionTimeoutException e) {
+            logger.error("Single rule execution timed out: executionId={}", executionId, e);
+            response = buildTimeoutResponse(startTime);
         } catch (Exception e) {
             logger.error("Single rule execution failed: executionId={}, error={}", executionId, e.getMessage(), e);
             response = buildErrorResponse(startTime);
@@ -206,29 +216,11 @@ public class RuleExecutionOrchestrator {
         List<ExecuteResponse> responses = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
-        try {
-            StatelessKieSession session = sessionManager.createStatelessSession(container);
-            responses = processInputsWithSession(inputs, session, executionId, startTime);
-        } catch (Exception e) {
-            logger.error("Failed to create session for bundle batch execution: executionId={}", executionId, e);
-            // Return error responses for all inputs
-            for (int i = 0; i < inputs.size(); i++) {
-                responses.add(buildErrorResponse(startTime));
-            }
-        }
-
-        return responses;
-    }
-
-    private List<ExecuteResponse> processInputsWithSession(List<RuleEnginePort.ExecuteInput> inputs,
-                                                           StatelessKieSession session,
-                                                           String executionId,
-                                                           long startTime) {
-        List<ExecuteResponse> responses = new ArrayList<>();
-
+        // Execute each input with its own session (thread-safe)
+        // StatelessKieSession is NOT thread-safe, so we create a new session for each execution
         for (RuleEnginePort.ExecuteInput input : inputs) {
             try {
-                ExecuteResponse response = executeSingleInSession(input, session, executionId);
+                ExecuteResponse response = executeSingleWithNewSession(input, container, executionId);
                 responses.add(response);
             } catch (Exception e) {
                 logger.error("Failed to execute single input in batch: executionId={}", executionId, e);
@@ -239,10 +231,13 @@ public class RuleExecutionOrchestrator {
         return responses;
     }
 
-    private ExecuteResponse executeSingleInSession(RuleEnginePort.ExecuteInput input,
-                                                   StatelessKieSession session,
-                                                   String executionId) {
+    private ExecuteResponse executeSingleWithNewSession(RuleEnginePort.ExecuteInput input,
+                                                        KieContainer container,
+                                                        String executionId) {
         long startTime = System.currentTimeMillis();
+
+        // Create a new session for this execution (thread-safe approach)
+        StatelessKieSession session = sessionManager.createStatelessSession(container);
 
         // Set up tracing
         ExecutionTracingService.TracingAgendaEventListener tracingListener = null;
@@ -264,13 +259,9 @@ public class RuleExecutionOrchestrator {
 
         // NOTE: Do NOT add result to facts - it should only be a global variable
 
-        // Execute
-        session.execute(facts);
-
-        // Remove listener after execution
-        if (tracingListener != null) {
-            session.removeEventListener(tracingListener);
-        }
+        // Execute with timeout enforcement
+        int timeoutMs = getTimeoutMs(input.getOptions());
+        executeWithTimeout(session, facts, timeoutMs, executionId);
 
         return buildSuccessResponse(result, reasonCodes, startTime, tracingListener, input);
     }
@@ -335,6 +326,24 @@ public class RuleExecutionOrchestrator {
         return response;
     }
 
+    private ExecuteResponse buildTimeoutResponse(long startTime) {
+        ExecuteResponse response = new ExecuteResponse();
+        response.setOk(false);
+        response.setDecision("DENY");
+        response.setReasonCodes(List.of("EXECUTION_TIMEOUT"));
+        response.setExplain(List.of(
+                new ExecuteResponse.ExplainEntry("error", "timeout", false)
+        ));
+
+        ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
+        engine.setVersion("timeout");
+        engine.setLatencyMs((int) (System.currentTimeMillis() - startTime));
+        engine.setCacheHit(false);
+        response.setEngine(engine);
+
+        return response;
+    }
+
     private ExecuteResponse buildBundleNotFoundResponse() {
         ExecuteResponse response = new ExecuteResponse();
         response.setOk(false);
@@ -361,5 +370,67 @@ public class RuleExecutionOrchestrator {
 
     private String generateExecutionId() {
         return "exec_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    /**
+     * Get timeout from options, with fallback to default and minimum enforcement
+     */
+    private int getTimeoutMs(RuleEnginePort.ExecuteOptions options) {
+        if (options == null || options.getTimeoutMs() == null || options.getTimeoutMs() <= 0) {
+            return DEFAULT_TIMEOUT_MS;
+        }
+        return Math.max(options.getTimeoutMs(), MIN_TIMEOUT_MS);
+    }
+
+    /**
+     * Execute session with timeout enforcement.
+     * Wraps the blocking session.execute() call in a CompletableFuture with timeout.
+     *
+     * @param session the stateless KIE session
+     * @param facts the facts to insert
+     * @param timeoutMs timeout in milliseconds
+     * @param executionId execution ID for logging
+     * @throws RuleExecutionTimeoutException if execution exceeds timeout
+     */
+    private void executeWithTimeout(StatelessKieSession session, List<Object> facts,
+                                     int timeoutMs, String executionId) {
+        try {
+            CompletableFuture<Void> executionFuture = CompletableFuture.runAsync(
+                    () -> session.execute(facts),
+                    executionExecutor
+            );
+
+            executionFuture.get(timeoutMs, TimeUnit.MILLISECONDS);
+
+        } catch (TimeoutException e) {
+            logger.error("Rule execution timed out: executionId={}, timeoutMs={}", executionId, timeoutMs);
+            throw new RuleExecutionTimeoutException(
+                    String.format("Rule execution timed out after %dms: executionId=%s", timeoutMs, executionId));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Rule execution interrupted: executionId={}", executionId);
+            throw new RuleExecutionException("Rule execution was interrupted: executionId=" + executionId, e);
+        } catch (Exception e) {
+            logger.error("Rule execution failed: executionId={}, error={}", executionId, e.getMessage(), e);
+            throw new RuleExecutionException("Rule execution failed: executionId=" + executionId, e);
+        }
+    }
+
+    /**
+     * Exception thrown when rule execution exceeds the configured timeout
+     */
+    public static class RuleExecutionTimeoutException extends RuntimeException {
+        public RuleExecutionTimeoutException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * General exception for rule execution failures
+     */
+    public static class RuleExecutionException extends RuntimeException {
+        public RuleExecutionException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

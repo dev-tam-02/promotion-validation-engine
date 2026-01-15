@@ -5,7 +5,7 @@ import vn.viettel.vds.promotion.rule.engine.application.dto.EngineConfigUpdateRe
 
 public interface ConfigManagementUseCase {
 
-    EngineConfigResponse getConfig(String tenantId);
+    EngineConfigResponse getConfig();
 
-    EngineConfigResponse updateConfig(String tenantId, EngineConfigUpdateRequest request);
+    EngineConfigResponse updateConfig(EngineConfigUpdateRequest request);
 }

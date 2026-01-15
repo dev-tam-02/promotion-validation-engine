@@ -69,8 +69,8 @@ public class CompileController {
         } catch (Exception e) {
             // Log the full error for debugging
             org.slf4j.LoggerFactory.getLogger(CompileController.class)
-                    .error("Compilation failed for tenantId={}, ruleId={}, version={}, errorType={}",
-                            request.getTenantId(), request.getRuleId(), request.getVersion(),
+                    .error("Compilation failed for ruleId={}, version={}, errorType={}",
+                            request.getRuleId(), request.getVersion(),
                             e.getClass().getSimpleName(), e);
 
             CompileResponse errorResponse = new CompileResponse();
@@ -96,7 +96,6 @@ public class CompileController {
 
     @GetMapping("/compile-jobs")
     public ResponseEntity<List<CompileJobResponse>> getCompileJobs(
-            @RequestParam String tenantId,
             @RequestParam(required = false) String ruleId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
@@ -105,7 +104,7 @@ public class CompileController {
             @RequestParam(defaultValue = "20") int size) {
         try {
             List<CompileJobResponse> jobs = compileUseCase.getCompileJobs(
-                    tenantId, ruleId, status, from, to, page, size);
+                    ruleId, status, from, to, page, size);
             return ResponseEntity.ok(jobs);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

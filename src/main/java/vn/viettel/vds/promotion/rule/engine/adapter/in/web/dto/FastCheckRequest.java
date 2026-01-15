@@ -17,11 +17,6 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FastCheckRequest {
 
-    @Schema(description = "Tenant identifier", example = "viettel", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "Tenant ID is required")
-    @JsonProperty("tenantId")
-    private String tenantId;
-
     @Schema(description = "Campaign/Bundle identifier", example = "tet-2025", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Campaign ID is required")
     @JsonProperty("campaignId")
@@ -70,8 +65,7 @@ public class FastCheckRequest {
     public FastCheckRequest() {
     }
 
-    public FastCheckRequest(String tenantId, String campaignId, String customerId, Long orderTotal, String currency) {
-        this.tenantId = tenantId;
+    public FastCheckRequest(String campaignId, String customerId, Long orderTotal, String currency) {
         this.campaignId = campaignId;
         this.customerId = customerId;
         this.orderTotal = orderTotal;
@@ -79,14 +73,6 @@ public class FastCheckRequest {
     }
 
     // Getters and setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public String getCampaignId() {
         return campaignId;
     }

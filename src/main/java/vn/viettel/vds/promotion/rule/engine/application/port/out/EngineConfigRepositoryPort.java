@@ -8,9 +8,9 @@ public interface EngineConfigRepositoryPort {
 
     EngineConfigEntity save(EngineConfigEntity engineConfig);
 
-    Optional<EngineConfigEntity> findByTenantId(String tenantId);
+    Optional<EngineConfigEntity> findById(String id);
 
     EngineConfigEntity upsert(EngineConfigEntity engineConfig);
 
-    void deleteByTenantId(String tenantId);
+    void deleteById(String id);
 }

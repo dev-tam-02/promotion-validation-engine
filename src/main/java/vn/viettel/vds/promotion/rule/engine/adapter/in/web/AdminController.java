@@ -39,22 +39,21 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/configs/{tenantId}")
-    public ResponseEntity<EngineConfigResponse> getConfig(@PathVariable String tenantId) {
+    @GetMapping("/configs")
+    public ResponseEntity<EngineConfigResponse> getConfig() {
         try {
-            EngineConfigResponse config = configManagementUseCase.getConfig(tenantId);
+            EngineConfigResponse config = configManagementUseCase.getConfig();
             return ResponseEntity.ok(config);
         } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
-    @PatchMapping("/configs/{tenantId}")
+    @PatchMapping("/configs")
     public ResponseEntity<EngineConfigResponse> updateConfig(
-            @PathVariable String tenantId,
             @Valid @RequestBody EngineConfigUpdateRequest request) {
         try {
-            EngineConfigResponse config = configManagementUseCase.updateConfig(tenantId, request);
+            EngineConfigResponse config = configManagementUseCase.updateConfig(request);
             return ResponseEntity.ok(config);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();

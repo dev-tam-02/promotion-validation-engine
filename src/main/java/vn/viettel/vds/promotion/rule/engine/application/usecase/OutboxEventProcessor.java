@@ -96,7 +96,7 @@ public class OutboxEventProcessor {
         Map<String, String> payload = event.getPayload();
 
         BundlePublishedEvent bundleEvent = new BundlePublishedEvent(
-                event.getTenantId(),
+                null, // tenantId removed
                 payload.get("ruleId"),
                 payload.get("ruleVersion") != null ? Integer.parseInt(payload.get("ruleVersion")) : null,
                 payload.get("assignmentVersion") != null ? Integer.parseInt(payload.get("assignmentVersion")) : null,
@@ -110,7 +110,7 @@ public class OutboxEventProcessor {
         Map<String, String> payload = event.getPayload();
 
         WarmupRequestedEvent warmupEvent = new WarmupRequestedEvent(
-                event.getTenantId(),
+                null, // tenantId removed
                 payload.get("bundleHash")
         );
 

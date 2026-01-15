@@ -55,9 +55,9 @@ public class CompileService implements CompileUseCase {
     @Override
     public CompileResponse compile(CompileRequest request) {
         // Check for existing job (idempotency)
-        String jobId = generateJobId(request.getTenantId(), request.getRuleId(), request.getVersion());
-        Optional<CompileJobEntity> existingJob = compileJobRepository.findByTenantIdAndRuleIdAndTargetVersion(
-                request.getTenantId(), request.getRuleId(), request.getVersion());
+        String jobId = generateJobId(request.getRuleId(), request.getVersion());
+        Optional<CompileJobEntity> existingJob = compileJobRepository.findByRuleIdAndTargetVersion(
+                request.getRuleId(), request.getVersion());
 
         CompileResponse existingResult = handleExistingJob(existingJob, jobId);
         if (existingResult != null) {
@@ -71,7 +71,6 @@ public class CompileService implements CompileUseCase {
         try {
             // Execute compilation
             RuleEnginePort.CompileInput compileInput = new RuleEnginePort.CompileInput(
-                    request.getTenantId(),
                     request.getRuleId(),
                     request.getVersion(),
                     request.getNodes(),
@@ -175,7 +174,7 @@ public class CompileService implements CompileUseCase {
     }
 
     @Override
-    public List<CompileJobResponse> getCompileJobs(String tenantId, String ruleId, String status,
+    public List<CompileJobResponse> getCompileJobs(String ruleId, String status,
                                                    String from, String to, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<CompileJobEntity> jobs;
@@ -185,15 +184,15 @@ public class CompileService implements CompileUseCase {
                 Instant fromInstant = Instant.parse(from);
                 Instant toInstant = Instant.parse(to);
                 CompileJobEntity.JobStatus jobStatus = CompileJobEntity.JobStatus.valueOf(status.toUpperCase());
-                jobs = compileJobRepository.findByTenantIdAndRuleIdAndStatusAndRequestedAtBetween(
-                        tenantId, ruleId, jobStatus, fromInstant, toInstant, pageable);
+                jobs = compileJobRepository.findByRuleIdAndStatusAndRequestedAtBetween(
+                        ruleId, jobStatus, fromInstant, toInstant, pageable);
             } catch (DateTimeParseException | IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid date format or status: " + e.getMessage());
             }
         } else if (ruleId != null) {
-            jobs = compileJobRepository.findByTenantIdAndRuleId(tenantId, ruleId, pageable);
+            jobs = compileJobRepository.findByRuleId(ruleId, pageable);
         } else {
-            jobs = compileJobRepository.findByTenantId(tenantId, pageable);
+            jobs = compileJobRepository.findAll(pageable);
         }
 
         return jobs.getContent().stream()
@@ -210,8 +209,8 @@ public class CompileService implements CompileUseCase {
         return mapToCompileJobResponse(job.get());
     }
 
-    private String generateJobId(String tenantId, String ruleId, Integer version) {
-        return String.format("pj_%s_%s_v%d", tenantId, ruleId, version);
+    private String generateJobId(String ruleId, Integer version) {
+        return String.format("pj_%s_v%d", ruleId, version);
     }
 
     private String generateArtifactKey(String bundleHash) {
@@ -221,7 +220,6 @@ public class CompileService implements CompileUseCase {
     private CompileJobEntity createCompileJob(String jobId, CompileRequest request) {
         CompileJobEntity job = new CompileJobEntity();
         job.setId(jobId);
-        job.setTenantId(request.getTenantId());
         job.setRuleId(request.getRuleId());
         job.setTargetVersion(request.getVersion());
         job.setStatus(CompileJobEntity.JobStatus.RUNNING);
@@ -239,7 +237,6 @@ public class CompileService implements CompileUseCase {
     private BundleEntity createBundle(CompileRequest request, RuleEnginePort.CompileResult result, String artifactKey) {
         BundleEntity bundle = new BundleEntity();
         bundle.setId(result.getBundleHash());
-        bundle.setTenantId(request.getTenantId());
         bundle.setRuleId(request.getRuleId());
         bundle.setRuleVersion(request.getVersion());
         bundle.setOperatorsFingerprint(request.getOperatorsFingerprint());
@@ -291,7 +288,6 @@ public class CompileService implements CompileUseCase {
         // Create outbox event
         OutboxEventEntity outboxEvent = new OutboxEventEntity();
         outboxEvent.setId("ox_" + UUID.randomUUID().toString().replace("-", ""));
-        outboxEvent.setTenantId(request.getTenantId());
         outboxEvent.setType(OutboxEventEntity.EventType.BUNDLE_PUBLISHED);
         Map<String, String> payload = new HashMap<>();
         payload.put("ruleId", request.getRuleId());
@@ -306,12 +302,12 @@ public class CompileService implements CompileUseCase {
 
         // Publish bundle published event
         BundlePublishedEvent event = new BundlePublishedEvent(
-                request.getTenantId(), request.getRuleId(), request.getVersion(), null, bundleHash);
+                null, request.getRuleId(), request.getVersion(), null, bundleHash);
         eventPublisherPort.publishBundlePublished(event);
 
         // Publish cache invalidation event to all instances (broadcast pattern)
         BundleCacheInvalidationEvent cacheInvalidationEvent = new BundleCacheInvalidationEvent(
-                request.getTenantId(),
+                null,
                 bundleHash,
                 request.getRuleId(),
                 request.getVersion(),
@@ -343,7 +339,6 @@ public class CompileService implements CompileUseCase {
 
         return new CompileJobResponse(
                 job.getId(),
-                job.getTenantId(),
                 job.getRuleId(),
                 job.getTargetVersion(),
                 job.getStatus().name(),

@@ -20,14 +20,14 @@ public class EngineConfigRepositoryAdapter implements EngineConfigRepositoryPort
     }
 
     @Override
-    public Optional<EngineConfigEntity> findByTenantId(String tenantId) {
-        return engineConfigJpaRepository.findByTenantId(tenantId);
+    public Optional<EngineConfigEntity> findById(String id) {
+        return engineConfigJpaRepository.findById(id);
     }
 
     @Override
     public EngineConfigEntity upsert(EngineConfigEntity engineConfig) {
-        // Check if config exists for this tenant
-        Optional<EngineConfigEntity> existingConfig = engineConfigJpaRepository.findByTenantId(engineConfig.getTenantId());
+        // Check if config exists by id
+        Optional<EngineConfigEntity> existingConfig = engineConfigJpaRepository.findById(engineConfig.getId());
 
         if (existingConfig.isPresent()) {
             // Update existing config
@@ -43,7 +43,7 @@ public class EngineConfigRepositoryAdapter implements EngineConfigRepositoryPort
     }
 
     @Override
-    public void deleteByTenantId(String tenantId) {
-        engineConfigJpaRepository.deleteByTenantId(tenantId);
+    public void deleteById(String id) {
+        engineConfigJpaRepository.deleteById(id);
     }
 }

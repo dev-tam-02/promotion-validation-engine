@@ -11,8 +11,7 @@ import java.util.List;
 @Table(name = "bundles",
         indexes = {
                 @Index(name = "idx_bundle_hash", columnList = "id", unique = true),
-                @Index(name = "idx_rule_version", columnList = "tenant_id, rule_id, rule_version"),
-                @Index(name = "idx_tenant", columnList = "tenant_id")
+                @Index(name = "idx_rule_version", columnList = "rule_id, rule_version")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_bundle_hash", columnNames = {"id"})
@@ -25,9 +24,6 @@ public class BundleEntity {
     @Id
     @Column(name = "id", nullable = false, length = 300) // bundleHash (sha256 hash format)
     private String id;
-
-    @Column(name = "tenant_id", nullable = false, length = 50)
-    private String tenantId;
 
     @Column(name = "rule_id", nullable = false, length = 100)
     private String ruleId;

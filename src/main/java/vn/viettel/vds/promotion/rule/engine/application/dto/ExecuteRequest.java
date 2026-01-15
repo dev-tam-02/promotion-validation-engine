@@ -8,9 +8,6 @@ import java.util.Map;
 
 public class ExecuteRequest {
 
-    @NotBlank
-    private String tenantId;
-
     @NotNull
     @Valid
     private Bundle bundle;
@@ -23,22 +20,13 @@ public class ExecuteRequest {
     public ExecuteRequest() {
     }
 
-    public ExecuteRequest(String tenantId, Bundle bundle, Map<String, Object> context, ExecuteOptions options) {
-        this.tenantId = tenantId;
+    public ExecuteRequest(Bundle bundle, Map<String, Object> context, ExecuteOptions options) {
         this.bundle = bundle;
         this.context = context;
         this.options = options;
     }
 
     // Getters and Setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public Bundle getBundle() {
         return bundle;
     }

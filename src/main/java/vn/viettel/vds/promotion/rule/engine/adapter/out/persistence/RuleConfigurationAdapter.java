@@ -17,21 +17,20 @@ import java.util.Set;
 public class RuleConfigurationAdapter implements RuleConfigurationPort {
 
     @Override
-    public RuleConfiguration getConfiguration(String tenantId, String campaignId) {
-        log.debug("Getting rule configuration for tenant: {} and campaign: {}", tenantId, campaignId);
+    public RuleConfiguration getConfiguration(String campaignId) {
+        log.debug("Getting rule configuration for campaign: {}", campaignId);
 
         // For now, returning a default configuration
         // In a real implementation, this would fetch from a database or configuration service
-        ValidationRuleConfig config = createDefaultConfiguration(tenantId, campaignId);
+        ValidationRuleConfig config = createDefaultConfiguration(campaignId);
 
         return new RuleConfiguration(config);
     }
 
-    private ValidationRuleConfig createDefaultConfiguration(String tenantId, String campaignId) {
+    private ValidationRuleConfig createDefaultConfiguration(String campaignId) {
         ValidationRuleConfig config = new ValidationRuleConfig();
         config.setRuleId("default-rule-" + campaignId);
         config.setCampaignId(campaignId);
-        config.setTenantId(tenantId);
         config.setEnabled(true);
         config.setCreatedAt(Instant.now());
         config.setUpdatedAt(Instant.now());

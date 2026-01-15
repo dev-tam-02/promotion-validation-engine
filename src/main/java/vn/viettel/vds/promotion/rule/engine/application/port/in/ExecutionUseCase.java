@@ -13,25 +13,15 @@ public interface ExecutionUseCase {
     BatchExecuteResponse executeBatch(BatchExecuteRequest request);
 
     public static class BatchExecuteRequest {
-        private String tenantId;
         private ExecuteRequest.Bundle bundle;
         private List<TestCase> cases;
 
         public BatchExecuteRequest() {
         }
 
-        public BatchExecuteRequest(String tenantId, ExecuteRequest.Bundle bundle, List<TestCase> cases) {
-            this.tenantId = tenantId;
+        public BatchExecuteRequest(ExecuteRequest.Bundle bundle, List<TestCase> cases) {
             this.bundle = bundle;
             this.cases = cases;
-        }
-
-        public String getTenantId() {
-            return tenantId;
-        }
-
-        public void setTenantId(String tenantId) {
-            this.tenantId = tenantId;
         }
 
         public ExecuteRequest.Bundle getBundle() {

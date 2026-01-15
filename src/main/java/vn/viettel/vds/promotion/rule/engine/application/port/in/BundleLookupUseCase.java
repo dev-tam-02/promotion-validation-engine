@@ -8,7 +8,7 @@ public interface BundleLookupUseCase {
 
     LatestBundleResponse getLatestBundle(String ruleId);
 
-    LatestBundleResponse getLatestBundle(String tenantId, String subjectType, String subjectKey);
+    LatestBundleResponse getLatestBundle(String subjectType, String subjectKey);
 
     BundleMetadataResponse getBundleMetadata(String bundleHash);
 

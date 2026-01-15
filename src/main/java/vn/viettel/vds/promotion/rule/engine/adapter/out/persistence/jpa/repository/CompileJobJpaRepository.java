@@ -12,23 +12,16 @@ import java.util.Optional;
 @Repository
 public interface CompileJobJpaRepository extends JpaRepository<CompileJobEntity, String> {
 
-    Optional<CompileJobEntity> findByTenantIdAndRuleIdAndTargetVersion(
-            String tenantId, String ruleId, Integer targetVersion);
+    Optional<CompileJobEntity> findByRuleIdAndTargetVersion(String ruleId, Integer targetVersion);
 
-    List<CompileJobEntity> findByTenantIdAndStatus(
-            String tenantId, CompileJobEntity.JobStatus status);
+    List<CompileJobEntity> findByStatus(CompileJobEntity.JobStatus status);
 
-    @Query("SELECT c FROM CompileJobEntity c WHERE c.tenantId = :tenantId " +
-            "AND c.status = :status ORDER BY c.requestedAt DESC")
-    List<CompileJobEntity> findByTenantIdAndStatusOrderByRequestedAtDesc(
-            @Param("tenantId") String tenantId,
+    @Query("SELECT c FROM CompileJobEntity c WHERE c.status = :status ORDER BY c.requestedAt DESC")
+    List<CompileJobEntity> findByStatusOrderByRequestedAtDesc(
             @Param("status") CompileJobEntity.JobStatus status);
 
-    List<CompileJobEntity> findByTenantIdAndRuleId(String tenantId, String ruleId);
+    List<CompileJobEntity> findByRuleId(String ruleId);
 
-    @Query("SELECT c FROM CompileJobEntity c WHERE c.tenantId = :tenantId " +
-            "AND c.ruleId = :ruleId ORDER BY c.targetVersion DESC")
-    List<CompileJobEntity> findLatestByTenantIdAndRuleId(
-            @Param("tenantId") String tenantId,
-            @Param("ruleId") String ruleId);
+    @Query("SELECT c FROM CompileJobEntity c WHERE c.ruleId = :ruleId ORDER BY c.targetVersion DESC")
+    List<CompileJobEntity> findLatestByRuleId(@Param("ruleId") String ruleId);
 }

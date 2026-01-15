@@ -16,6 +16,8 @@ import java.util.Optional;
 @Transactional
 public class ConfigManagementService implements ConfigManagementUseCase {
 
+    private static final String DEFAULT_CONFIG_ID = "cfg_default";
+
     private final EngineConfigRepositoryPort engineConfigRepository;
 
     public ConfigManagementService(EngineConfigRepositoryPort engineConfigRepository) {
@@ -24,20 +26,20 @@ public class ConfigManagementService implements ConfigManagementUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public EngineConfigResponse getConfig(String tenantId) {
-        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(tenantId);
+    public EngineConfigResponse getConfig() {
+        Optional<EngineConfigEntity> config = engineConfigRepository.findById(DEFAULT_CONFIG_ID);
 
         if (config.isPresent()) {
             return mapToConfigResponse(config.get());
         } else {
-            // Return default configuration for new tenants
-            return getDefaultConfig(tenantId);
+            // Return default configuration
+            return getDefaultConfig();
         }
     }
 
     @Override
-    public EngineConfigResponse updateConfig(String tenantId, EngineConfigUpdateRequest request) {
-        Optional<EngineConfigEntity> existingConfig = engineConfigRepository.findByTenantId(tenantId);
+    public EngineConfigResponse updateConfig(EngineConfigUpdateRequest request) {
+        Optional<EngineConfigEntity> existingConfig = engineConfigRepository.findById(DEFAULT_CONFIG_ID);
 
         EngineConfigEntity config;
         if (existingConfig.isPresent()) {
@@ -45,16 +47,15 @@ public class ConfigManagementService implements ConfigManagementUseCase {
             updateConfigFromRequest(config, request);
             config.setUpdatedAt(Instant.now());
         } else {
-            config = createConfigFromRequest(tenantId, request);
+            config = createConfigFromRequest(request);
         }
 
         EngineConfigEntity savedConfig = engineConfigRepository.save(config);
         return mapToConfigResponse(savedConfig);
     }
 
-    private EngineConfigResponse getDefaultConfig(String tenantId) {
+    private EngineConfigResponse getDefaultConfig() {
         EngineConfigResponse response = new EngineConfigResponse();
-        response.setTenantId(tenantId);
 
         // Default execute configuration
         EngineConfigResponse.ExecuteConfig executeConfig = new EngineConfigResponse.ExecuteConfig();
@@ -80,10 +81,9 @@ public class ConfigManagementService implements ConfigManagementUseCase {
         return response;
     }
 
-    private EngineConfigEntity createConfigFromRequest(String tenantId, EngineConfigUpdateRequest request) {
+    private EngineConfigEntity createConfigFromRequest(EngineConfigUpdateRequest request) {
         EngineConfigEntity config = new EngineConfigEntity();
-        config.setId("cfg_" + tenantId);
-        config.setTenantId(tenantId);
+        config.setId(DEFAULT_CONFIG_ID);
 
         Instant now = Instant.now();
         config.setCreatedAt(now);
@@ -129,7 +129,6 @@ public class ConfigManagementService implements ConfigManagementUseCase {
 
     private EngineConfigResponse mapToConfigResponse(EngineConfigEntity config) {
         EngineConfigResponse response = new EngineConfigResponse();
-        response.setTenantId(config.getTenantId());
         response.setCreatedAt(config.getCreatedAt());
         response.setUpdatedAt(config.getUpdatedAt());
 

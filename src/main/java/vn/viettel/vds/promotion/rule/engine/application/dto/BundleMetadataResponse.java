@@ -4,7 +4,6 @@ import java.util.List;
 
 public class BundleMetadataResponse {
 
-    private String tenantId;
     private String ruleId;
     private Integer ruleVersion;
     private String operatorsFingerprint;
@@ -15,10 +14,9 @@ public class BundleMetadataResponse {
     public BundleMetadataResponse() {
     }
 
-    public BundleMetadataResponse(String tenantId, String ruleId, Integer ruleVersion,
+    public BundleMetadataResponse(String ruleId, Integer ruleVersion,
                                   String operatorsFingerprint, Limits limits, List<TimeLink> timeLinks,
                                   Engine engine) {
-        this.tenantId = tenantId;
         this.ruleId = ruleId;
         this.ruleVersion = ruleVersion;
         this.operatorsFingerprint = operatorsFingerprint;
@@ -28,14 +26,6 @@ public class BundleMetadataResponse {
     }
 
     // Getters and Setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public String getRuleId() {
         return ruleId;
     }

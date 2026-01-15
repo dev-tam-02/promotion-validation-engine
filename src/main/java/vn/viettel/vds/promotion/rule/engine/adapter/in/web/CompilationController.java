@@ -48,8 +48,8 @@ public class CompilationController {
     @PostMapping
     public ResponseEntity<CompileResponse> compileRule(@Valid @RequestBody CompileRequest request) {
 
-        logger.info("Compiling rule: tenantId={}, ruleId={}, version={}",
-                request.getTenantId(), request.getRuleId(), request.getVersion());
+        logger.info("Compiling rule: ruleId={}, version={}",
+                request.getRuleId(), request.getVersion());
 
         try {
             // Convert web DTO to application DTO
@@ -69,8 +69,8 @@ public class CompilationController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            logger.error("Rule compilation failed: tenantId={}, ruleId={}, error={}",
-                    request.getTenantId(), request.getRuleId(), e.getMessage(), e);
+            logger.error("Rule compilation failed: ruleId={}, error={}",
+                    request.getRuleId(), e.getMessage(), e);
 
             CompileResponse errorResponse = new CompileResponse();
             errorResponse.setOk(false);
@@ -176,7 +176,6 @@ public class CompilationController {
         // Create application DTO
         vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest appRequest =
                 new vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest();
-        appRequest.setTenantId(webRequest.getTenantId());
         appRequest.setRuleId(webRequest.getRuleId());
         appRequest.setVersion(webRequest.getVersion());
         appRequest.setLogic(webRequest.getLogic());

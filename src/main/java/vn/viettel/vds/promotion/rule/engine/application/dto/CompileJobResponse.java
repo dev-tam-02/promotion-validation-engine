@@ -5,7 +5,6 @@ import java.util.List;
 
 public record CompileJobResponse(
         String id,
-        String tenantId,
         String ruleId,
         Integer targetVersion,
         String status,

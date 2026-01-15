@@ -28,27 +28,26 @@ public class CompileJobRepositoryAdapter implements CompileJobRepositoryPort {
     }
 
     @Override
-    public Optional<CompileJobEntity> findByTenantIdAndRuleIdAndTargetVersion(String tenantId, String ruleId, Integer targetVersion) {
-        return compileJobJpaRepository.findByTenantIdAndRuleIdAndTargetVersion(tenantId, ruleId, targetVersion);
+    public Optional<CompileJobEntity> findByRuleIdAndTargetVersion(String ruleId, Integer targetVersion) {
+        return compileJobJpaRepository.findByRuleIdAndTargetVersion(ruleId, targetVersion);
     }
 
     @Override
-    public Page<CompileJobEntity> findByTenantIdAndRuleIdAndStatusAndRequestedAtBetween(
-            String tenantId, String ruleId, CompileJobEntity.JobStatus status,
+    public Page<CompileJobEntity> findByRuleIdAndStatusAndRequestedAtBetween(
+            String ruleId, CompileJobEntity.JobStatus status,
             Instant from, Instant to, Pageable pageable) {
         // Need to implement this method in JpaRepository or use @Query
         return Page.empty(pageable);
     }
 
     @Override
-    public Page<CompileJobEntity> findByTenantIdAndRuleId(String tenantId, String ruleId, Pageable pageable) {
+    public Page<CompileJobEntity> findByRuleId(String ruleId, Pageable pageable) {
         // Need to implement this method in JpaRepository
         return Page.empty(pageable);
     }
 
     @Override
-    public Page<CompileJobEntity> findByTenantId(String tenantId, Pageable pageable) {
-        // Need to implement this method in JpaRepository
-        return Page.empty(pageable);
+    public Page<CompileJobEntity> findAll(Pageable pageable) {
+        return compileJobJpaRepository.findAll(pageable);
     }
 }

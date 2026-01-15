@@ -48,8 +48,8 @@ public class ExecutionService implements ExecutionUseCase {
 
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
 
-        // Get tenant configuration
-        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
+        // Get configuration by bundle id
+        Optional<EngineConfigEntity> config = engineConfigRepository.findById(bundleHash);
         ExecuteRequest.ExecuteOptions effectiveOptions = mergeOptions(request.getOptions(), config.orElse(null));
 
         // Ensure bundle is warmed up
@@ -59,7 +59,6 @@ public class ExecutionService implements ExecutionUseCase {
 
         // Execute rules
         RuleEnginePort.ExecuteInput executeInput = new RuleEnginePort.ExecuteInput(
-                request.getTenantId(),
                 bundleHash,
                 request.getContext(),
                 mapToRuleEngineOptions(effectiveOptions)
@@ -79,8 +78,8 @@ public class ExecutionService implements ExecutionUseCase {
 
         Optional<BundleEntity> bundle = bundleRepository.findById(bundleHash);
 
-        // Get tenant configuration
-        Optional<EngineConfigEntity> config = engineConfigRepository.findByTenantId(request.getTenantId());
+        // Get configuration by bundle id
+        Optional<EngineConfigEntity> config = engineConfigRepository.findById(bundleHash);
 
         // Ensure bundle is warmed up
         if (bundle.isPresent()) {
@@ -92,7 +91,6 @@ public class ExecutionService implements ExecutionUseCase {
                 .map(testCase -> {
                     validateContext(testCase.getContext());
                     return new RuleEnginePort.ExecuteInput(
-                            request.getTenantId(),
                             bundleHash,
                             testCase.getContext(),
                             getDefaultOptions(config.orElse(null))

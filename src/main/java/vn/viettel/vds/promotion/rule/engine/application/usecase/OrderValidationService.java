@@ -58,15 +58,14 @@ public class OrderValidationService {
 
     private List<CampaignInfo> discoverCampaigns(ValidateOrderRequest request) {
         ValidateOrderRequest.CampaignFilter filter = request.getCampaignFilter();
-        
-        CampaignDiscoveryService.DiscoveryRequest discoveryRequest = 
+
+        CampaignDiscoveryService.DiscoveryRequest discoveryRequest =
                 new CampaignDiscoveryService.DiscoveryRequest();
-        
-        discoveryRequest.setTenantId(request.getExecutionContext().getTenantId());
+
         discoveryRequest.setEffectiveTime(filter != null ? filter.getEffectiveTime() : Instant.now());
         discoveryRequest.setActiveOnly(filter != null ? filter.getActiveOnly() : true);
         discoveryRequest.setMaxResults(filter != null ? filter.getMaxCampaigns() : 50);
-        
+
         if (filter != null) {
             discoveryRequest.setCampaignIds(filter.getCampaignIds());
             discoveryRequest.setCampaignTypes(filter.getCampaignTypes());
@@ -85,7 +84,6 @@ public class OrderValidationService {
         // Create execution inputs for all campaigns
         List<RuleEnginePort.ExecuteInput> executeInputs = campaigns.stream()
                 .map(campaign -> new RuleEnginePort.ExecuteInput(
-                        request.getExecutionContext().getTenantId(),
                         campaign.getBundleHash(),
                         context,
                         buildExecuteOptions(request.getOptions())

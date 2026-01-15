@@ -32,9 +32,9 @@ import java.time.*;
 public class FastCheckService implements FastCheckUseCase {
 
     // Redis key patterns
-    private static final String BLACKLIST_KEY = "fast:blacklist:%s:%s"; // tenant:customerId
-    private static final String RATE_LIMIT_KEY = "fast:rate:%s:%s:%s"; // tenant:customerId:window
-    private static final String HOLIDAY_KEY = "fast:holiday:%s:%s"; // tenant:date
+    private static final String BLACKLIST_KEY = "fast:blacklist:%s"; // customerId
+    private static final String RATE_LIMIT_KEY = "fast:rate:%s:%s"; // customerId:window
+    private static final String HOLIDAY_KEY = "fast:holiday:%s"; // date
     private final RuleConfigurationPort ruleConfigurationPort;
     private final RedissonClient redissonClient;
 
@@ -43,7 +43,6 @@ public class FastCheckService implements FastCheckUseCase {
 
         // Load fast check rules for the campaign/bundle
         RuleConfiguration config = ruleConfigurationPort.getConfiguration(
-                request.getTenantId(),
                 request.getCampaignId()
         );
 
@@ -127,7 +126,7 @@ public class FastCheckService implements FastCheckUseCase {
         }
 
         // Check if holiday (from Redis)
-        if (config.isExcludeHolidays() && isHoliday(request.getTenantId(), zonedTime.toLocalDate())) {
+        if (config.isExcludeHolidays() && isHoliday(zonedTime.toLocalDate())) {
             return new TimeCheckResult(false, "HOLIDAY_EXCLUSION",
                     "Promotions not available on holidays");
         }
@@ -185,7 +184,7 @@ public class FastCheckService implements FastCheckUseCase {
     private BlacklistCheckResult checkBlacklist(FastCheckRequest request) {
         try {
             // Check customer-specific blacklist using RBucket
-            String customerKey = String.format(BLACKLIST_KEY, request.getTenantId(), request.getCustomerId());
+            String customerKey = String.format(BLACKLIST_KEY, request.getCustomerId());
             RBucket<Boolean> bucket = redissonClient.getBucket(customerKey);
             Boolean isBlacklisted = bucket.get();
 
@@ -195,7 +194,7 @@ public class FastCheckService implements FastCheckUseCase {
             }
 
             // Check global blacklist set using RSet
-            String globalKey = String.format("fast:blacklist:global:%s", request.getTenantId());
+            String globalKey = "fast:blacklist:global";
             RSet<String> globalBlacklist = redissonClient.getSet(globalKey);
             Boolean isMember = globalBlacklist.contains(request.getCustomerId());
 
@@ -221,11 +220,10 @@ public class FastCheckService implements FastCheckUseCase {
     private RateLimitResult checkRateLimit(RuleConfiguration config, FastCheckRequest request) {
         try {
             String customerId = request.getCustomerId();
-            String tenantId = request.getTenantId();
 
             // Check hourly limit using RAtomicLong
             if (config.getMaxPerHour() > 0) {
-                String hourKey = String.format(RATE_LIMIT_KEY, tenantId, customerId, "hour");
+                String hourKey = String.format(RATE_LIMIT_KEY, customerId, "hour");
                 RAtomicLong hourCounter = redissonClient.getAtomicLong(hourKey);
                 long count = hourCounter.incrementAndGet();
 
@@ -241,7 +239,7 @@ public class FastCheckService implements FastCheckUseCase {
 
             // Check daily limit using RAtomicLong
             if (config.getMaxPerDay() > 0) {
-                String dayKey = String.format(RATE_LIMIT_KEY, tenantId, customerId, "day");
+                String dayKey = String.format(RATE_LIMIT_KEY, customerId, "day");
                 RAtomicLong dayCounter = redissonClient.getAtomicLong(dayKey);
                 long count = dayCounter.incrementAndGet();
 
@@ -276,9 +274,9 @@ public class FastCheckService implements FastCheckUseCase {
         return !currentTime.isBefore(hours.getStart()) && !currentTime.isAfter(hours.getEnd());
     }
 
-    private boolean isHoliday(String tenantId, LocalDate date) {
+    private boolean isHoliday(LocalDate date) {
         try {
-            String holidayKey = String.format(HOLIDAY_KEY, tenantId, date.toString());
+            String holidayKey = String.format(HOLIDAY_KEY, date.toString());
             RBucket<Boolean> holidayBucket = redissonClient.getBucket(holidayKey);
             return Boolean.TRUE.equals(holidayBucket.get());
         } catch (Exception e) {

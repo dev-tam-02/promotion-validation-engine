@@ -11,7 +11,7 @@ public interface BundleRepositoryPort {
 
     Optional<BundleEntity> findById(String bundleHash);
 
-    Optional<BundleEntity> findByTenantIdAndRuleIdAndRuleVersion(String tenantId, String ruleId, Integer ruleVersion);
+    Optional<BundleEntity> findByRuleIdAndRuleVersion(String ruleId, Integer ruleVersion);
 
     boolean existsById(String bundleHash);
     

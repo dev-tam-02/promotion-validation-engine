@@ -7,29 +7,17 @@ import java.util.List;
 
 public class WarmupRequest {
 
-    @NotBlank
-    private String tenantId;
-
     @NotEmpty
     private List<String> bundleHashes;
 
     public WarmupRequest() {
     }
 
-    public WarmupRequest(String tenantId, List<String> bundleHashes) {
-        this.tenantId = tenantId;
+    public WarmupRequest(List<String> bundleHashes) {
         this.bundleHashes = bundleHashes;
     }
 
     // Getters and Setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public List<String> getBundleHashes() {
         return bundleHashes;
     }

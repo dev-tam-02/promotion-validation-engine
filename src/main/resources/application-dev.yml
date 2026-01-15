@@ -12,10 +12,6 @@ minio:
   read-timeout: ${MINIO_READ_TIMEOUT:60000}
 
 spring:
-  # Exclude Zipkin auto-configuration to prevent connection attempts
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
   application:
     name: rule-engine
     context-path: /promotion/promotion-rule-engine
@@ -86,10 +82,6 @@ management:
     enabled: true
     sampling:
       probability: 1.0
-  zipkin:
-    tracing:
-      enabled: true  # Enable Zipkin sender creation (required for Tracer bean)
-      endpoint: "http://localhost:65535/api/v2/spans"  # Fake endpoint - no actual connection
 
 # Promix Platform Configuration - Only essential overrides
 promix:

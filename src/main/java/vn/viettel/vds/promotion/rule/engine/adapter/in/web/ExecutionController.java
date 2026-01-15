@@ -137,7 +137,6 @@ public class ExecutionController {
         context.put("executionContext", request.getExecutionContext());
 
         return new RuleEnginePort.ExecuteInput(
-                request.getExecutionContext().getTenantId(),
                 request.getBundleHash(),
                 context,
                 new RuleEnginePort.ExecuteOptions("NONE", 30000, 1000)

@@ -28,7 +28,7 @@ public class DroolsCompilationService {
         this.kieServices = KieServices.Factory.get();
     }
 
-    public CompilationResult compileDrl(String tenantId, String ruleId, Integer version, String drlContent) {
+    public CompilationResult compileDrl(String ruleId, Integer version, String drlContent) {
         logger.info("Compiling DRL for rule: {}", ruleId);
         logger.debug("DRL Content:\n{}", drlContent);
 
@@ -36,7 +36,7 @@ public class DroolsCompilationService {
             List<String> logs = new ArrayList<>();
 
             ReleaseId releaseId = kieServices.newReleaseId(
-                    tenantId,
+                    "rules",
                     ruleId,
                     version != null ? version.toString() : "1.0.0"
             );
@@ -99,13 +99,12 @@ public class DroolsCompilationService {
      * Compile multiple DRL files into a single bundle.
      * Used for compiling both temporal DRL and validation rule DRL together.
      *
-     * @param tenantId tenant identifier
      * @param bundleId bundle identifier (e.g., assignmentId)
      * @param version  bundle version
      * @param drlFiles map of filename to DRL content
      * @return compilation result with bundleHash and artifact bytes
      */
-    public CompilationResult compileMultipleDrls(String tenantId, String bundleId, Integer version,
+    public CompilationResult compileMultipleDrls(String bundleId, Integer version,
                                                  java.util.Map<String, String> drlFiles) {
         logger.info("Compiling multiple DRLs for bundle: {}, fileCount={}", bundleId, drlFiles.size());
 
@@ -113,7 +112,7 @@ public class DroolsCompilationService {
             List<String> logs = new ArrayList<>();
 
             ReleaseId releaseId = kieServices.newReleaseId(
-                    tenantId,
+                    "rules",
                     bundleId,
                     version != null ? version.toString() : "1.0.0"
             );

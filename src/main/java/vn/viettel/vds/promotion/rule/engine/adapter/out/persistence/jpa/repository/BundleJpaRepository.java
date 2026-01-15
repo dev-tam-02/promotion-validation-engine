@@ -12,27 +12,20 @@ import java.util.Optional;
 @Repository
 public interface BundleJpaRepository extends JpaRepository<BundleEntity, String> {
 
-    Optional<BundleEntity> findByTenantIdAndRuleIdAndRuleVersion(
-            String tenantId, String ruleId, Integer ruleVersion);
+    Optional<BundleEntity> findByRuleIdAndRuleVersion(String ruleId, Integer ruleVersion);
 
-    List<BundleEntity> findByTenantId(String tenantId);
+    List<BundleEntity> findByRuleId(String ruleId);
 
-    List<BundleEntity> findByTenantIdAndRuleId(String tenantId, String ruleId);
+    @Query("SELECT b FROM BundleEntity b WHERE b.ruleId = :ruleId ORDER BY b.ruleVersion DESC")
+    List<BundleEntity> findLatestByRuleId(@Param("ruleId") String ruleId);
 
-    @Query("SELECT b FROM BundleEntity b WHERE b.tenantId = :tenantId " +
-            "AND b.ruleId = :ruleId ORDER BY b.ruleVersion DESC")
-    List<BundleEntity> findLatestByTenantIdAndRuleId(
-            @Param("tenantId") String tenantId,
-            @Param("ruleId") String ruleId);
+    @Query("SELECT b FROM BundleEntity b ORDER BY b.createdAt DESC")
+    List<BundleEntity> findLatest();
 
-    @Query("SELECT b FROM BundleEntity b WHERE b.tenantId = :tenantId " +
-            "ORDER BY b.createdAt DESC")
-    List<BundleEntity> findLatestByTenantId(@Param("tenantId") String tenantId);
+    @Query("SELECT COUNT(b) FROM BundleEntity b WHERE b.ruleId = :ruleId")
+    long countByRuleId(@Param("ruleId") String ruleId);
 
-    @Query("SELECT COUNT(b) FROM BundleEntity b WHERE b.tenantId = :tenantId")
-    long countByTenantId(@Param("tenantId") String tenantId);
-    
     List<BundleEntity> findByEnabledTrue();
-    
+
     List<BundleEntity> findByEnabled(boolean enabled);
 }

@@ -13,13 +13,13 @@ public interface CompileJobRepositoryPort {
 
     Optional<CompileJobEntity> findById(String jobId);
 
-    Optional<CompileJobEntity> findByTenantIdAndRuleIdAndTargetVersion(String tenantId, String ruleId, Integer targetVersion);
+    Optional<CompileJobEntity> findByRuleIdAndTargetVersion(String ruleId, Integer targetVersion);
 
-    Page<CompileJobEntity> findByTenantIdAndRuleIdAndStatusAndRequestedAtBetween(
-            String tenantId, String ruleId, CompileJobEntity.JobStatus status,
+    Page<CompileJobEntity> findByRuleIdAndStatusAndRequestedAtBetween(
+            String ruleId, CompileJobEntity.JobStatus status,
             Instant from, Instant to, Pageable pageable);
 
-    Page<CompileJobEntity> findByTenantIdAndRuleId(String tenantId, String ruleId, Pageable pageable);
+    Page<CompileJobEntity> findByRuleId(String ruleId, Pageable pageable);
 
-    Page<CompileJobEntity> findByTenantId(String tenantId, Pageable pageable);
+    Page<CompileJobEntity> findAll(Pageable pageable);
 }

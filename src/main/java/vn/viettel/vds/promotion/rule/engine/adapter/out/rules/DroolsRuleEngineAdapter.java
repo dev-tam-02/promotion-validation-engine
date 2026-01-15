@@ -22,9 +22,13 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.execution.ExecutionMe
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.KieSessionManager;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.RuleExecutionOrchestrator;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Weigher;
+
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Qualifier("droolsRuleEngineAdapter")
@@ -32,6 +36,9 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
     private static final Logger logger = LoggerFactory.getLogger(DroolsRuleEngineAdapter.class);
     private static final String ERROR_VERSION = "error";
+
+    // Max 100MB total for artifact cache, 30 minutes TTL
+    private static final long MAX_ARTIFACT_CACHE_WEIGHT = 100 * 1024 * 1024L;
 
     private final RuleTranslationService ruleTranslationService;
     private final DroolsCompilationService compilationService;
@@ -42,7 +49,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     private final ObjectStoragePort objectStoragePort;
     private final TemporalDrlGenerator temporalDrlGenerator;
 
-    private final ConcurrentHashMap<String, byte[]> bundleArtifacts = new ConcurrentHashMap<>();
+    // Caffeine cache with weight-based eviction (max 100MB) and TTL
+    private final Cache<String, byte[]> bundleArtifacts;
 
     public DroolsRuleEngineAdapter(RuleTranslationService ruleTranslationService,
                                    DroolsCompilationService compilationService,
@@ -60,12 +68,23 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         this.bundleRepositoryPort = bundleRepositoryPort;
         this.objectStoragePort = objectStoragePort;
         this.temporalDrlGenerator = temporalDrlGenerator;
+
+        // Initialize Caffeine cache with weight-based eviction (max 100MB) and 30-minute TTL
+        this.bundleArtifacts = Caffeine.newBuilder()
+                .maximumWeight(MAX_ARTIFACT_CACHE_WEIGHT)
+                .weigher((Weigher<String, byte[]>) (key, value) -> value.length)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .recordStats()
+                .removalListener((key, value, cause) ->
+                        logger.debug("Bundle artifact evicted: key={}, size={}, cause={}", key,
+                                value != null ? value.length : 0, cause))
+                .build();
     }
 
     @Override
     public CompileResult compile(CompileInput input) {
-        logger.info("Compiling rule: tenantId={}, ruleId={}, version={}, hasTemporalData={}",
-                input.getTenantId(), input.getRuleId(), input.getVersion(),
+        logger.info("Compiling rule: ruleId={}, version={}, hasTemporalData={}",
+                input.getRuleId(), input.getVersion(),
                 input.getTimeLinks() != null && !input.getTimeLinks().isEmpty());
 
         long startTime = System.currentTimeMillis();
@@ -73,7 +92,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         try {
             // Generate business rule DRL
             String businessRuleDrl = ruleTranslationService.translateToDrl(
-                    input.getTenantId(),
                     input.getNodes()
             );
 
@@ -94,9 +112,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                 TimeLink timeLink = input.getTimeLinks().get(0);
                 CompileRequest.TemporalPolicyData temporalData = (CompileRequest.TemporalPolicyData) timeLink.getData();
 
-                // Generate temporal DRL (pass tenantId to ensure same package as validation DRL)
+                // Generate temporal DRL
                 String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl(
-                        input.getTenantId(),
                         input.getRuleId(),
                         temporalData
                 );
@@ -110,7 +127,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
                 // Compile multiple DRLs together
                 result = compilationService.compileMultipleDrls(
-                        input.getTenantId(),
                         input.getRuleId(),
                         input.getVersion(),
                         drlFiles
@@ -126,7 +142,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
                 // No temporal policy - compile business rule only (existing behavior)
                 result = compilationService.compileDrl(
-                        input.getTenantId(),
                         input.getRuleId(),
                         input.getVersion(),
                         businessRuleDrl
@@ -153,8 +168,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             // Record compilation failure metrics
             metricsService.recordCompilation(Duration.ofMillis(System.currentTimeMillis() - startTime), false);
 
-            String errorMessage = String.format("Compilation failed for rule '%s' (tenant: %s, version: %s): %s",
-                    input.getRuleId(), input.getTenantId(), input.getVersion(),
+            String errorMessage = String.format("Compilation failed for rule '%s' (version: %s): %s",
+                    input.getRuleId(), input.getVersion(),
                     e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
             throw new RuleBundleException(errorMessage, e);
         }
@@ -162,8 +177,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
 
     @Override
     public ExecuteResponse execute(ExecuteInput input) {
-        logger.debug("Executing rule: bundleHash={}, tenantId={}",
-                input.getBundleHash(), input.getTenantId());
+        logger.debug("Executing rule: bundleHash={}", input.getBundleHash());
 
         try {
             KieContainer container = getOrCreateContainer(input.getBundleHash());
@@ -281,7 +295,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         }
 
         // 2. Check if artifact bytes are in memory cache
-        byte[] artifactBytes = bundleArtifacts.get(bundleHash);
+        byte[] artifactBytes = bundleArtifacts.getIfPresent(bundleHash);
         if (artifactBytes != null) {
             logger.debug("Artifact found in memory cache: bundleHash={}", bundleHash);
             container = compilationService.createKieContainer(artifactBytes);
@@ -325,13 +339,13 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         // Find bundle entity in database
         Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);
         if (bundleOpt.isEmpty()) {
-            logger.warn("Bundle not found in database: bundleHash={}", bundleHash);
-            return new byte[0];
+            throw new RuleBundleException(
+                    String.format("Bundle not found in database: bundleHash=%s", bundleHash));
         }
 
         BundleEntity bundle = bundleOpt.get();
-        logger.debug("Found bundle in database: bundleHash={}, tenantId={}, ruleId={}, version={}",
-                bundleHash, bundle.getTenantId(), bundle.getRuleId(), bundle.getRuleVersion());
+        logger.debug("Found bundle in database: bundleHash={}, ruleId={}, version={}",
+                bundleHash, bundle.getRuleId(), bundle.getRuleVersion());
 
         // Try to load artifact bytes from object storage
         if (bundle.getArtifact() != null && bundle.getArtifact().getKey() != null) {
@@ -353,7 +367,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             logger.info("Artifact not available, compiling from DRL content: bundleHash={}", bundleHash);
             try {
                 DroolsCompilationService.CompilationResult result = compilationService.compileDrl(
-                        bundle.getTenantId(),
                         bundle.getRuleId(),
                         bundle.getRuleVersion(),
                         bundle.getDrlContent()
@@ -364,11 +377,13 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             } catch (Exception e) {
                 logger.error("Failed to compile DRL from database: bundleHash={}, error={}",
                         bundleHash, e.getMessage(), e);
+                throw new RuleBundleException(
+                        String.format("Failed to compile DRL for bundle: bundleHash=%s", bundleHash), e);
             }
         }
 
-        logger.error("No artifact or DRL content available for bundle: bundleHash={}", bundleHash);
-        return new byte[0];
+        throw new RuleBundleException(
+                String.format("No artifact or DRL content available for bundle: bundleHash=%s", bundleHash));
     }
 
     // Legacy methods - delegate to existing RuleEngineAdapter
@@ -380,7 +395,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         context.put("candidate", candidate);
 
         ExecuteInput input = new ExecuteInput(
-                "default",
                 bundleHash,
                 context,
                 new ExecuteOptions("NONE", 30000, 1000)

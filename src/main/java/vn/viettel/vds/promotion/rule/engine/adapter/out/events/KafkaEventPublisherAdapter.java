@@ -40,24 +40,23 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
 
     @Override
     public void publishBundlePublished(BundlePublishedEvent event) {
-        logger.info("Publishing BundlePublished event: tenantId={}, ruleId={}, bundleHash={}",
-                event.getTenantId(), event.getRuleId(), event.getBundleHash());
+        logger.info("Publishing BundlePublished event: ruleId={}, bundleHash={}",
+                event.getRuleId(), event.getBundleHash());
 
         sendToKafka(bundlePublishedTopic, event.getBundleHash(), event);
     }
 
     @Override
     public void publishWarmupRequested(WarmupRequestedEvent event) {
-        logger.info("Publishing WarmupRequested event: tenantId={}, bundleHash={}",
-                event.getTenantId(), event.getBundleHash());
+        logger.info("Publishing WarmupRequested event: bundleHash={}", event.getBundleHash());
 
         sendToKafka(warmupRequestedTopic, event.getBundleHash(), event);
     }
 
     @Override
     public void publishOutboxEvent(OutboxEventEntity outboxEvent) {
-        logger.info("Publishing outbox event: id={}, type={}, tenantId={}",
-                outboxEvent.getId(), outboxEvent.getType(), outboxEvent.getTenantId());
+        logger.info("Publishing outbox event: id={}, type={}",
+                outboxEvent.getId(), outboxEvent.getType());
 
         if (OutboxEventEntity.EventType.BUNDLE_PUBLISHED.equals(outboxEvent.getType())) {
             String ruleId = outboxEvent.getPayload().get("ruleId");
@@ -67,7 +66,7 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
                     : null;
 
             BundlePublishedEvent event = new BundlePublishedEvent(
-                    outboxEvent.getTenantId(), ruleId, ruleVersion, null, bundleHash);
+                    null, ruleId, ruleVersion, null, bundleHash);
             publishBundlePublished(event);
         }
     }

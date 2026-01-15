@@ -11,9 +11,6 @@ import java.util.Map;
 public class CompileRequest {
 
     @NotBlank
-    private String tenantId;
-
-    @NotBlank
     private String ruleId;
 
     @NotNull
@@ -39,14 +36,6 @@ public class CompileRequest {
 
 
     // Getters and Setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public String getRuleId() {
         return ruleId;
     }

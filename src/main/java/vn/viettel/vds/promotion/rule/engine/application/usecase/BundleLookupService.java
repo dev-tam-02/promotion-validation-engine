@@ -54,16 +54,15 @@ public class BundleLookupService implements BundleLookupUseCase {
     }
 
     @Override
-    public LatestBundleResponse getLatestBundle(String tenantId, String subjectType, String subjectKey) {
-        logger.info("Getting latest bundle for tenant: {}, subject: {}/{}", tenantId, subjectType, subjectKey);
+    public LatestBundleResponse getLatestBundle(String subjectType, String subjectKey) {
+        logger.info("Getting latest bundle for subject: {}/{}", subjectType, subjectKey);
 
         List<BundleEntity> bundles = bundleRepositoryPort.findActiveBundles();
         Optional<BundleEntity> latestBundle = bundles.stream()
-                .filter(b -> tenantId.equals(b.getTenantId()))
                 .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
 
         if (latestBundle.isEmpty()) {
-            throw new IllegalArgumentException("No bundle found for tenant: " + tenantId);
+            throw new IllegalArgumentException("No bundle found for subject: " + subjectType + "/" + subjectKey);
         }
 
         BundleEntity bundle = latestBundle.get();
@@ -92,8 +91,7 @@ public class BundleLookupService implements BundleLookupUseCase {
 
     @Override
     public void warmupBundles(WarmupRequest request) {
-        logger.info("Warming up {} bundles for tenant: {}",
-                request.getBundleHashes().size(), request.getTenantId());
+        logger.info("Warming up {} bundles", request.getBundleHashes().size());
 
         for (String bundleHash : request.getBundleHashes()) {
             warmupSingleBundle(bundleHash);
@@ -132,7 +130,6 @@ public class BundleLookupService implements BundleLookupUseCase {
 
     private BundleMetadataResponse mapToBundleMetadataResponse(BundleEntity bundle) {
         BundleMetadataResponse response = new BundleMetadataResponse();
-        response.setTenantId(bundle.getTenantId());
         response.setRuleId(bundle.getRuleId());
         response.setRuleVersion(bundle.getRuleVersion());
 

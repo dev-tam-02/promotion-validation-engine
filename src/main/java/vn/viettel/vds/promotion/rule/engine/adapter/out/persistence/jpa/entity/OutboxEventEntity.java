@@ -11,7 +11,7 @@ import java.util.Map;
 @Entity
 @Table(name = "outbox_events",
         indexes = {
-                @Index(name = "idx_dispatch_queue", columnList = "tenant_id, status, created_at")
+                @Index(name = "idx_dispatch_queue", columnList = "status, created_at")
         }
 )
 @Getter
@@ -21,9 +21,6 @@ public class OutboxEventEntity {
     @Id
     @Column(name = "id", nullable = false, length = 100) // ox_xxx format for event IDs
     private String id;
-
-    @Column(name = "tenant_id", nullable = false, length = 50)
-    private String tenantId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 30)

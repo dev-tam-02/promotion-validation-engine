@@ -27,10 +27,9 @@ public class BundleController {
 
     @GetMapping("/bundles/latest")
     public LatestBundleResponse getLatestBundle(
-            @RequestParam String tenantId,
             @RequestParam String subjectType,
             @RequestParam String subjectKey) {
-        return bundleLookupUseCase.getLatestBundle(tenantId, subjectType, subjectKey);
+        return bundleLookupUseCase.getLatestBundle(subjectType, subjectKey);
     }
 
     @PostMapping("/bundles:warmup")

@@ -23,23 +23,15 @@ public class RuleTranslationService {
     private static final String DRL_WHEN = "    when\n";
     private static final String DRL_THEN = "    then\n";
     private static final String DRL_END = "end\n\n";
-    private static final Set<String> JAVA_RESERVED_KEYWORDS = Set.of(
-            "abstract", "assert", "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue", "default",
-            "do", "double", "else", "enum", "extends", "final", "finally",
-            "float", "for", "goto", "if", "implements", "import", "instanceof",
-            "int", "interface", "long", "native", "new", "package", "private",
-            "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws",
-            "transient", "try", "void", "volatile", "while"
-    );
     private final OperatorTranslatorRegistry translatorRegistry;
 
     public RuleTranslationService(OperatorTranslatorRegistry translatorRegistry) {
         this.translatorRegistry = translatorRegistry;
     }
 
-    public String translateToDrl(String tenantId, List<Map<String, Object>> nodes) {
+    private static final String DEFAULT_PACKAGE = "rules";
+
+    public String translateToDrl(List<Map<String, Object>> nodes) {
 
         // Sort nodes by ID to ensure deterministic DRL generation
         List<Map<String, Object>> sortedNodes = nodes.stream()
@@ -62,16 +54,14 @@ public class RuleTranslationService {
 
         StringBuilder drl = new StringBuilder();
 
-        generateDrlHeader(drl, tenantId);
+        generateDrlHeader(drl);
         generateRule(drl, rootNode, nodeMap);
 
         return drl.toString();
     }
 
-    private void generateDrlHeader(StringBuilder drl, String tenantId) {
-        // Convert tenantId to valid package name - replace "default" and sanitize
-        String packageName = sanitizePackageName(tenantId);
-        drl.append("package ").append(packageName).append(";\n\n");
+    private void generateDrlHeader(StringBuilder drl) {
+        drl.append("package ").append(DEFAULT_PACKAGE).append(";\n\n");
 
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Order;\n");
@@ -387,26 +377,4 @@ public class RuleTranslationService {
         return List.of();
     }
 
-    private String sanitizePackageName(String tenantId) {
-        // Handle reserved Java keywords and invalid package names
-        if (tenantId == null || tenantId.isEmpty() || "default".equalsIgnoreCase(tenantId)) {
-            return "tenant.defaulttenant";
-        }
-
-        // Convert to lowercase and replace invalid characters
-        String sanitized = tenantId.toLowerCase()
-                .replaceAll("[^a-z0-9_.]", "_")
-                .replaceAll("^\\\\d", "_$0"); // Prefix with _ if starts with number
-
-        // Ensure it doesn't start with a reserved word
-        if (isReservedKeyword(sanitized)) {
-            sanitized = "tenant." + sanitized;
-        }
-
-        return sanitized;
-    }
-
-    private boolean isReservedKeyword(String word) {
-        return JAVA_RESERVED_KEYWORDS.contains(word);
-    }
 }

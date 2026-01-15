@@ -26,7 +26,7 @@ public class CachedCompilationService {
         this.cacheConfig = cacheConfig;
     }
 
-    public DroolsCompilationService.CompilationResult compileDrl(String tenantId, String ruleId,
+    public DroolsCompilationService.CompilationResult compileDrl(String ruleId,
                                                                  Integer version, String drlContent,
                                                                  String operatorsFingerprint) {
         logger.debug("Compiling DRL with caching for rule: {}", ruleId);
@@ -38,7 +38,7 @@ public class CachedCompilationService {
 
             CompilationCacheService.CachedCompilation cached = cacheService.getOrCompile(cacheKey, () -> {
                 logger.debug("Cache miss - performing compilation for rule: {}", ruleId);
-                DroolsCompilationService.CompilationResult result = compilationService.compileDrl(tenantId, ruleId, version, drlContent);
+                DroolsCompilationService.CompilationResult result = compilationService.compileDrl(ruleId, version, drlContent);
                 return convertToCompilationResult(result, drlContent);
             });
 
@@ -47,7 +47,7 @@ public class CachedCompilationService {
 
         // No cache, compile directly
         logger.debug("Cache disabled or no fingerprint - compiling directly for rule: {}", ruleId);
-        return compilationService.compileDrl(tenantId, ruleId, version, drlContent);
+        return compilationService.compileDrl(ruleId, version, drlContent);
     }
 
     public void invalidateCache(String ruleId) {

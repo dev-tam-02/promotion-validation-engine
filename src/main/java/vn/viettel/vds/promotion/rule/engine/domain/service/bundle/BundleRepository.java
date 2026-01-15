@@ -84,7 +84,6 @@ public class BundleRepository {
                 bundle.getRuleId(),
                 bundle.getId(), // bundleHash
                 artifactBytes.get(),
-                bundle.getTenantId(),
                 bundle.getRuleVersion(),
                 bundle.getCreatedAt()
         );

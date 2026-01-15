@@ -11,10 +11,10 @@ import java.util.List;
 @Entity
 @Table(name = "compile_jobs",
         indexes = {
-                @Index(name = "idx_status_time", columnList = "tenant_id, status, requested_at")
+                @Index(name = "idx_status_time", columnList = "status, requested_at")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_rule_target", columnNames = {"tenant_id", "rule_id", "target_version"})
+                @UniqueConstraint(name = "uk_rule_target", columnNames = {"rule_id", "target_version"})
         }
 )
 @Getter
@@ -22,11 +22,8 @@ import java.util.List;
 public class CompileJobEntity {
 
     @Id
-    @Column(name = "id", nullable = false, length = 200) // pj_tenantId_ruleId_targetVersion format
+    @Column(name = "id", nullable = false, length = 200) // pj_ruleId_targetVersion format
     private String id;
-
-    @Column(name = "tenant_id", nullable = false, length = 50)
-    private String tenantId;
 
     @Column(name = "rule_id", nullable = false, length = 100)
     private String ruleId;

@@ -9,21 +9,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Entity
-@Table(name = "engine_configs",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_tenant", columnNames = {"tenant_id"})
-        }
-)
+@Table(name = "engine_configs")
 @Getter
 @Setter
 public class EngineConfigEntity {
 
     @Id
-    @Column(name = "id", nullable = false, length = 100) // cfg_tenantId format
+    @Column(name = "id", nullable = false, length = 100)
     private String id;
-
-    @Column(name = "tenant_id", nullable = false, unique = true, length = 50)
-    private String tenantId;
 
     @Embedded
     private ExecuteConfig execute;

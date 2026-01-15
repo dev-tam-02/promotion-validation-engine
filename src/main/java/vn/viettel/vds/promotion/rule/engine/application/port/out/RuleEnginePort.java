@@ -29,7 +29,6 @@ public interface RuleEnginePort {
     boolean isBundleCached(String bundleHash);
 
     class CompileInput {
-        private String tenantId;
         private String ruleId;
         private Integer version;
         private List<java.util.Map<String, Object>> nodes;
@@ -40,9 +39,8 @@ public interface RuleEnginePort {
         public CompileInput() {
         }
 
-        public CompileInput(String tenantId, String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
+        public CompileInput(String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
                             String operatorsFingerprint, String compilerId) {
-            this.tenantId = tenantId;
             this.ruleId = ruleId;
             this.version = version;
             this.nodes = nodes;
@@ -50,23 +48,14 @@ public interface RuleEnginePort {
             this.compilerId = compilerId;
         }
 
-        public CompileInput(String tenantId, String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
+        public CompileInput(String ruleId, Integer version, List<java.util.Map<String, Object>> nodes,
                             String operatorsFingerprint, String compilerId, List<TimeLink> timeLinks) {
-            this.tenantId = tenantId;
             this.ruleId = ruleId;
             this.version = version;
             this.nodes = nodes;
             this.operatorsFingerprint = operatorsFingerprint;
             this.compilerId = compilerId;
             this.timeLinks = timeLinks;
-        }
-
-        public String getTenantId() {
-            return tenantId;
-        }
-
-        public void setTenantId(String tenantId) {
-            this.tenantId = tenantId;
         }
 
         public String getRuleId() {
@@ -200,7 +189,6 @@ public interface RuleEnginePort {
     }
 
     class ExecuteInput {
-        private String tenantId;
         private String bundleHash;
         private java.util.Map<String, Object> context;
         private ExecuteOptions options;
@@ -212,21 +200,6 @@ public interface RuleEnginePort {
             this.bundleHash = bundleHash;
             this.context = context;
             this.options = options;
-        }
-
-        public ExecuteInput(String tenantId, String bundleHash, java.util.Map<String, Object> context, ExecuteOptions options) {
-            this.tenantId = tenantId;
-            this.bundleHash = bundleHash;
-            this.context = context;
-            this.options = options;
-        }
-
-        public String getTenantId() {
-            return tenantId;
-        }
-
-        public void setTenantId(String tenantId) {
-            this.tenantId = tenantId;
         }
 
         public String getBundleHash() {

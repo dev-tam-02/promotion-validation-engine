@@ -26,8 +26,8 @@ public class BundleRepositoryAdapter implements BundleRepositoryPort {
     }
 
     @Override
-    public Optional<BundleEntity> findByTenantIdAndRuleIdAndRuleVersion(String tenantId, String ruleId, Integer ruleVersion) {
-        return bundleJpaRepository.findByTenantIdAndRuleIdAndRuleVersion(tenantId, ruleId, ruleVersion);
+    public Optional<BundleEntity> findByRuleIdAndRuleVersion(String ruleId, Integer ruleVersion) {
+        return bundleJpaRepository.findByRuleIdAndRuleVersion(ruleId, ruleVersion);
     }
 
     @Override
