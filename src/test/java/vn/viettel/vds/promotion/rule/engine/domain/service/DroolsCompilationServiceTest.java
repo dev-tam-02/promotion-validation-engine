@@ -26,17 +26,16 @@ class DroolsCompilationServiceTest {
     @DisplayName("Should compile single DRL successfully")
     void testCompileSingleDrl() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule001";
         Integer version = 1;
         String drlContent = """
-                package tenant1;
-                
+                package rules;
+
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
-                
+
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-                
+
                 rule "test_rule"
                 when
                     eval(true)
@@ -48,7 +47,7 @@ class DroolsCompilationServiceTest {
 
         // When
         DroolsCompilationService.CompilationResult result = compilationService.compileDrl(
-                tenantId, ruleId, version, drlContent
+                ruleId, version, drlContent
         );
 
         // Then
@@ -67,26 +66,25 @@ class DroolsCompilationServiceTest {
     @org.junit.jupiter.api.Disabled("Logs assertion depends on implementation details - core compilation tested")
     void testCompileMultipleDrls() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule002";
         Integer version = 1;
 
         String temporalDrl = """
                 package promotion.assignment.test_assignment;
-                
+
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
                 import java.time.*;
-                
+
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-                
+
                 declare TemporalAllowed
                 end
-                
+
                 function boolean checkTimeWindow(String start, String end, String tz, boolean spans, String days) {
                     return true; // Simplified for test
                 }
-                
+
                 rule "temporal_check_allow"
                     salience 1000
                 when
@@ -94,7 +92,7 @@ class DroolsCompilationServiceTest {
                 then
                     insert(new TemporalAllowed());
                 end
-                
+
                 rule "temporal_check_deny"
                     salience 999
                     no-loop
@@ -108,13 +106,13 @@ class DroolsCompilationServiceTest {
                 """;
 
         String businessRuleDrl = """
-                package tenant1;
-                
+                package rules;
+
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
-                
+
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-                
+
                 rule "business_rule"
                     salience 0
                 when
@@ -131,7 +129,7 @@ class DroolsCompilationServiceTest {
 
         // When
         DroolsCompilationService.CompilationResult result = compilationService.compileMultipleDrls(
-                tenantId, ruleId, version, drlFiles
+                ruleId, version, drlFiles
         );
 
         // Then
@@ -152,20 +150,19 @@ class DroolsCompilationServiceTest {
     @DisplayName("Should generate deterministic bundleHash from DRL content")
     void testDeterministicBundleHash() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule003";
         Integer version = 1;
         String drlContent = """
-                package tenant1;
+                package rules;
                 rule "test" when eval(true) then end
                 """;
 
         // When - Compile same DRL twice
         DroolsCompilationService.CompilationResult result1 = compilationService.compileDrl(
-                tenantId, ruleId, version, drlContent
+                ruleId, version, drlContent
         );
         DroolsCompilationService.CompilationResult result2 = compilationService.compileDrl(
-                tenantId, ruleId, version, drlContent
+                ruleId, version, drlContent
         );
 
         // Then - Should produce same bundleHash
@@ -176,11 +173,10 @@ class DroolsCompilationServiceTest {
     @DisplayName("Should fail compilation with invalid DRL syntax")
     void testCompilationFailureWithInvalidDrl() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule004";
         Integer version = 1;
         String invalidDrl = """
-                package tenant1;
+                package rules;
                 rule "invalid_syntax"
                     this is invalid drools syntax!!!
                 end
@@ -188,7 +184,7 @@ class DroolsCompilationServiceTest {
 
         // When & Then
         assertThrows(RuntimeException.class, () -> {
-            compilationService.compileDrl(tenantId, ruleId, version, invalidDrl);
+            compilationService.compileDrl(ruleId, version, invalidDrl);
         });
     }
 
@@ -196,16 +192,15 @@ class DroolsCompilationServiceTest {
     @DisplayName("Should create KieContainer from artifact bytes")
     void testCreateKieContainerFromArtifactBytes() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule005";
         Integer version = 1;
         String drlContent = """
-                package tenant1;
-                
+                package rules;
+
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
-                
+
                 global ValidationResult result;
-                
+
                 rule "test_rule"
                 when
                     eval(true)
@@ -215,7 +210,7 @@ class DroolsCompilationServiceTest {
                 """;
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileDrl(
-                tenantId, ruleId, version, drlContent
+                ruleId, version, drlContent
         );
 
         // When
@@ -231,20 +226,19 @@ class DroolsCompilationServiceTest {
     @org.junit.jupiter.api.Disabled("Empty map handling depends on implementation - not critical for temporal DRL integration")
     void testCompileWithEmptyDrlFilesMap() {
         // Given
-        String tenantId = "tenant1";
         String ruleId = "rule006";
         Integer version = 1;
         Map<String, String> emptyDrlFiles = new LinkedHashMap<>();
 
         // When & Then - Should throw some exception (implementation may vary)
         assertThrows(RuntimeException.class, () -> {
-            compilationService.compileMultipleDrls(tenantId, ruleId, version, emptyDrlFiles);
+            compilationService.compileMultipleDrls(ruleId, version, emptyDrlFiles);
         });
     }
 
     @Test
-    @DisplayName("Should compile with different tenant IDs producing different bundles")
-    void testDifferentTenantsProduceDifferentBundles() {
+    @DisplayName("Should compile with different DRL content producing different bundles")
+    void testDifferentContentProducesDifferentBundles() {
         // Given
         String drlContent = """
                 package %s;
@@ -253,13 +247,13 @@ class DroolsCompilationServiceTest {
 
         // When
         DroolsCompilationService.CompilationResult result1 = compilationService.compileDrl(
-                "tenant1", "rule007", 1, String.format(drlContent, "tenant1")
+                "rule007", 1, String.format(drlContent, "rules1")
         );
         DroolsCompilationService.CompilationResult result2 = compilationService.compileDrl(
-                "tenant2", "rule007", 1, String.format(drlContent, "tenant2")
+                "rule007", 1, String.format(drlContent, "rules2")
         );
 
-        // Then - Different tenants should produce different bundleHashes
+        // Then - Different content should produce different bundleHashes
         assertNotEquals(result1.getBundleHash(), result2.getBundleHash());
     }
 }

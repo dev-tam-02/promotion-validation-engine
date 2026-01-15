@@ -84,7 +84,7 @@ class BatchRuleExecutorTest {
 
     private RuleEnginePort.ExecuteInput createTestInput(String bundleHash) {
         Map<String, Object> context = new HashMap<>();
-        return new RuleEnginePort.ExecuteInput("tenant1", bundleHash, context, null);
+        return new RuleEnginePort.ExecuteInput(bundleHash, context, null);
     }
 
     private ExecuteResponse createSuccessResponse() {

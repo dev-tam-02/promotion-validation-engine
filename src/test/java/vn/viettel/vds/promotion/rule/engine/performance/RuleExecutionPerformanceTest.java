@@ -65,7 +65,7 @@ class RuleExecutionPerformanceTest {
         for (int i = 0; i < count; i++) {
             Map<String, Object> context = new HashMap<>();
             context.put("customer", Map.of("id", "customer-" + i));
-            inputs.add(new RuleEnginePort.ExecuteInput("tenant1", "bundle1", context, null));
+            inputs.add(new RuleEnginePort.ExecuteInput("bundle1", context, null));
         }
         return inputs;
     }

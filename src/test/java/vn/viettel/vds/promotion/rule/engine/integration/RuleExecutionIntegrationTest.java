@@ -40,7 +40,7 @@ class RuleExecutionIntegrationTest {
         // Given
         Map<String, Object> context = createTestContext();
         RuleEnginePort.ExecuteInput input = new RuleEnginePort.ExecuteInput(
-                "test-tenant", "test-bundle", context, null
+                "test-bundle", context, null
         );
 
         // When & Then - This would require actual rule compilation and setup
@@ -52,8 +52,8 @@ class RuleExecutionIntegrationTest {
     void executeBatch_ShouldProcessMultipleRules() {
         // Given
         List<RuleEnginePort.ExecuteInput> inputs = List.of(
-                new RuleEnginePort.ExecuteInput("tenant1", "bundle1", createTestContext(), null),
-                new RuleEnginePort.ExecuteInput("tenant1", "bundle2", createTestContext(), null)
+                new RuleEnginePort.ExecuteInput("bundle1", createTestContext(), null),
+                new RuleEnginePort.ExecuteInput("bundle2", createTestContext(), null)
         );
 
         // When & Then - This would require actual rule compilation and setup

@@ -86,7 +86,7 @@ class SingleRuleExecutorTest {
 
     private RuleEnginePort.ExecuteInput createTestInput() {
         Map<String, Object> context = new HashMap<>();
-        return new RuleEnginePort.ExecuteInput("tenant1", "bundle123", context, null);
+        return new RuleEnginePort.ExecuteInput("bundle123", context, null);
     }
 
     private ExecuteResponse createSuccessResponse() {

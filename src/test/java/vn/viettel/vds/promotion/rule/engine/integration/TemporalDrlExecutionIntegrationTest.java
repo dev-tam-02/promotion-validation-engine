@@ -48,7 +48,7 @@ class TemporalDrlExecutionIntegrationTest {
         );
 
         // Generate and compile temporal DRL
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -56,7 +56,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule001", 1, drlFiles
+                "rule001", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -81,7 +81,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("09:00", "17:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -89,7 +89,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule002", 1, drlFiles
+                "rule002", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -116,7 +116,7 @@ class TemporalDrlExecutionIntegrationTest {
 
         CompileRequest.TemporalPolicyData temporalData = createTemporalData("UTC", null, windows);
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -124,7 +124,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule003", 1, drlFiles
+                "rule003", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -148,7 +148,7 @@ class TemporalDrlExecutionIntegrationTest {
 
         CompileRequest.TemporalPolicyData temporalData = createTemporalData("UTC", null, windows);
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -156,7 +156,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule004", 1, drlFiles
+                "rule004", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -180,7 +180,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("22:00", "06:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule();
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -188,7 +188,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule005", 1, drlFiles
+                "rule005", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -214,7 +214,7 @@ class TemporalDrlExecutionIntegrationTest {
                 List.of(new CompileRequest.TimeWindow("09:00", "17:00"))
         );
 
-        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("tenant1", "test-assignment", temporalData);
+        String timeframeDrl = temporalDrlGenerator.generateTimeframeDrl("test-assignment", temporalData);
         String businessRuleDrl = createSimpleBusinessRule(); // Would ALLOW if executed
 
         Map<String, String> drlFiles = new LinkedHashMap<>();
@@ -222,7 +222,7 @@ class TemporalDrlExecutionIntegrationTest {
         drlFiles.put("business-rule.drl", businessRuleDrl);
 
         DroolsCompilationService.CompilationResult compileResult = compilationService.compileMultipleDrls(
-                "tenant1", "rule006", 1, drlFiles
+                "rule006", 1, drlFiles
         );
 
         KieContainer container = compilationService.createKieContainer(compileResult.getArtifactBytes());
@@ -247,13 +247,13 @@ class TemporalDrlExecutionIntegrationTest {
 
     private String createSimpleBusinessRule() {
         return """
-                package tenant1;
-                
+                package rules;
+
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
-                
+
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-                
+
                 rule "simple_allow_rule"
                     salience 0
                 when

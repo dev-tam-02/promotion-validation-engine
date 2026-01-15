@@ -48,11 +48,11 @@ class NewOperatorsDrlGenerationTest {
         );
 
         // When
-        String drl = ruleTranslationService.translateToDrl("tenant1", nodes);
+        String drl = ruleTranslationService.translateToDrl(nodes);
 
         // Then
         assertNotNull(drl);
-        assertTrue(drl.contains("package tenant1"));
+        assertTrue(drl.contains("package rules"));
         assertTrue(drl.contains("brand in (\"Nike\", \"Adidas\")"));
         assertTrue(drl.contains("reasonCodes.add(\"BRAND_NOT_ALLOWED\")"));
         System.out.println("Brand DRL:\n" + drl);
@@ -77,7 +77,7 @@ class NewOperatorsDrlGenerationTest {
         );
 
         // When
-        String drl = ruleTranslationService.translateToDrl("tenant1", nodes);
+        String drl = ruleTranslationService.translateToDrl(nodes);
 
         // Then
         assertNotNull(drl);
@@ -105,7 +105,7 @@ class NewOperatorsDrlGenerationTest {
         );
 
         // When
-        String drl = ruleTranslationService.translateToDrl("tenant1", nodes);
+        String drl = ruleTranslationService.translateToDrl(nodes);
 
         // Then
         assertNotNull(drl);
@@ -133,7 +133,7 @@ class NewOperatorsDrlGenerationTest {
         );
 
         // When
-        String drl = ruleTranslationService.translateToDrl("tenant1", nodes);
+        String drl = ruleTranslationService.translateToDrl(nodes);
 
         // Then
         assertNotNull(drl);
@@ -186,7 +186,7 @@ class NewOperatorsDrlGenerationTest {
         );
 
         // When
-        String drl = ruleTranslationService.translateToDrl("tenant1", nodes);
+        String drl = ruleTranslationService.translateToDrl(nodes);
 
         // Then
         assertNotNull(drl);

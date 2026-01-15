@@ -27,7 +27,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate DRL with single time window")
     void testGenerateDrlWithSingleTimeWindow() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-001";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "Asia/Bangkok",
@@ -36,11 +35,11 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
-        assertTrue(drl.contains("package test_tenant"));
+        assertTrue(drl.contains("package rules"));
         assertTrue(drl.contains("function boolean checkTimeWindow"));
         assertTrue(drl.contains("rule \"temporal_check_allow\""));
         assertTrue(drl.contains("salience 1000"));
@@ -56,7 +55,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate DRL with multiple time windows (OR logic)")
     void testGenerateDrlWithMultipleTimeWindows() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-002";
         List<CompileRequest.TimeWindow> windows = List.of(
                 new CompileRequest.TimeWindow("09:00", "12:00"),
@@ -70,7 +68,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
@@ -88,7 +86,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate DRL with day-of-week filtering (BYDAY)")
     void testGenerateDrlWithDayOfWeekFiltering() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-003";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "UTC",
@@ -97,7 +94,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
@@ -110,7 +107,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate DRL with midnight-spanning time range")
     void testGenerateDrlWithMidnightSpanningRange() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-004";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "Asia/Bangkok",
@@ -119,7 +115,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
@@ -132,15 +128,14 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate empty temporal DRL when no temporal data provided")
     void testGenerateEmptyDrlWhenNoTemporalData() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-005";
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, null);
+        String drl = generator.generateTimeframeDrl(assignmentId, null);
 
         // Then
         assertNotNull(drl);
-        assertTrue(drl.contains("package test_tenant"));
+        assertTrue(drl.contains("package rules"));
         assertTrue(drl.contains("rule \"temporal_always_allow\""));
         assertTrue(drl.contains("salience 1000"));
         assertTrue(drl.contains("No temporal constraints - always allow"));
@@ -151,7 +146,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should generate 24/7 allow rule when no time windows defined")
     void testGenerate24x7AllowRuleWhenNoTimeWindows() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-006";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "Asia/Bangkok",
@@ -160,7 +154,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
@@ -173,7 +167,6 @@ class TemporalDrlGeneratorTest {
     @DisplayName("Should handle weekend-only schedule (Saturday and Sunday)")
     void testGenerateDrlWithWeekendSchedule() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-007";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "Asia/Bangkok",
@@ -182,7 +175,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
@@ -192,10 +185,9 @@ class TemporalDrlGeneratorTest {
     }
 
     @Test
-    @DisplayName("Should sanitize tenant ID for package name")
-    void testSanitizeTenantIdForPackageName() {
-        // Given - Tenant ID with special characters
-        String tenantId = "test-tenant-@#$-001";
+    @DisplayName("Should use default package name")
+    void testDefaultPackageName() {
+        // Given
         String assignmentId = "test-assignment-001";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "UTC",
@@ -204,19 +196,18 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
-        // Special characters should be replaced with underscores (- @ # $ -)
-        assertTrue(drl.contains("package test_tenant_____001"));
+        // Package should be the default "rules"
+        assertTrue(drl.contains("package rules"));
     }
 
     @Test
     @DisplayName("Should include timezone in DRL for time validation")
     void testIncludeTimezoneInDrl() {
         // Given
-        String tenantId = "test-tenant";
         String assignmentId = "test-assignment-008";
         CompileRequest.TemporalPolicyData temporalData = createTemporalData(
                 "America/New_York",
@@ -225,7 +216,7 @@ class TemporalDrlGeneratorTest {
         );
 
         // When
-        String drl = generator.generateTimeframeDrl(tenantId, assignmentId, temporalData);
+        String drl = generator.generateTimeframeDrl(assignmentId, temporalData);
 
         // Then
         assertNotNull(drl);
