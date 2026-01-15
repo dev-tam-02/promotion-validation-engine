@@ -7,9 +7,5 @@
 
     <!-- Include all migration files in order -->
     <include file="db/changelog/changes/001-initial-schema.xml"/>
-    <include file="db/changelog/changes/002-add-time-policies.xml"/>
-    <include file="db/changelog/changes/003-drop-unused-time-policy-tables.xml"/>
-    <include file="db/changelog/changes/004-add-enabled-to-bundles.xml"/>
-    <include file="db/changelog/changes/005-remove-tenant-id.xml"/>
 
 </databaseChangeLog>
