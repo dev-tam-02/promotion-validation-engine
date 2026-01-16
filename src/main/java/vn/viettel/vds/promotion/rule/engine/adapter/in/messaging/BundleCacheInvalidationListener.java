@@ -68,7 +68,6 @@ public class BundleCacheInvalidationListener {
         switch (event.getType()) {
             case BUNDLE_UPDATED -> handleBundleUpdated(event);
             case BUNDLE_DELETED -> handleBundleDeleted(event);
-            case TENANT_INVALIDATED -> handleTenantInvalidated(event);
             case FULL_INVALIDATION -> handleFullInvalidation();
             default -> logger.warn("Unknown invalidation type: {}", event.getType());
         }
@@ -108,22 +107,6 @@ public class BundleCacheInvalidationListener {
 
         // Just evict, no preload needed
         kieSessionManager.evictContainer(bundleHash);
-    }
-
-    /**
-     * Handle tenant invalidated: clear all bundles for a tenant.
-     * Note: Current implementation clears all cache (can be enhanced for tenant-specific eviction).
-     */
-    private void handleTenantInvalidated(BundleCacheInvalidationEvent event) {
-        String tenantId = event.getTenantId();
-
-        logger.info("Handling TENANT_INVALIDATED: tenantId={}", tenantId);
-
-        // For now, clear all cache. Can be enhanced to filter by tenantId if needed.
-        kieSessionManager.clearCache();
-
-        // Preload all active rules
-        bundlePreloadService.preloadActiveRules();
     }
 
     /**

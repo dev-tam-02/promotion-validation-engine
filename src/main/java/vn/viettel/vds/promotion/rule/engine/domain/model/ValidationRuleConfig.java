@@ -14,7 +14,6 @@ public class ValidationRuleConfig {
 
     private String ruleId;
     private String campaignId;
-    private String tenantId;
     private boolean enabled;
 
     // Fast-checkable rules (simple if-else)
@@ -56,14 +55,6 @@ public class ValidationRuleConfig {
 
     public void setCampaignId(String campaignId) {
         this.campaignId = campaignId;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
     }
 
     public boolean isEnabled() {

@@ -214,13 +214,6 @@ validation:
       prewarm-session-count: 3
       health-check-interval-seconds: 300
 
-# Rule Engine Tenant Configuration
-rule-engine:
-  tenant:
-    default-id: "default"
-    single-tenant-mode: true
-    enable-tenant-migration: false
-
 # Kafka Topics Configuration
 kafka:
   topics:

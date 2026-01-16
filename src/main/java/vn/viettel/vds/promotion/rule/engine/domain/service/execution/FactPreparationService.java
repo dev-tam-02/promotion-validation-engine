@@ -325,12 +325,6 @@ public class FactPreparationService {
     private List<Object> prepareContextFacts(Map<String, Object> executionContext) {
         List<Object> contextFacts = new ArrayList<>();
 
-        // Add tenant context
-        String tenantId = (String) executionContext.get("tenantId");
-        if (tenantId != null) {
-            contextFacts.add(new TenantContext(tenantId));
-        }
-
         // Add timestamp context
         Object timestampObj = executionContext.get("timestamp");
         if (timestampObj instanceof Number number) {
@@ -348,18 +342,6 @@ public class FactPreparationService {
     }
 
     // Helper classes for context facts
-    public static class TenantContext {
-        private final String tenantId;
-
-        public TenantContext(String tenantId) {
-            this.tenantId = tenantId;
-        }
-
-        public String getTenantId() {
-            return tenantId;
-        }
-    }
-
     public static class ExecutionTimestamp {
         private final long timestamp;
 
