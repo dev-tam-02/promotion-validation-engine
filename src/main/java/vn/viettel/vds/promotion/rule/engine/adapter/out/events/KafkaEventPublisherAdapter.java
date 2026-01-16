@@ -66,7 +66,7 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
                     : null;
 
             BundlePublishedEvent event = new BundlePublishedEvent(
-                    null, ruleId, ruleVersion, null, bundleHash);
+                    ruleId, ruleVersion, null, bundleHash);
             publishBundlePublished(event);
         }
     }

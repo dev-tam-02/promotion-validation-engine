@@ -1,4 +1,4 @@
-package tenant1;
+package rules;
 
 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
@@ -9,7 +9,7 @@ import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 global ValidationResult result;
 global java.util.List reasonCodes;
 
-rule "tenant1_new_operators_test_1_validation_rule"
+rule "new_operators_test_1_validation_rule"
     when
         $customer: Customer()
         $order: Order()
@@ -31,7 +31,7 @@ rule "tenant1_new_operators_test_1_validation_rule"
         result.setOk(true);
 end
 
-rule "tenant1_new_operators_test_1_brand_check_failure"
+rule "new_operators_test_1_brand_check_failure"
     when
         $customer: Customer()
         $order: Order()
@@ -43,7 +43,7 @@ rule "tenant1_new_operators_test_1_brand_check_failure"
         result.setOk(false);
 end
 
-rule "tenant1_new_operators_test_1_lifetime_check_failure"
+rule "new_operators_test_1_lifetime_check_failure"
     when
         $customer: Customer(lifetimeValue < 1000000)
         $order: Order()
@@ -54,7 +54,7 @@ rule "tenant1_new_operators_test_1_lifetime_check_failure"
         result.setOk(false);
 end
 
-rule "tenant1_new_operators_test_1_customer_metadata_failure"
+rule "new_operators_test_1_customer_metadata_failure"
     when
         $customer: Customer(attrs["region"] != "HCM")
         $order: Order(metadata["channel"] != "MOBILE")

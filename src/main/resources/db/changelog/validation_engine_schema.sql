@@ -10,7 +10,6 @@
 CREATE TABLE bundles
 (
     id                         VARCHAR(300) NOT NULL COMMENT 'ID duy nhất của bundle (hash)',
-    tenant_id                  VARCHAR(50)  NOT NULL COMMENT 'ID của tenant sở hữu bundle',
     rule_id                    VARCHAR(100) NOT NULL COMMENT 'ID của rule được compile',
     rule_version               INT          NOT NULL COMMENT 'Version của rule',
     operators_fingerprint      VARCHAR(255) COMMENT 'Fingerprint của các operators trong rule',
@@ -32,8 +31,7 @@ CREATE TABLE bundles
 
 -- Indexes cho bundles
 CREATE UNIQUE INDEX idx_bundle_hash ON bundles (id);
-CREATE INDEX idx_rule_version ON bundles (tenant_id, rule_id, rule_version);
-CREATE INDEX idx_tenant ON bundles (tenant_id);
+CREATE INDEX idx_rule_version ON bundles (rule_id, rule_version);
 
 -- -----------------------------------------------------------------------------
 -- Table: bundle_time_links
@@ -58,7 +56,6 @@ CREATE TABLE bundle_time_links
 CREATE TABLE bundle_subject_index
 (
     id                 VARCHAR(200) NOT NULL COMMENT 'ID duy nhất của index entry',
-    tenant_id          VARCHAR(50)  NOT NULL COMMENT 'ID của tenant',
     subject_type       VARCHAR(50)  NOT NULL COMMENT 'Loại subject (CAMPAIGN, PROMOTION, etc.)',
     subject_key        VARCHAR(100) NOT NULL COMMENT 'Key của subject',
     rule_id            VARCHAR(100) NOT NULL COMMENT 'ID của rule',
@@ -67,13 +64,13 @@ CREATE TABLE bundle_subject_index
     bundle_hash        VARCHAR(300) COMMENT 'Hash của bundle được gán',
     updated_at         TIMESTAMP    NOT NULL COMMENT 'Thời điểm cập nhật cuối',
     PRIMARY KEY (id),
-    CONSTRAINT uk_tenant_subject UNIQUE (tenant_id, subject_type, subject_key)
+    CONSTRAINT uk_subject UNIQUE (subject_type, subject_key)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho bundle_subject_index
-CREATE INDEX idx_subject ON bundle_subject_index (tenant_id, subject_type, subject_key);
-CREATE INDEX idx_rule_ver ON bundle_subject_index (tenant_id, rule_id, rule_version);
+CREATE INDEX idx_subject ON bundle_subject_index (subject_type, subject_key);
+CREATE INDEX idx_rule_ver ON bundle_subject_index (rule_id, rule_version);
 
 -- -----------------------------------------------------------------------------
 -- Table: bundle_warmups
@@ -82,7 +79,6 @@ CREATE INDEX idx_rule_ver ON bundle_subject_index (tenant_id, rule_id, rule_vers
 CREATE TABLE bundle_warmups
 (
     id          VARCHAR(200) NOT NULL COMMENT 'ID duy nhất của warmup entry',
-    tenant_id   VARCHAR(50)  NOT NULL COMMENT 'ID của tenant',
     bundle_hash VARCHAR(300) NOT NULL COMMENT 'Hash của bundle cần warmup',
     state       VARCHAR(20)  NOT NULL COMMENT 'Trạng thái warmup (PENDING, WARMING, READY, FAILED)',
     attempts    INT COMMENT 'Số lần thử warmup',
@@ -93,7 +89,7 @@ CREATE TABLE bundle_warmups
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho bundle_warmups
-CREATE INDEX idx_tenant_state ON bundle_warmups (tenant_id, state, created_at);
+CREATE INDEX idx_state ON bundle_warmups (state, created_at);
 
 -- -----------------------------------------------------------------------------
 -- Table: compile_jobs
@@ -102,7 +98,6 @@ CREATE INDEX idx_tenant_state ON bundle_warmups (tenant_id, state, created_at);
 CREATE TABLE compile_jobs
 (
     id                    VARCHAR(200) NOT NULL COMMENT 'ID duy nhất của compile job',
-    tenant_id             VARCHAR(50)  NOT NULL COMMENT 'ID của tenant',
     rule_id               VARCHAR(100) NOT NULL COMMENT 'ID của rule cần compile',
     target_version        INT          NOT NULL COMMENT 'Version đích cần compile',
     status                VARCHAR(20)  NOT NULL COMMENT 'Trạng thái job (PENDING, RUNNING, COMPLETED, FAILED)',
@@ -113,12 +108,12 @@ CREATE TABLE compile_jobs
     compiler_id           VARCHAR(100) COMMENT 'ID của compiler xử lý job',
     bundle_hash           VARCHAR(300) COMMENT 'Hash của bundle kết quả',
     PRIMARY KEY (id),
-    CONSTRAINT uk_rule_target UNIQUE (tenant_id, rule_id, target_version)
+    CONSTRAINT uk_rule_target UNIQUE (rule_id, target_version)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho compile_jobs
-CREATE INDEX idx_status_time ON compile_jobs (tenant_id, status, requested_at);
+CREATE INDEX idx_status_time ON compile_jobs (status, requested_at);
 
 -- -----------------------------------------------------------------------------
 -- Table: compile_job_logs
@@ -152,12 +147,11 @@ CREATE TABLE compile_job_errors
 
 -- -----------------------------------------------------------------------------
 -- Table: engine_configs
--- Description: Cấu hình cho validation engine theo tenant
+-- Description: Cấu hình cho validation engine
 -- -----------------------------------------------------------------------------
 CREATE TABLE engine_configs
 (
     id              VARCHAR(100) NOT NULL COMMENT 'ID duy nhất của config',
-    tenant_id       VARCHAR(50)  NOT NULL COMMENT 'ID của tenant (unique)',
     timeout_ms      INT COMMENT 'Timeout cho validation (milliseconds)',
     max_rules_fired INT COMMENT 'Số rule tối đa được fire trong 1 session',
     max_facts       INT COMMENT 'Số facts tối đa trong working memory',
@@ -165,8 +159,7 @@ CREATE TABLE engine_configs
     max_depth       INT COMMENT 'Độ sâu tối đa của rule chain',
     created_at      TIMESTAMP    NOT NULL COMMENT 'Thời điểm tạo',
     updated_at      TIMESTAMP COMMENT 'Thời điểm cập nhật cuối',
-    PRIMARY KEY (id),
-    CONSTRAINT uk_tenant UNIQUE (tenant_id)
+    PRIMARY KEY (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
@@ -191,7 +184,6 @@ CREATE TABLE engine_config_explain_sampling
 CREATE TABLE outbox_events
 (
     id            VARCHAR(100) NOT NULL COMMENT 'ID duy nhất của event',
-    tenant_id     VARCHAR(50)  NOT NULL COMMENT 'ID của tenant',
     type          VARCHAR(30)  NOT NULL COMMENT 'Loại event (BUNDLE_COMPILED, RULE_UPDATED, etc.)',
     status        VARCHAR(20)  NOT NULL COMMENT 'Trạng thái (PENDING, DISPATCHED, FAILED)',
     attempts      INT COMMENT 'Số lần thử dispatch',
@@ -202,7 +194,7 @@ CREATE TABLE outbox_events
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho outbox_events
-CREATE INDEX idx_dispatch_queue ON outbox_events (tenant_id, status, created_at);
+CREATE INDEX idx_dispatch_queue ON outbox_events (status, created_at);
 
 -- -----------------------------------------------------------------------------
 -- Table: outbox_event_payload
@@ -247,7 +239,6 @@ CREATE TABLE fast_check_configs
 (
     id                      BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'ID tự động tăng',
     campaign_id             VARCHAR(100) NOT NULL COMMENT 'ID của campaign (unique)',
-    tenant_id               VARCHAR(50)  NOT NULL COMMENT 'ID của tenant',
     enabled                 BOOLEAN      NOT NULL DEFAULT TRUE COMMENT 'Trạng thái enable/disable',
     -- Time constraints
     business_hours_start    TIME COMMENT 'Giờ bắt đầu business hours',
@@ -276,7 +267,7 @@ CREATE TABLE fast_check_configs
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho fast_check_configs
-CREATE INDEX idx_tenant_id ON fast_check_configs (tenant_id);
+CREATE INDEX idx_campaign_id ON fast_check_configs (campaign_id);
 
 -- -----------------------------------------------------------------------------
 -- Table: blackout_periods
@@ -437,7 +428,6 @@ CREATE TABLE excluded_regions
 CREATE TABLE time_policies
 (
     id          VARCHAR(100)                                                  NOT NULL COMMENT 'ID duy nhất của time policy',
-    tenant_id   VARCHAR(50)                                                   NOT NULL COMMENT 'ID của tenant',
     name        VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên của time policy',
     description VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả chi tiết về policy',
     active      BOOLEAN                                                       NOT NULL DEFAULT TRUE COMMENT 'Trạng thái active/inactive',
@@ -448,7 +438,6 @@ CREATE TABLE time_policies
   DEFAULT CHARSET = utf8mb4;
 
 -- Indexes cho time_policies
-CREATE INDEX idx_time_policy_tenant ON time_policies (tenant_id);
 CREATE INDEX idx_time_policy_active ON time_policies (active);
 
 -- -----------------------------------------------------------------------------

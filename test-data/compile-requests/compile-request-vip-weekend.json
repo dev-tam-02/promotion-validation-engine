@@ -1,5 +1,4 @@
 {
-  "tenantId": "test-tenant",
   "ruleId": "VIP_WEEKEND_PROMO",
   "version": 3,
   "logic": "ALL",

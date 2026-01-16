@@ -67,7 +67,7 @@ end
 
 
 === validation-rule.drl ===
-package test_tenant;
+package rules;
 
 import vn.viettel.vds.promotion.validation.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Order;

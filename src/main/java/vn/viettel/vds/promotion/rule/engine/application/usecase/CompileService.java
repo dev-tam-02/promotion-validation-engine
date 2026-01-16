@@ -302,12 +302,11 @@ public class CompileService implements CompileUseCase {
 
         // Publish bundle published event
         BundlePublishedEvent event = new BundlePublishedEvent(
-                null, request.getRuleId(), request.getVersion(), null, bundleHash);
+                request.getRuleId(), request.getVersion(), null, bundleHash);
         eventPublisherPort.publishBundlePublished(event);
 
         // Publish cache invalidation event to all instances (broadcast pattern)
         BundleCacheInvalidationEvent cacheInvalidationEvent = new BundleCacheInvalidationEvent(
-                null,
                 bundleHash,
                 request.getRuleId(),
                 request.getVersion(),

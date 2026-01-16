@@ -30,7 +30,6 @@
   "executionContext": {
     "now": "2025-11-14T08:30:00Z",
     "timezone": "Asia/Bangkok",
-    "tenantId": "test-tenant",
     "sessionId": "session-002"
   }
 }

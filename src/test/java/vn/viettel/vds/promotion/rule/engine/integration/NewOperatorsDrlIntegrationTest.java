@@ -20,7 +20,7 @@ class NewOperatorsDrlIntegrationTest {
     void testNewOperatorsDrlCompilationAndExecution() {
         // Create DRL content with new operators
         String drlContent = """
-                package tenant1;
+                package rules;
                 
                 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
                 import vn.viettel.vds.promotion.rule.engine.domain.model.Order;

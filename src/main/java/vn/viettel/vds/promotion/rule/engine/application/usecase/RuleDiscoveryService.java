@@ -26,7 +26,7 @@ public class RuleDiscoveryService {
     }
 
     /**
-     * Discover and validate all active rules for a tenant
+     * Discover and validate all active rules
      * Returns list of valid campaignIds
      */
     public List<String> discoverValidCampaigns(DiscoveryRequest request) {

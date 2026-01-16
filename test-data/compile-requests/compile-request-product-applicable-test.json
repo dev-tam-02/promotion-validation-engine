@@ -1,5 +1,4 @@
 {
-  "tenantId": "test-tenant",
   "ruleId": "PRODUCT_APPLICABLE_TEST",
   "version": 1,
   "logic": "ALL",
