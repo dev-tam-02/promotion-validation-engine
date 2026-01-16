@@ -9,9 +9,6 @@ import java.util.List;
 @Repository
 public interface OutboxEventJpaRepository extends JpaRepository<OutboxEventEntity, String> {
 
-    List<OutboxEventEntity> findByTenantIdAndStatusOrderByCreatedAt(
-            String tenantId, OutboxEventEntity.EventStatus status);
-
     List<OutboxEventEntity> findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus status);
 
     void deleteByIdIn(List<String> eventIds);

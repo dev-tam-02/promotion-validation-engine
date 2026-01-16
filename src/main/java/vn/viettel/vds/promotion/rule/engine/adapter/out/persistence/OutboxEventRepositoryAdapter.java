@@ -23,10 +23,6 @@ public class OutboxEventRepositoryAdapter implements OutboxEventRepositoryPort {
         return outboxEventJpaRepository.findById(eventId);
     }
 
-    public List<OutboxEventEntity> findByTenantIdAndStatusOrderByCreatedAt(String tenantId, OutboxEventEntity.EventStatus status) {
-        return outboxEventJpaRepository.findByTenantIdAndStatusOrderByCreatedAt(tenantId, status);
-    }
-
     public List<OutboxEventEntity> findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus status) {
         return outboxEventJpaRepository.findByStatusOrderByCreatedAt(status);
     }

@@ -11,9 +11,6 @@ public interface OutboxEventRepositoryPort {
 
     Optional<OutboxEventEntity> findById(String eventId);
 
-    List<OutboxEventEntity> findByTenantIdAndStatusOrderByCreatedAt(
-            String tenantId, OutboxEventEntity.EventStatus status);
-
     List<OutboxEventEntity> findByStatusOrderByCreatedAt(OutboxEventEntity.EventStatus status);
 
     void deleteByIdIn(List<String> eventIds);
