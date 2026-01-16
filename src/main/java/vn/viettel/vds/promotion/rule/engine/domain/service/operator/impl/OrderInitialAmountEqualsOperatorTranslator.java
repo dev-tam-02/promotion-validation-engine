@@ -6,29 +6,27 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.operator.OperatorTran
 import java.util.Map;
 
 @Component
-public class OrderInitialAmountGteOperatorTranslator implements OperatorTranslator {
+public class OrderInitialAmountEqualsOperatorTranslator implements OperatorTranslator {
 
     @Override
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         Object amount = params.get("amount");
         if (amount == null) {
-            throw new IllegalArgumentException("Missing required parameter 'amount' for order.initial.amount.gte operator");
+            throw new IllegalArgumentException("Missing required parameter 'amount' for order.initial.amount.equals operator");
         }
 
         StringBuilder sb = new StringBuilder();
         // Use BigDecimal.compareTo() for proper BigDecimal comparison in Drools
-        // compareTo returns: -1 if less, 0 if equal, 1 if greater
-        // So >= 0 means initialAmount is greater than or equal to amount
         sb.append("        $order: Order(initialAmount != null, initialAmount.compareTo(new BigDecimal(\"")
                 .append(amount)
-                .append("\")) >= 0)\n");
+                .append("\")) == 0)\n");
 
         return sb.toString();
     }
 
     @Override
     public String getOperatorName() {
-        return "order.initial.amount.gte";
+        return "order.initial.amount.equals";
     }
 
     @Override
@@ -38,7 +36,7 @@ public class OrderInitialAmountGteOperatorTranslator implements OperatorTranslat
 
     @Override
     public boolean supports(String operatorName, Integer version) {
-        return "order.initial.amount.gte".equals(operatorName) &&
+        return "order.initial.amount.equals".equals(operatorName) &&
                 (version == null || version.equals(getVersion()));
     }
 }
