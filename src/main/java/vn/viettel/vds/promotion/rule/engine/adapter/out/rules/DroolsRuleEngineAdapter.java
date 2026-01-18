@@ -90,17 +90,18 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         long startTime = System.currentTimeMillis();
 
         try {
-            // Generate business rule DRL
-            String businessRuleDrl = ruleTranslationService.translateToDrl(
-                    input.getNodes()
-            );
-
-            logger.debug("Generated business rule DRL:\n{}", businessRuleDrl);
-
             // Check if temporal policy exists
             boolean hasTemporalPolicy = input.getTimeLinks() != null
                     && !input.getTimeLinks().isEmpty()
                     && input.getTimeLinks().get(0).getData() != null;
+
+            // Generate business rule DRL with temporal policy awareness
+            String businessRuleDrl = ruleTranslationService.translateToDrl(
+                    input.getNodes(),
+                    hasTemporalPolicy
+            );
+
+            logger.debug("Generated business rule DRL:\n{}", businessRuleDrl);
 
             DroolsCompilationService.CompilationResult result;
             String combinedDrlContent;

@@ -32,10 +32,17 @@ public class RuleTranslationService {
     private static final String DEFAULT_PACKAGE = "rules";
 
     public String translateToDrl(List<Map<String, Object>> nodes) {
+        return translateToDrl(nodes, false);
+    }
+
+    public String translateToDrl(List<Map<String, Object>> nodes, boolean hasTemporalPolicy) {
 
         // Sort nodes by ID to ensure deterministic DRL generation
         List<Map<String, Object>> sortedNodes = nodes.stream()
-                .sorted(Comparator.comparing(node -> (String) node.get("id")))
+                .sorted(Comparator.comparing(node -> {
+                    String id = (String) node.get("id");
+                    return id != null ? id : "";
+                }))
                 .toList();
 
         // Use LinkedHashMap to preserve insertion order
@@ -54,13 +61,13 @@ public class RuleTranslationService {
 
         StringBuilder drl = new StringBuilder();
 
-        generateDrlHeader(drl);
-        generateRule(drl, rootNode, nodeMap);
+        generateDrlHeader(drl, hasTemporalPolicy);
+        generateRule(drl, rootNode, nodeMap, hasTemporalPolicy);
 
         return drl.toString();
     }
 
-    private void generateDrlHeader(StringBuilder drl) {
+    private void generateDrlHeader(StringBuilder drl, boolean hasTemporalPolicy) {
         drl.append("package ").append(DEFAULT_PACKAGE).append(";\n\n");
 
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;\n");
@@ -82,22 +89,36 @@ public class RuleTranslationService {
         drl.append("global List<String> reasonCodes;\n");
         drl.append("global Object usageService;\n\n");
 
-        // NOTE: checkTimeWindow function is NO LONGER generated here
-        // When temporal policy exists, it's generated in timeframe.drl
-        // When no temporal policy, time-based operators are not supported
-        // This prevents duplicate function definition when both DRLs are in same package
+        // When no temporal policy, we need to declare TemporalAllowed locally
+        // and insert it automatically so the rule can still match
+        if (!hasTemporalPolicy) {
+            drl.append("// No temporal policy - declare TemporalAllowed locally\n");
+            drl.append("declare TemporalAllowed\n");
+            drl.append("end\n\n");
+        }
     }
 
     private void generateRule(StringBuilder drl, Map<String, Object> rootNode,
-                              Map<String, Map<String, Object>> nodeMap) {
+                              Map<String, Map<String, Object>> nodeMap, boolean hasTemporalPolicy) {
 
         // Add debug rule to log input values
         generateDebugRule(drl);
 
+        // When no temporal policy, add rule to insert TemporalAllowed automatically
+        if (!hasTemporalPolicy) {
+            drl.append("rule \"insert_temporal_allowed\"\n");
+            drl.append("    salience 9999\n");  // Very high priority to run first
+            drl.append(DRL_WHEN);
+            drl.append("        not TemporalAllowed()\n");
+            drl.append(DRL_THEN);
+            drl.append("        insert(new TemporalAllowed());\n");
+            drl.append(DRL_END);
+        }
+
         drl.append("rule \"promotion_validation_rule\"\n");
         drl.append(DRL_WHEN);
 
-        // Require temporal check to pass first (TemporalAllowed is inserted by timeframe.drl)
+        // Require temporal check to pass first (TemporalAllowed is inserted by timeframe.drl or by insert_temporal_allowed rule)
         drl.append("        TemporalAllowed()\n");
 
         generateConditions(drl, rootNode, nodeMap, 2);
