@@ -50,6 +50,9 @@ public class CompileJobEntity {
     @Embedded
     private EngineInfo engine;
 
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId = "";
+
     @Column(name = "bundle_hash", length = 300)
     private String bundleHash;
 

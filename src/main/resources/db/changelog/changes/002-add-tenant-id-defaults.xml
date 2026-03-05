@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Add tenant_id column to compile_jobs for fresh databases -->
+    <changeSet id="002-01-add-tenant-id-to-compile-jobs" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="compile_jobs" columnName="tenant_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="compile_jobs">
+            <column name="tenant_id" type="VARCHAR(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Set default value for tenant_id in compile_jobs (handles existing databases) -->
+    <changeSet id="002-02-set-tenant-id-default-compile-jobs" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="compile_jobs" columnName="tenant_id"/>
+        </preConditions>
+        <addDefaultValue tableName="compile_jobs" columnName="tenant_id" defaultValue=""/>
+    </changeSet>
+
+</databaseChangeLog>
