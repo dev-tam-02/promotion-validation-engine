@@ -18,7 +18,7 @@ spring:
 
   # DataSource Configuration for MariaDB
   datasource:
-    url: jdbc:mariadb://${DB_HOST:promotion-mariadb}:${DB_PORT:3306}/${DB_NAME:rule_engine}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8mb4
+    url: jdbc:mariadb://${DB_HOST:mariadb}:${DB_PORT:3306}/${DB_NAME:rule_engine}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8mb4
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:123123a@}
     driver-class-name: org.mariadb.jdbc.Driver
@@ -107,6 +107,8 @@ promix:
     kafka:
       bootstrap-servers:
         - kafka-1:19092
+        - kafka-2:19093
+        - kafka-3:19094
       client-id: rule-engine
       enable-avro: false
 
