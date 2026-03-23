@@ -18,8 +18,9 @@ public class OrderItemPriceBetweenOperatorTranslator implements OperatorTranslat
         }
 
         StringBuilder sb = new StringBuilder();
+        sb.append("        $order: Order()\n");
         sb.append("        exists(OrderItem(price >= ").append(minPrice)
-          .append(" && price <= ").append(maxPrice).append(") from $order.items)\n");
+          .append(" && price <= ").append(maxPrice).append(") from $order.getItems())\n");
 
         return sb.toString();
     }

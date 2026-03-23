@@ -33,7 +33,7 @@ public class OrderItemProductApplicableNoneOperatorTranslator implements Operato
         StringBuilder sb = new StringBuilder();
         // Check that no items have productId in the list
         sb.append("        $order: Order()\n");
-        sb.append("        not(exists(OrderItem(productId memberOf java.util.Arrays.asList(").append(productList).append(")) from $order.items))\n");
+        sb.append("        not(exists(OrderItem(productId memberOf java.util.Arrays.asList(").append(productList).append(")) from $order.getItems()))\n");
 
         return sb.toString();
     }

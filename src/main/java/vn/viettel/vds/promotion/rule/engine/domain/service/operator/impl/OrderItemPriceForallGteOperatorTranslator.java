@@ -3,7 +3,6 @@ package vn.viettel.vds.promotion.rule.engine.domain.service.operator.impl;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.rule.engine.domain.service.operator.OperatorTranslator;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -28,7 +27,7 @@ public class OrderItemPriceForallGteOperatorTranslator implements OperatorTransl
         StringBuilder sb = new StringBuilder();
         // Check that all items have price >= minPrice
         sb.append("        $order: Order(items.size() > 0)\n");
-        sb.append("        forall(OrderItem(price >= ").append(minPrice).append(") from $order.items)\n");
+        sb.append("        forall(OrderItem(price >= ").append(minPrice).append(") from $order.getItems())\n");
 
         return sb.toString();
     }

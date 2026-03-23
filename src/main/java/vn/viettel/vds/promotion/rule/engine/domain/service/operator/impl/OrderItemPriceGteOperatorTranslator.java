@@ -16,7 +16,8 @@ public class OrderItemPriceGteOperatorTranslator implements OperatorTranslator {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("        exists(OrderItem(price >= ").append(minPrice).append(") from $order.items)\n");
+        sb.append("        $order: Order()\n");
+        sb.append("        exists(OrderItem(price >= ").append(minPrice).append(") from $order.getItems())\n");
 
         return sb.toString();
     }

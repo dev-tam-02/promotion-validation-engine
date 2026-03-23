@@ -26,10 +26,10 @@ public class BundleRepository {
     }
 
     public List<ActiveRuleInfo> findActiveRules() {
-        logger.debug("Finding all active rules from database");
+        logger.debug("Finding active (enabled) rules from database");
 
-        List<BundleEntity> bundles = bundleJpaRepository.findAll();
-        logger.debug("Found {} bundles in database", bundles.size());
+        List<BundleEntity> bundles = bundleJpaRepository.findByEnabledTrue();
+        logger.debug("Found {} enabled bundles in database", bundles.size());
 
         List<ActiveRuleInfo> activeRules = new ArrayList<>();
 
@@ -51,16 +51,15 @@ public class BundleRepository {
     public ActiveRuleInfo findActiveRule(String ruleId) {
         logger.debug("Finding active rule by ruleId: {}", ruleId);
 
-        List<BundleEntity> bundles = bundleJpaRepository.findAll();
+        List<BundleEntity> bundles = bundleJpaRepository.findLatestByRuleId(ruleId);
 
-        for (BundleEntity bundle : bundles) {
-            if (bundle.getRuleId().equals(ruleId)) {
-                return buildActiveRuleInfo(bundle);
-            }
+        if (bundles.isEmpty()) {
+            logger.warn("No bundle found for ruleId: {}", ruleId);
+            return null;
         }
 
-        logger.warn("No active rule found for ruleId: {}", ruleId);
-        return null;
+        // findLatestByRuleId is ordered by version DESC, take first (latest)
+        return buildActiveRuleInfo(bundles.get(0));
     }
 
     private ActiveRuleInfo buildActiveRuleInfo(BundleEntity bundle) {

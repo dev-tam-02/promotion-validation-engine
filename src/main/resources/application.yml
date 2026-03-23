@@ -7,9 +7,9 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:123123a@}
   bucket-name: ${MINIO_BUCKET_NAME:validation-bundles}
   auto-create-bucket: ${MINIO_AUTO_CREATE_BUCKET:true}
-  connect-timeout: ${MINIO_CONNECT_TIMEOUT:10000}
-  write-timeout: ${MINIO_WRITE_TIMEOUT:60000}
-  read-timeout: ${MINIO_READ_TIMEOUT:60000}
+  connect-timeout: ${MINIO_CONNECT_TIMEOUT:3000}
+  write-timeout: ${MINIO_WRITE_TIMEOUT:30000}
+  read-timeout: ${MINIO_READ_TIMEOUT:10000}
 
 spring:
   application:
@@ -100,6 +100,11 @@ promix:
       audit:
         enabled: true
         date-time-provider: system
+
+  # Outbox JPA Configuration
+  outbox:
+    jpa:
+      enabled: false  # Service has its own outbox implementation
 
   # Kafka Configuration
   messaging:
@@ -215,6 +220,8 @@ validation:
       prewarm-session-pool: true
       prewarm-session-count: 3
       health-check-interval-seconds: 300
+      refresh-ahead-enabled: true
+      refresh-ahead-interval-minutes: 15
 
 # Kafka Topics Configuration
 kafka:

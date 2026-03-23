@@ -30,8 +30,8 @@ public class KieSessionManager {
         this.poolConfig = poolConfig;
         this.sessionFactory = sessionFactory;
         this.containerCache = Caffeine.newBuilder()
-                .maximumSize(50)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .maximumSize(200)
+                .expireAfterAccess(60, TimeUnit.MINUTES)
                 .recordStats()
                 .removalListener((key, value, cause) -> {
                     logger.debug("KieContainer removed from cache: key={}, cause={}", key, cause);

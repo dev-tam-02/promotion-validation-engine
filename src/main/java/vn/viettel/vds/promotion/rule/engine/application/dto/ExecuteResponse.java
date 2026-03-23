@@ -1,6 +1,7 @@
 package vn.viettel.vds.promotion.rule.engine.application.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public class ExecuteResponse {
 
@@ -9,6 +10,7 @@ public class ExecuteResponse {
     private List<String> reasonCodes;
     private List<ExplainEntry> explain;
     private Engine engine;
+    private Map<String, Object> metadata;
 
     public ExecuteResponse() {
     }
@@ -61,6 +63,14 @@ public class ExecuteResponse {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     // Nested classes

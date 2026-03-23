@@ -13,6 +13,8 @@ public class BundlePreloadConfig {
     private boolean prewarmSessionPool = true;
     private int prewarmSessionCount = 3;
     private int healthCheckIntervalSeconds = 300;
+    private boolean refreshAheadEnabled = true;
+    private int refreshAheadIntervalMinutes = 15;
 
     // Getters and setters
     public boolean isPreloadEnabled() {
@@ -61,5 +63,21 @@ public class BundlePreloadConfig {
 
     public void setHealthCheckIntervalSeconds(int healthCheckIntervalSeconds) {
         this.healthCheckIntervalSeconds = healthCheckIntervalSeconds;
+    }
+
+    public boolean isRefreshAheadEnabled() {
+        return refreshAheadEnabled;
+    }
+
+    public void setRefreshAheadEnabled(boolean refreshAheadEnabled) {
+        this.refreshAheadEnabled = refreshAheadEnabled;
+    }
+
+    public int getRefreshAheadIntervalMinutes() {
+        return refreshAheadIntervalMinutes;
+    }
+
+    public void setRefreshAheadIntervalMinutes(int refreshAheadIntervalMinutes) {
+        this.refreshAheadIntervalMinutes = refreshAheadIntervalMinutes;
     }
 }

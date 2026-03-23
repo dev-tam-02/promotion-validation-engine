@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
-import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +51,7 @@ class SingleRuleExecutorTest {
 
         when(sessionManager.createStatelessSession(container)).thenReturn(session);
         when(factPreparationService.prepareFacts(any())).thenReturn(List.of());
-        when(responseBuilder.buildSuccessResponse(any(), any(), anyLong(), any(), any()))
+        when(responseBuilder.buildSuccessResponse(any(), any(), anyLong(), any()))
                 .thenReturn(expectedResponse);
 
         // When

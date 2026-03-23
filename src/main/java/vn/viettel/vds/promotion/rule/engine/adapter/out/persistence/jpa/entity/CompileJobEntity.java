@@ -1,9 +1,13 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
+import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +21,12 @@ import java.util.List;
                 @UniqueConstraint(name = "uk_rule_target", columnNames = {"rule_id", "target_version"})
         }
 )
+@EntityListeners(IdGenerationListener.class)
+@AttributeOverride(name = "id", column = @Column(name = "id", nullable = false, length = 200))
 @Getter
 @Setter
-public class CompileJobEntity {
-
-    @Id
-    @Column(name = "id", nullable = false, length = 200) // pj_ruleId_targetVersion format
-    private String id;
+@EqualsAndHashCode(callSuper = true)
+public class CompileJobEntity extends BaseEntity {
 
     @Column(name = "rule_id", nullable = false, length = 100)
     private String ruleId;
@@ -75,7 +78,10 @@ public class CompileJobEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class EngineInfo {
+    public static class EngineInfo implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "compiler_id", length = 100)
         private String compilerId;
     }

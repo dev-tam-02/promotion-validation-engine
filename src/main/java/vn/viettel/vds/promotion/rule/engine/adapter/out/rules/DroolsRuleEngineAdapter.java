@@ -37,8 +37,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
     private static final Logger logger = LoggerFactory.getLogger(DroolsRuleEngineAdapter.class);
     private static final String ERROR_VERSION = "error";
 
-    // Max 100MB total for artifact cache, 30 minutes TTL
-    private static final long MAX_ARTIFACT_CACHE_WEIGHT = 100 * 1024 * 1024L;
+    // Max 500MB total for artifact cache, 60 minutes TTL
+    private static final long MAX_ARTIFACT_CACHE_WEIGHT = 500 * 1024 * 1024L;
 
     private final RuleTranslationService ruleTranslationService;
     private final DroolsCompilationService compilationService;
@@ -69,11 +69,11 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
         this.objectStoragePort = objectStoragePort;
         this.temporalDrlGenerator = temporalDrlGenerator;
 
-        // Initialize Caffeine cache with weight-based eviction (max 100MB) and 30-minute TTL
+        // Initialize Caffeine cache with weight-based eviction (max 500MB) and 60-minute TTL
         this.bundleArtifacts = Caffeine.newBuilder()
                 .maximumWeight(MAX_ARTIFACT_CACHE_WEIGHT)
                 .weigher((Weigher<String, byte[]>) (key, value) -> value.length)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .expireAfterAccess(60, TimeUnit.MINUTES)
                 .recordStats()
                 .removalListener((key, value, cause) ->
                         logger.debug("Bundle artifact evicted: key={}, size={}, cause={}", key,
@@ -376,8 +376,6 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
                         bundleHash, result.getArtifactBytes().length);
                 return result.getArtifactBytes();
             } catch (Exception e) {
-                logger.error("Failed to compile DRL from database: bundleHash={}, error={}",
-                        bundleHash, e.getMessage(), e);
                 throw new RuleBundleException(
                         String.format("Failed to compile DRL for bundle: bundleHash=%s", bundleHash), e);
             }

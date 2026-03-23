@@ -29,7 +29,7 @@ public class ExecutionErrorHandler {
         return e instanceof SessionCreationException;
     }
 
-    public void attemptRecovery(String bundleHash, Exception e) {
+    public void attemptRecovery(Exception e) {
         // Implement recovery strategies like cache invalidation, session pool reset, etc.
         if (e instanceof SessionCreationException) {
             // Could trigger bundle reload or session pool cleanup

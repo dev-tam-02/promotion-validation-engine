@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.*;
 import vn.viettel.vds.promotion.rule.engine.application.port.in.CompileUseCase;
+import vn.viettel.vds.promotion.rule.engine.application.port.out.ObjectStoragePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
 import java.util.ArrayList;
@@ -31,11 +32,14 @@ public class CompilationController {
 
     private final CompileUseCase compileUseCase;
     private final RuleEnginePort ruleEnginePort;
+    private final ObjectStoragePort objectStoragePort;
 
     public CompilationController(CompileUseCase compileUseCase,
-                                 @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
+                                 @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
+                                 ObjectStoragePort objectStoragePort) {
         this.compileUseCase = compileUseCase;
         this.ruleEnginePort = ruleEnginePort;
+        this.objectStoragePort = objectStoragePort;
     }
 
     @Operation(summary = "Compile rule to Drools artifact",
@@ -45,23 +49,31 @@ public class CompilationController {
             @ApiResponse(responseCode = "400", description = "Invalid request"),
             @ApiResponse(responseCode = "500", description = "Compilation failed")
     })
+    /**
+     * Compile rule to Drools artifact.
+     * @param includeArtifact if true, loads artifact bytes from storage and includes in response (for warmup)
+     */
     @PostMapping
-    public ResponseEntity<CompileResponse> compileRule(@Valid @RequestBody CompileRequest request) {
+    public ResponseEntity<CompileResponse> compileRule(
+            @Valid @RequestBody CompileRequest request,
+            @RequestParam(value = "includeArtifact", defaultValue = "false") boolean includeArtifact) {
 
-        logger.info("Compiling rule: ruleId={}, version={}",
-                request.getRuleId(), request.getVersion());
+        logger.info("Compiling rule: ruleId={}, version={}, includeArtifact={}",
+                request.getRuleId(), request.getVersion(), includeArtifact);
 
         try {
-            // Convert web DTO to application DTO
             vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest appRequest =
                     mapToApplicationRequest(request);
 
-            // Compile rule through use case (saves to database and object storage)
             vn.viettel.vds.promotion.rule.engine.application.dto.CompileResponse appResponse =
                     compileUseCase.compile(appRequest);
 
-            // Convert application response to web DTO
             CompileResponse response = mapToWebResponse(appResponse);
+
+            // Optionally load artifact bytes for warmup use case
+            if (includeArtifact && response.getBundleHash() != null) {
+                loadArtifactBytes(response);
+            }
 
             logger.info("Rule compilation completed: bundleHash={}, ok={}",
                     response.getBundleHash(), response.isOk());
@@ -77,6 +89,15 @@ public class CompilationController {
             errorResponse.setErrors(List.of("Compilation failed: " + e.getMessage()));
 
             return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    private void loadArtifactBytes(CompileResponse response) {
+        try {
+            String artifactKey = "bundles/" + response.getBundleHash().replace("sha256:", "") + ".kjar";
+            objectStoragePort.retrieve(artifactKey).ifPresent(response::setArtifactBytes);
+        } catch (Exception e) {
+            logger.warn("Failed to load artifact bytes for bundleHash={}: {}", response.getBundleHash(), e.getMessage());
         }
     }
 

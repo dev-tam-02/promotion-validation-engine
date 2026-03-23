@@ -37,19 +37,15 @@ public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {
         StringBuilder sb = new StringBuilder();
 
         if (segments.size() == 1) {
-            // Single segment check - use contains for efficiency
             sb.append("        $customer: Customer(segments contains \"").append(segments.get(0)).append("\")\n");
         } else {
-            // Multiple segments - check if any customer segment is in the target list
-            String segmentList = segments.stream()
-                    .map(s -> "\"" + s + "\"")
-                    .collect(Collectors.joining(", "));
-
-            sb.append("        $customer: Customer(\n");
-            sb.append("            segments != null && segments.size() > 0 &&\n");
-            sb.append("            eval(segments.stream().anyMatch(seg -> java.util.Arrays.asList(")
-                    .append(segmentList).append(").contains(seg)))\n");
-            sb.append("        )\n");
+            // Multiple segments — use OR of contains checks (Drools-compatible)
+            sb.append("        $customer: Customer(");
+            for (int i = 0; i < segments.size(); i++) {
+                if (i > 0) sb.append(" || ");
+                sb.append("segments contains \"").append(segments.get(i)).append("\"");
+            }
+            sb.append(")\n");
         }
 
         return sb.toString();

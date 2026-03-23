@@ -1,6 +1,5 @@
 package vn.viettel.vds.promotion.rule.engine.application.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;

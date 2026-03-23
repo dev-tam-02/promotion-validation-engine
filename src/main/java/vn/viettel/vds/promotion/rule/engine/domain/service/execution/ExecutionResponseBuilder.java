@@ -2,7 +2,6 @@ package vn.viettel.vds.promotion.rule.engine.domain.service.execution;
 
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
-import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 
 import java.util.List;
@@ -19,8 +18,7 @@ public class ExecutionResponseBuilder {
     public ExecuteResponse buildSuccessResponse(ValidationResult result,
                                                 List<String> reasonCodes,
                                                 long startTime,
-                                                ExecutionTracingService.TracingAgendaEventListener tracingListener,
-                                                RuleEnginePort.ExecuteInput input) {
+                                                ExecutionTracingService.TracingAgendaEventListener tracingListener) {
         ExecuteResponse response = new ExecuteResponse();
         
         response.setOk(Boolean.TRUE.equals(result.getOk()));
@@ -28,9 +26,8 @@ public class ExecutionResponseBuilder {
         response.setReasonCodes(determineReasonCodes(reasonCodes, result));
         response.setExplain(tracingListener != null ? tracingListener.getExplainEntries() : List.of());
         
-        response.setEngine(buildEngineInfo(startTime, input.getBundleHash()));
+        response.setEngine(buildEngineInfo(startTime));
         
-        recordMetrics(input, response, startTime);
         return response;
     }
 
@@ -61,7 +58,7 @@ public class ExecutionResponseBuilder {
         return result.getReasonCodes() != null ? result.getReasonCodes() : List.of();
     }
 
-    private ExecuteResponse.Engine buildEngineInfo(long startTime, String bundleHash) {
+    private ExecuteResponse.Engine buildEngineInfo(long startTime) {
         ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
         engine.setVersion("drools-10.1.0");
         engine.setLatencyMs((int) (System.currentTimeMillis() - startTime));
@@ -85,11 +82,4 @@ public class ExecutionResponseBuilder {
         return engine;
     }
 
-    private void recordMetrics(RuleEnginePort.ExecuteInput input, ExecuteResponse response, long startTime) {
-        if (metricsService != null) {
-            boolean success = Boolean.TRUE.equals(response.getOk());
-            long duration = System.currentTimeMillis() - startTime;
-            // metricsService.recordExecution(input.getBundleHash(), Duration.ofMillis(duration), success);
-        }
-    }
 }

@@ -18,12 +18,13 @@ public class OrderItemSkuInOperatorTranslator implements OperatorTranslator {
 
         List<String> skuList = (List<String>) skus;
         StringBuilder sb = new StringBuilder();
+        sb.append("        $order: Order()\n");
         sb.append("        exists(OrderItem(sku in (");
         for (int i = 0; i < skuList.size(); i++) {
             if (i > 0) sb.append(", ");
             sb.append("\"").append(skuList.get(i)).append("\"");
         }
-        sb.append(")) from $order.items)\n");
+        sb.append(")) from $order.getItems())\n");
 
         return sb.toString();
     }

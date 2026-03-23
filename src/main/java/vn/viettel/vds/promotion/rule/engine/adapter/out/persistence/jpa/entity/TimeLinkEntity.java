@@ -1,19 +1,18 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
+import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Table(name = "bundle_time_links")
+@EntityListeners(IdGenerationListener.class)
 @Getter
 @Setter
-public class TimeLinkEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class TimeLinkEntity extends BaseEntity {
 
     @Column(name = "policy_id", length = 100)
     private String policyId;

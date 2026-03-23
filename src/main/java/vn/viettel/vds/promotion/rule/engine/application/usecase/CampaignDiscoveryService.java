@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 public class CampaignDiscoveryService {
 
     private final BundleRepositoryPort bundleRepositoryPort;
-    // TODO: Add CampaignServicePort for campaign metadata
 
     public CampaignDiscoveryService(BundleRepositoryPort bundleRepositoryPort) {
         this.bundleRepositoryPort = bundleRepositoryPort;
@@ -23,7 +22,6 @@ public class CampaignDiscoveryService {
 
         return bundleRepositoryPort.findActiveBundles()
                 .stream()
-                .filter(bundle -> isApplicable(bundle, request))
                 .map(bundle -> {
                     OrderValidationService.CampaignInfo info = new OrderValidationService.CampaignInfo();
                     info.setCampaignId(bundle.getRuleId()); // Using ruleId as campaignId for now
@@ -34,12 +32,6 @@ public class CampaignDiscoveryService {
                 })
                 .limit(request.getMaxResults())
                 .collect(Collectors.toList());
-    }
-
-    private boolean isApplicable(Object bundle, DiscoveryRequest request) {
-        // TODO: Implement proper filtering logic
-        // For now, return true for all bundles
-        return true;
     }
 
     public static class DiscoveryRequest {

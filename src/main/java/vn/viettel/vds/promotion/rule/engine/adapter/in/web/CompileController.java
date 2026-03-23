@@ -14,6 +14,13 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.ObjectStoragePo
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link CompilationController} at /v1/compile instead.
+ * This controller is kept for backward compatibility with existing Feign clients.
+ * New integrations should use /v1/compile (compile), /v1/compile/warmup (warmup),
+ * and /v1/compile/bundle/{hash}/status (status).
+ */
+@Deprecated(since = "2026-03", forRemoval = true)
 @RestController
 @ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/compiler")

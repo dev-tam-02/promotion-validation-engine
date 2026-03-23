@@ -5,12 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.ObjectStoragePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
-import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Disabled("Disabled until full Spring context configuration is available for tests")
 class RuleExecutionIntegrationTest {
 
-    @MockBean
+    @MockitoBean
     private ObjectStoragePort objectStoragePort;
 
     @Autowired
@@ -39,9 +38,7 @@ class RuleExecutionIntegrationTest {
     void execute_ShouldProcessRuleSuccessfully() {
         // Given
         Map<String, Object> context = createTestContext();
-        RuleEnginePort.ExecuteInput input = new RuleEnginePort.ExecuteInput(
-                "test-bundle", context, null
-        );
+        new RuleEnginePort.ExecuteInput("test-bundle", context, null);
 
         // When & Then - This would require actual rule compilation and setup
         // For now, just verify the service is wired correctly
@@ -51,7 +48,7 @@ class RuleExecutionIntegrationTest {
     @Test
     void executeBatch_ShouldProcessMultipleRules() {
         // Given
-        List<RuleEnginePort.ExecuteInput> inputs = List.of(
+        List.of(
                 new RuleEnginePort.ExecuteInput("bundle1", createTestContext(), null),
                 new RuleEnginePort.ExecuteInput("bundle2", createTestContext(), null)
         );

@@ -58,14 +58,14 @@ public class SingleRuleExecutor {
 
             session.execute(facts);
 
-            return responseBuilder.buildSuccessResponse(result, reasonCodes, startTime, tracingListener, input);
+            return responseBuilder.buildSuccessResponse(result, reasonCodes, startTime, tracingListener);
 
         } catch (Exception e) {
             logger.error("Single rule execution failed: executionId={}", executionId, e);
             
             // Attempt recovery if possible
             if (errorHandler.isRecoverableError(e)) {
-                errorHandler.attemptRecovery(input.getBundleHash(), e);
+                errorHandler.attemptRecovery(e);
             }
             
             // Handle the error appropriately

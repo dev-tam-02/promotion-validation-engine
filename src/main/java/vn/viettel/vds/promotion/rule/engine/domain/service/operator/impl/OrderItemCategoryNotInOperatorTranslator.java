@@ -23,8 +23,9 @@ public class OrderItemCategoryNotInOperatorTranslator implements OperatorTransla
                 .collect(Collectors.joining(", "));
 
         StringBuilder sb = new StringBuilder();
+        sb.append("        $order: Order()\n");
         // Check that NO items belong to the excluded categories
-        sb.append("        not exists(OrderItem(category in (").append(categoriesStr).append(")) from $order.items)\n");
+        sb.append("        not exists(OrderItem(category in (").append(categoriesStr).append(")) from $order.getItems())\n");
 
         return sb.toString();
     }

@@ -23,7 +23,8 @@ public class OrderItemCategoryInOperatorTranslator implements OperatorTranslator
                 .collect(Collectors.joining(", "));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("        exists OrderItem(category in (").append(categoriesStr).append("))\n");
+        sb.append("        $order: Order()\n");
+        sb.append("        exists(OrderItem(category in (").append(categoriesStr).append(")) from $order.getItems())\n");
 
         return sb.toString();
     }

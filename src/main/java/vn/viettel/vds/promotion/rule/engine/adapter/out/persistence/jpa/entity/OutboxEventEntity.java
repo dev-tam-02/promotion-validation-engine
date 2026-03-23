@@ -1,6 +1,8 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
+import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,13 +16,12 @@ import java.util.Map;
                 @Index(name = "idx_dispatch_queue", columnList = "status, created_at")
         }
 )
+@EntityListeners(IdGenerationListener.class)
+@AttributeOverride(name = "id", column = @Column(name = "id", nullable = false, length = 100))
 @Getter
 @Setter
-public class OutboxEventEntity {
-
-    @Id
-    @Column(name = "id", nullable = false, length = 100) // ox_xxx format for event IDs
-    private String id;
+@EqualsAndHashCode(callSuper = true)
+public class OutboxEventEntity extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 30)
@@ -41,9 +42,6 @@ public class OutboxEventEntity {
 
     @Column(name = "attempts")
     private Integer attempts;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 
     @Column(name = "last_tried_at")
     private Instant lastTriedAt;

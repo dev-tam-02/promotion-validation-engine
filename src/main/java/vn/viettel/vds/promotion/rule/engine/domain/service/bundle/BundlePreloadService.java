@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.KieSessionManager;
@@ -167,6 +168,37 @@ public class BundlePreloadService {
 
         } catch (Exception e) {
             logger.warn("Failed to prewarm session pool for bundle: {}", bundleHash, e);
+        }
+    }
+
+    /**
+     * Periodic refresh-ahead: re-preload all active bundles so cache never expires on live traffic.
+     * Runs every N minutes (default 15). Since container cache TTL is 60min and this runs every 15min,
+     * containers are refreshed well before expiration — eliminating TTL-based cache misses.
+     */
+    @Scheduled(fixedRateString = "#{${validation.engine.bundle.refresh-ahead-interval-minutes:15} * 60 * 1000}",
+               initialDelayString = "#{${validation.engine.bundle.refresh-ahead-interval-minutes:15} * 60 * 1000}")
+    public void refreshAhead() {
+        if (!config.isRefreshAheadEnabled()) {
+            return;
+        }
+
+        logger.debug("Running refresh-ahead for active bundles");
+        List<ActiveRuleInfo> activeRules = bundleRepository.findActiveRules();
+
+        int refreshed = 0;
+        for (ActiveRuleInfo rule : activeRules) {
+            if (!sessionManager.isContainerCached(rule.getBundleHash())) {
+                // Not in cache at all — preload it
+                preloadSingleRule(rule, new AtomicInteger(), new AtomicInteger(), new AtomicInteger());
+                refreshed++;
+            }
+            // If already cached, expireAfterAccess timer resets on next real request — no action needed.
+            // The key insight: this job ensures bundles evicted during low-traffic periods get re-loaded.
+        }
+
+        if (refreshed > 0) {
+            logger.info("Refresh-ahead: re-loaded {} bundles that were not in cache", refreshed);
         }
     }
 

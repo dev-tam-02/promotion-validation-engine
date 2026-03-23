@@ -51,7 +51,7 @@ class RuleExecutionPerformanceTest {
 
         // When
         long startTime = System.nanoTime();
-        List<ExecuteResponse> results = batchExecutor.executeOptimized(inputs, containerMap);
+        batchExecutor.executeOptimized(inputs, containerMap);
         long endTime = System.nanoTime();
         
         // Then

@@ -9,6 +9,7 @@ import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderItemDto;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
+import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
 import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;
 
@@ -33,6 +34,7 @@ public class FactPreparationService {
         addCustomerFacts(context.get("customer"), facts);
         addOrderFacts(context.get("order"), facts);
         addCandidateFacts(context.get("candidate"), facts);
+        addLimitsFacts(context.containsKey("executionContext") ? context.get("executionContext") : null, facts);
         addExecutionContextFacts(context.get("executionContext"), facts);
 
         logger.debug("Prepared {} total facts for rule execution", facts.size());
@@ -85,6 +87,88 @@ public class FactPreparationService {
             facts.add(candidate);
             logger.debug("Added Candidate fact: id={}, type={}", candidate.getId(), candidate.getType());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addLimitsFacts(Object executionContextObj, List<Object> facts) {
+        if (!(executionContextObj instanceof Map<?, ?> execContext)) {
+            logger.debug("No execution context, inserting empty LimitsCtx");
+            facts.add(new LimitsCtx());
+            return;
+        }
+
+        Object limitsObj = ((Map<String, Object>) execContext).get("limits");
+        if (limitsObj == null) {
+            logger.debug("No limits data in execution context, inserting empty LimitsCtx");
+            facts.add(new LimitsCtx());
+            return;
+        }
+
+        try {
+            LimitsCtx limitsCtx = convertToLimitsCtx(limitsObj);
+            facts.add(limitsCtx);
+            logger.debug("Added LimitsCtx fact: totalRedemptions={}, perCustomerPerDay={}",
+                    limitsCtx.getTotalRedemptions(), limitsCtx.getPerCustomerPerDay());
+        } catch (Exception e) {
+            logger.warn("Failed to convert limits data, using empty LimitsCtx: {}", e.getMessage());
+            facts.add(new LimitsCtx());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private LimitsCtx convertToLimitsCtx(Object limitsObj) {
+        if (limitsObj instanceof LimitsCtx ctx) {
+            return ctx;
+        }
+
+        if (!(limitsObj instanceof Map<?, ?>)) {
+            return new LimitsCtx();
+        }
+
+        Map<String, Object> m = (Map<String, Object>) limitsObj;
+        LimitsCtx ctx = new LimitsCtx();
+
+        // Usage counters
+        ctx.setTotalRedemptions(intVal(m, "totalRedemptions"));
+        ctx.setRedemptionsPerDay(intVal(m, "redemptionsPerDay"));
+        ctx.setRedemptionsPerMonth(intVal(m, "redemptionsPerMonth"));
+        ctx.setPerCustomerUsed(intVal(m, "perCustomerUsed"));
+        ctx.setPerCustomerPerDay(intVal(m, "perCustomerPerDay"));
+        ctx.setPerCustomerPerMonth(intVal(m, "perCustomerPerMonth"));
+        ctx.setPerCodeTotalUsed(intVal(m, "perCodeTotalUsed"));
+
+        // Monetary amounts
+        ctx.setTotalDiscountedAmount(bigDecimalVal(m, "totalDiscountedAmount"));
+        ctx.setTotalOrdersValue(bigDecimalVal(m, "totalOrdersValue"));
+        ctx.setTotalGiftAmount(bigDecimalVal(m, "totalGiftAmount"));
+        ctx.setTotalPayWithPoints(bigDecimalVal(m, "totalPayWithPoints"));
+
+        // Configured limits
+        ctx.setMaxTotalRedemptions(intVal(m, "maxTotalRedemptions"));
+        ctx.setMaxRedemptionsPerDay(intVal(m, "maxRedemptionsPerDay"));
+        ctx.setMaxRedemptionsPerMonth(intVal(m, "maxRedemptionsPerMonth"));
+        ctx.setMaxPerCustomer(intVal(m, "maxPerCustomer"));
+        ctx.setMaxPerCustomerPerDay(intVal(m, "maxPerCustomerPerDay"));
+        ctx.setMaxPerCustomerPerMonth(intVal(m, "maxPerCustomerPerMonth"));
+        ctx.setMaxDiscountedAmount(bigDecimalVal(m, "maxDiscountedAmount"));
+
+        return ctx;
+    }
+
+    private int intVal(Map<String, Object> m, String key) {
+        Object v = m.get(key);
+        if (v instanceof Number n) {
+            return n.intValue();
+        }
+        return 0;
+    }
+
+    private BigDecimal bigDecimalVal(Map<String, Object> m, String key) {
+        Object v = m.get(key);
+        if (v instanceof Number n) {
+            return BigDecimal.valueOf(n.doubleValue());
+        }
+        return BigDecimal.ZERO;
     }
 
     private void addExecutionContextFacts(Object executionContextObj, List<Object> facts) {

@@ -1,10 +1,13 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
+import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 
 @Entity
@@ -17,13 +20,12 @@ import java.util.List;
                 @UniqueConstraint(name = "uk_bundle_hash", columnNames = {"id"})
         }
 )
+@EntityListeners(IdGenerationListener.class)
+@AttributeOverride(name = "id", column = @Column(name = "id", nullable = false, length = 300))
 @Getter
 @Setter
-public class BundleEntity {
-
-    @Id
-    @Column(name = "id", nullable = false, length = 300) // bundleHash (sha256 hash format)
-    private String id;
+@EqualsAndHashCode(callSuper = true)
+public class BundleEntity extends BaseEntity {
 
     @Column(name = "rule_id", nullable = false, length = 100)
     private String ruleId;
@@ -46,9 +48,6 @@ public class BundleEntity {
     @Embedded
     private Artifact artifact;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-    
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
@@ -62,7 +61,10 @@ public class BundleEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class EngineInfo {
+    public static class EngineInfo implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "engine_type", length = 50)
         private String type;
 
@@ -76,7 +78,10 @@ public class BundleEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class Limits {
+    public static class Limits implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "limit_per_customer")
         private Integer perCustomer;
 
@@ -87,7 +92,10 @@ public class BundleEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class Artifact {
+    public static class Artifact implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "artifact_store", length = 50)
         private String store;
 
@@ -101,7 +109,10 @@ public class BundleEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class Source {
+    public static class Source implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "validation_rule_version_id", length = 100)
         private String validationRuleVersionId;
 

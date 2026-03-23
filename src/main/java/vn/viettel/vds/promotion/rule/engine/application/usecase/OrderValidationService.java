@@ -9,9 +9,6 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 @Service
 public class OrderValidationService {
@@ -20,13 +17,11 @@ public class OrderValidationService {
 
     private final RuleEnginePort ruleEnginePort;
     private final CampaignDiscoveryService campaignDiscoveryService;
-    private final Executor validationExecutor;
 
     public OrderValidationService(RuleEnginePort ruleEnginePort,
                                   CampaignDiscoveryService campaignDiscoveryService) {
         this.ruleEnginePort = ruleEnginePort;
         this.campaignDiscoveryService = campaignDiscoveryService;
-        this.validationExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     public ValidateOrderResponse validateOrder(ValidateOrderRequest request) {
@@ -63,7 +58,7 @@ public class OrderValidationService {
                 new CampaignDiscoveryService.DiscoveryRequest();
 
         discoveryRequest.setEffectiveTime(filter != null ? filter.getEffectiveTime() : Instant.now());
-        discoveryRequest.setActiveOnly(filter != null ? filter.getActiveOnly() : true);
+        discoveryRequest.setActiveOnly(filter == null ? Boolean.TRUE : filter.getActiveOnly());
         discoveryRequest.setMaxResults(filter != null ? filter.getMaxCampaigns() : 50);
 
         if (filter != null) {

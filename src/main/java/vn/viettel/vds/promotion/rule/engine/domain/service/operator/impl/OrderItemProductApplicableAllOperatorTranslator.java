@@ -33,7 +33,7 @@ public class OrderItemProductApplicableAllOperatorTranslator implements Operator
         StringBuilder sb = new StringBuilder();
         // Check that all items have productId in the list
         sb.append("        $order: Order(items.size() > 0)\n");
-        sb.append("        forall(OrderItem(productId memberOf java.util.Arrays.asList(").append(productList).append(")) from $order.items)\n");
+        sb.append("        forall(OrderItem(productId memberOf java.util.Arrays.asList(").append(productList).append(")) from $order.getItems())\n");
 
         return sb.toString();
     }

@@ -18,13 +18,14 @@ public class OrderItemCollectionNotInOperatorTranslator implements OperatorTrans
 
         List<String> collectionList = (List<String>) collections;
         StringBuilder sb = new StringBuilder();
+        sb.append("        $order: Order()\n");
         // Check that NO items belong to the excluded collections
         sb.append("        not exists(OrderItem(collection in (");
         for (int i = 0; i < collectionList.size(); i++) {
             if (i > 0) sb.append(", ");
             sb.append("\"").append(collectionList.get(i)).append("\"");
         }
-        sb.append(")) from $order.items)\n");
+        sb.append(")) from $order.getItems())\n");
 
         return sb.toString();
     }

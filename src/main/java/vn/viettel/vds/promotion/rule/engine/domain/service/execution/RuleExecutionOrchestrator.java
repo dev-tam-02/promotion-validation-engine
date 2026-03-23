@@ -23,6 +23,7 @@ public class RuleExecutionOrchestrator {
     private static final Logger logger = LoggerFactory.getLogger(RuleExecutionOrchestrator.class);
     private static final int DEFAULT_TIMEOUT_MS = 30000; // 30 seconds default timeout
     private static final int MIN_TIMEOUT_MS = 100; // Minimum timeout to prevent misuse
+    private static final String EXECUTION_ERROR = "error";
 
     private final KieSessionManager sessionManager;
     private final FactPreparationService factPreparationService;
@@ -298,6 +299,23 @@ public class RuleExecutionOrchestrator {
         engine.setCacheHit(sessionManager.isContainerCached(input.getBundleHash()));
         response.setEngine(engine);
 
+        // Add per-rule timing metadata for performance analysis
+        if (tracingListener != null) {
+            Map<String, Object> metadata = new HashMap<>();
+            Map<String, Long> ruleDurations = new HashMap<>();
+            tracingListener.getRuleExecutionTimes().forEach((key, value) -> {
+                if (key.endsWith("_duration")) {
+                    ruleDurations.put(key.replace("_duration", ""), value);
+                }
+            });
+            if (!ruleDurations.isEmpty()) {
+                metadata.put("ruleTimings", ruleDurations);
+                metadata.put("totalRulesFired", tracingListener.getTotalRulesFired());
+                metadata.put("totalRuleExecutionMs", tracingListener.getTotalExecutionTime());
+            }
+            response.setMetadata(metadata);
+        }
+
         return response;
     }
 
@@ -314,11 +332,11 @@ public class RuleExecutionOrchestrator {
         response.setDecision("DENY");
         response.setReasonCodes(List.of("EXECUTION_ERROR"));
         response.setExplain(List.of(
-                new ExecuteResponse.ExplainEntry("error", "exception", false)
+                new ExecuteResponse.ExplainEntry(EXECUTION_ERROR, "exception", false)
         ));
 
         ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
-        engine.setVersion("error");
+        engine.setVersion(EXECUTION_ERROR);
         engine.setLatencyMs((int) (System.currentTimeMillis() - startTime));
         engine.setCacheHit(false);
         response.setEngine(engine);
@@ -332,7 +350,7 @@ public class RuleExecutionOrchestrator {
         response.setDecision("DENY");
         response.setReasonCodes(List.of("EXECUTION_TIMEOUT"));
         response.setExplain(List.of(
-                new ExecuteResponse.ExplainEntry("error", "timeout", false)
+                new ExecuteResponse.ExplainEntry(EXECUTION_ERROR, "timeout", false)
         ));
 
         ExecuteResponse.Engine engine = new ExecuteResponse.Engine();
@@ -408,10 +426,8 @@ public class RuleExecutionOrchestrator {
                     String.format("Rule execution timed out after %dms: executionId=%s", timeoutMs, executionId));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Rule execution interrupted: executionId={}", executionId);
             throw new RuleExecutionException("Rule execution was interrupted: executionId=" + executionId, e);
         } catch (Exception e) {
-            logger.error("Rule execution failed: executionId={}, error={}", executionId, e.getMessage(), e);
             throw new RuleExecutionException("Rule execution failed: executionId=" + executionId, e);
         }
     }

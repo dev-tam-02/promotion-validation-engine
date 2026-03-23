@@ -1,22 +1,24 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
+import com.promix.platform.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 @Entity
 @Table(name = "engine_configs")
+@EntityListeners(IdGenerationListener.class)
+@AttributeOverride(name = "id", column = @Column(name = "id", nullable = false, length = 100))
 @Getter
 @Setter
-public class EngineConfigEntity {
-
-    @Id
-    @Column(name = "id", nullable = false, length = 100)
-    private String id;
+@EqualsAndHashCode(callSuper = true)
+public class EngineConfigEntity extends BaseEntity {
 
     @Embedded
     private ExecuteConfig execute;
@@ -24,16 +26,13 @@ public class EngineConfigEntity {
     @Embedded
     private CompileConfig compile;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
     @Embeddable
     @Getter
     @Setter
-    public static class ExecuteConfig {
+    public static class ExecuteConfig implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "timeout_ms")
         private Integer timeoutMs;
 
@@ -56,7 +55,10 @@ public class EngineConfigEntity {
     @Embeddable
     @Getter
     @Setter
-    public static class CompileConfig {
+    public static class CompileConfig implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         @Column(name = "max_nodes")
         private Integer maxNodes;
 
