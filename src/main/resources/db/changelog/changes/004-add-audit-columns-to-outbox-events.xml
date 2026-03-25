@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="004-01-add-audit-columns-to-outbox-events" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="outbox_events"/>
+            <not>
+                <columnExists tableName="outbox_events" columnName="created_by"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="outbox_events">
+            <column name="created_by" type="VARCHAR(255)" remarks="Created by user"/>
+            <column name="updated_by" type="VARCHAR(255)" remarks="Updated by user"/>
+            <column name="updated_at" type="TIMESTAMP" remarks="Last update timestamp"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0" remarks="Optimistic locking version"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
