@@ -10,5 +10,6 @@
     <include file="db/changelog/changes/002-add-tenant-id-defaults.xml"/>
     <include file="db/changelog/changes/003-add-audit-columns-to-bundles.xml"/>
     <include file="db/changelog/changes/004-add-audit-columns-to-outbox-events.xml"/>
+    <include file="db/changelog/changes/005-create-assignments-table.xml"/>
 
 </databaseChangeLog>

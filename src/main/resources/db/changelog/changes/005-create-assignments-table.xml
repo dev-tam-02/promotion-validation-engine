@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ==================== ASSIGNMENTS TABLE ==================== -->
+    <changeSet id="005-01-create-assignments-table" author="system">
+        <createTable tableName="assignments">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subject_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject_key" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rule_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bundle_hash" type="VARCHAR(300)"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="INT" defaultValueNumeric="0"/>
+            <column name="valid_from" type="TIMESTAMP"/>
+            <column name="valid_to" type="TIMESTAMP"/>
+            <column name="timezone" type="VARCHAR(50)" defaultValue="Asia/Ho_Chi_Minh"/>
+            <column name="rrule" type="VARCHAR(500)"/>
+            <column name="time_windows" type="TEXT"/>
+            <column name="excluded_dates" type="TEXT"/>
+            <column name="traffic_percent" type="INT" defaultValueNumeric="100"/>
+            <column name="sticky_key_strategy" type="VARCHAR(50)"/>
+            <column name="included_all" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="included_products" type="TEXT"/>
+            <column name="excluded_products" type="TEXT"/>
+            <column name="included_categories" type="TEXT"/>
+            <column name="excluded_categories" type="TEXT"/>
+            <column name="included_brands" type="TEXT"/>
+            <column name="excluded_brands" type="TEXT"/>
+            <column name="source_version" type="BIGINT" defaultValueNumeric="0"/>
+            <column name="tenant_id" type="VARCHAR(100)" defaultValue=""/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <createIndex tableName="assignments" indexName="idx_assignment_subject" unique="true">
+            <column name="subject_type"/>
+            <column name="subject_key"/>
+            <column name="rule_id"/>
+        </createIndex>
+
+        <createIndex tableName="assignments" indexName="idx_assignment_lookup">
+            <column name="subject_type"/>
+            <column name="subject_key"/>
+            <column name="active"/>
+        </createIndex>
+
+        <createIndex tableName="assignments" indexName="idx_assignment_bundle_hash">
+            <column name="bundle_hash"/>
+        </createIndex>
+
+        <createIndex tableName="assignments" indexName="idx_assignment_rule_id">
+            <column name="rule_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Add missing 'version' column required by BaseEntity @Version -->
+    <changeSet id="005-02-add-version-column" author="system">
+        <addColumn tableName="assignments">
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

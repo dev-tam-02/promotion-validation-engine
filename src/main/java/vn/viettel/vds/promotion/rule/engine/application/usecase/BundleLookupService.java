@@ -4,11 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.AssignmentEntity;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.BundleEntity;
 import vn.viettel.vds.promotion.rule.engine.application.dto.BundleMetadataResponse;
 import vn.viettel.vds.promotion.rule.engine.application.dto.LatestBundleResponse;
 import vn.viettel.vds.promotion.rule.engine.application.dto.WarmupRequest;
 import vn.viettel.vds.promotion.rule.engine.application.port.in.BundleLookupUseCase;
+import vn.viettel.vds.promotion.rule.engine.application.port.out.AssignmentRepositoryPort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.BundleRepositoryPort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
@@ -21,11 +23,14 @@ public class BundleLookupService implements BundleLookupUseCase {
     private static final Logger logger = LoggerFactory.getLogger(BundleLookupService.class);
 
     private final BundleRepositoryPort bundleRepositoryPort;
+    private final AssignmentRepositoryPort assignmentRepositoryPort;
     private final RuleEnginePort ruleEnginePort;
 
     public BundleLookupService(BundleRepositoryPort bundleRepositoryPort,
+                               AssignmentRepositoryPort assignmentRepositoryPort,
                                @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
         this.bundleRepositoryPort = bundleRepositoryPort;
+        this.assignmentRepositoryPort = assignmentRepositoryPort;
         this.ruleEnginePort = ruleEnginePort;
     }
 
@@ -57,23 +62,44 @@ public class BundleLookupService implements BundleLookupUseCase {
     public LatestBundleResponse getLatestBundle(String subjectType, String subjectKey) {
         logger.info("Getting latest bundle for subject: {}/{}", subjectType, subjectKey);
 
-        List<BundleEntity> bundles = bundleRepositoryPort.findActiveBundles();
-        Optional<BundleEntity> latestBundle = bundles.stream()
-                .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
+        // First: lookup via assignment table (primary path)
+        List<AssignmentEntity> assignments = assignmentRepositoryPort.findActiveBySubjectOrderByPriority(
+                subjectType, subjectKey);
 
-        if (latestBundle.isEmpty()) {
-            throw new IllegalArgumentException("No bundle found for subject: " + subjectType + "/" + subjectKey);
+        for (AssignmentEntity assignment : assignments) {
+            if (assignment.getBundleHash() != null) {
+                Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(assignment.getBundleHash());
+                if (bundleOpt.isPresent()) {
+                    BundleEntity bundle = bundleOpt.get();
+                    if (!ruleEnginePort.isRuleBundleLoaded(bundle.getId())) {
+                        logger.info("Bundle not loaded, warming up: {}", bundle.getId());
+                        warmupSingleBundle(bundle.getId());
+                    }
+                    LatestBundleResponse response = mapToLatestBundleResponse(bundle);
+                    response.setAssignmentVersion(assignment.getSourceVersion() != null
+                            ? assignment.getSourceVersion().intValue() : 0);
+                    return response;
+                }
+            }
+
+            // Assignment exists but bundle not found: try by ruleId
+            if (assignment.getRuleId() != null) {
+                Optional<BundleEntity> byRule = bundleRepositoryPort.findActiveBundles().stream()
+                        .filter(b -> assignment.getRuleId().equals(b.getRuleId()))
+                        .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
+                if (byRule.isPresent()) {
+                    BundleEntity bundle = byRule.get();
+                    if (!ruleEnginePort.isRuleBundleLoaded(bundle.getId())) {
+                        warmupSingleBundle(bundle.getId());
+                    }
+                    return mapToLatestBundleResponse(bundle);
+                }
+            }
         }
 
-        BundleEntity bundle = latestBundle.get();
-        String bundleHash = bundle.getId();
-
-        if (!ruleEnginePort.isRuleBundleLoaded(bundleHash)) {
-            logger.info("Bundle not loaded, warming up: {}", bundleHash);
-            warmupSingleBundle(bundleHash);
-        }
-
-        return mapToLatestBundleResponse(bundle);
+        // No matching assignment or bundle found for this subject
+        logger.warn("No active assignment or bundle found for subject: {}/{}", subjectType, subjectKey);
+        throw new IllegalArgumentException("No bundle found for subject: " + subjectType + "/" + subjectKey);
     }
 
     @Override
