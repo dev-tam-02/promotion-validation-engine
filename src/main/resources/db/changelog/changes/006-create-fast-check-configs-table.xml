@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ==================== FAST CHECK CONFIGS TABLE ==================== -->
+    <!--
+        Canonical subject-keyed fast-check configuration table.
+
+        Columns with `_json` suffix hold JSON-encoded string arrays so we can
+        store variable-size lists (allowed currencies, required segments,
+        allowed days of week, etc.) without a satellite table. The adapter
+        deserialises via Jackson on read and caches the parsed result.
+
+        Uniqueness is on (subject_type, subject_key) — this is the same
+        canonical key pp-rule-engine already uses in `assignments` — so a
+        single fast_check_configs row mirrors one assignment row.
+    -->
+    <changeSet id="006-01-create-fast-check-configs-table" author="system">
+        <createTable tableName="fast_check_configs">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subject_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject_key" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Time constraints -->
+            <column name="business_hours_start" type="TIME"/>
+            <column name="business_hours_end" type="TIME"/>
+            <column name="business_hours_timezone" type="VARCHAR(50)"/>
+            <column name="allowed_days_of_week_json" type="TEXT"/>
+            <column name="exclude_holidays" type="BOOLEAN" defaultValueBoolean="false"/>
+            <!-- Order constraints -->
+            <column name="min_order_value" type="BIGINT"/>
+            <column name="max_order_value" type="BIGINT"/>
+            <column name="min_items" type="INT"/>
+            <column name="max_items" type="INT"/>
+            <column name="allowed_currencies_json" type="TEXT"/>
+            <!-- Customer constraints -->
+            <column name="required_segments_json" type="TEXT"/>
+            <column name="excluded_segments_json" type="TEXT"/>
+            <column name="require_all_segments" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="max_order_count" type="INT"/>
+            <!-- Rate limits -->
+            <column name="max_per_hour" type="INT"/>
+            <column name="max_per_day" type="INT"/>
+            <column name="max_per_week" type="INT"/>
+            <column name="max_per_month" type="INT"/>
+            <column name="window_type" type="VARCHAR(20)"/>
+            <!-- Audit -->
+            <column name="source_version" type="BIGINT" defaultValueNumeric="0"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="fast_check_configs" indexName="idx_fast_check_subject" unique="true">
+            <column name="subject_type"/>
+            <column name="subject_key"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
