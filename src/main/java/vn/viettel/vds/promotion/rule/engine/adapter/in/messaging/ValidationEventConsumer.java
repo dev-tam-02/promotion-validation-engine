@@ -1,19 +1,33 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.in.messaging;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.RuleConfigurationAdapter;
 import vn.viettel.vds.promotion.rule.engine.application.service.AssignmentSyncService;
+import vn.viettel.vds.promotion.validation.event.ValidationEvent;
+import vn.viettel.vds.promotion.validation.event.ValidationRuleDeletedEvent;
+import vn.viettel.vds.promotion.validation.event.ValidationRuleDisabledEvent;
+import vn.viettel.vds.promotion.validation.event.ValidationRuleEnabledEvent;
+import vn.viettel.vds.promotion.validation.event.ValidationRuleSettingAppliedEvent;
+import vn.viettel.vds.promotion.validation.event.ValidationRuleSettingAppliedEventPayload;
 
 import java.time.Instant;
 
 /**
- * Kafka consumer for validation events from pp-validation.
- * Handles assignment sync when rules are applied, deleted, enabled, or disabled.
+ * Kafka consumer for validation lifecycle events from pp-validation.
+ * <p>
+ * Deserializes the raw payload into a typed {@link ValidationEvent} via
+ * Jackson polymorphic routing (on the {@code type} field) and then
+ * dispatches to per-event handlers with {@code instanceof} pattern
+ * matching. The payloads carry canonical {@code (subjectType, subjectKey)}
+ * plus {@code bundleHash}, {@code sourceVersion}, and an embedded
+ * {@code FastCheckConfigDto} snapshot so the rule engine can hydrate
+ * both {@code assignments} and {@code fast_check_configs} without a
+ * round-trip back to pp-validation.
  */
 @Component
 public class ValidationEventConsumer {
@@ -21,11 +35,14 @@ public class ValidationEventConsumer {
     private static final Logger logger = LoggerFactory.getLogger(ValidationEventConsumer.class);
 
     private final AssignmentSyncService assignmentSyncService;
+    private final RuleConfigurationAdapter ruleConfigurationAdapter;
     private final ObjectMapper objectMapper;
 
     public ValidationEventConsumer(AssignmentSyncService assignmentSyncService,
+                                   RuleConfigurationAdapter ruleConfigurationAdapter,
                                    ObjectMapper objectMapper) {
         this.assignmentSyncService = assignmentSyncService;
+        this.ruleConfigurationAdapter = ruleConfigurationAdapter;
         this.objectMapper = objectMapper;
     }
 
@@ -36,198 +53,139 @@ public class ValidationEventConsumer {
     )
     public void onValidationEvent(String message, Acknowledgment ack) {
         try {
-            JsonNode root = objectMapper.readTree(message);
-            String eventType = getTextOrNull(root, "type");
+            ValidationEvent event = objectMapper.readValue(message, ValidationEvent.class);
+            logger.info("Received validation event: type={}, id={}", event.getType(), event.getId());
 
-            if (eventType == null) {
-                logger.warn("Received validation event without type, skipping");
-                ack.acknowledge();
-                return;
+            switch (event) {
+                case ValidationRuleSettingAppliedEvent e -> handleApplied(e);
+                case ValidationRuleEnabledEvent e -> handleEnabled(e);
+                case ValidationRuleDisabledEvent e -> handleDisabled(e);
+                case ValidationRuleDeletedEvent e -> handleDeleted(e);
+                default -> logger.debug("Ignoring event type: {}", event.getType());
             }
-
-            logger.info("Received validation event: type={}", eventType);
-
-            switch (eventType) {
-                case "ValidationRuleSettingAppliedEvent" -> handleAppliedEvent(root);
-                case "ValidationRuleDeletedEvent" -> handleDeletedEvent(root);
-                case "ValidationRuleDisabledEvent" -> handleDisabledEvent(root);
-                case "ValidationRuleEnabledEvent" -> handleEnabledEvent(root);
-                case "ValidationCompensationResultEvent" -> handleCompensationEvent(root);
-                default -> logger.debug("Ignoring validation event type: {}", eventType);
-            }
-
-            ack.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process validation event", e);
+            // Deserialization failures and handler errors are logged and acked:
+            // the dead-letter path is handled at the container level via
+            // ErrorHandlingDeserializer + DLQ topic suffix. We never want a
+            // poison pill to block the partition.
+            logger.error("Failed to process validation event: {}", message, e);
+        } finally {
             ack.acknowledge();
         }
     }
 
-    private void handleAppliedEvent(JsonNode root) {
-        JsonNode payload = root.get("payload");
+    private void handleApplied(ValidationRuleSettingAppliedEvent event) {
+        ValidationRuleSettingAppliedEventPayload payload = event.getPayload();
         if (payload == null) {
-            logger.warn("Applied event missing payload");
+            logger.warn("Applied event {} has no payload", event.getId());
             return;
         }
 
-        String subject = getTextOrNull(root, "subject");
+        ValidationRuleSettingAppliedEventPayload.AssignmentResult assignment = payload.getAssignmentResult();
+        ValidationRuleSettingAppliedEventPayload.ApplicabilityResult applicability = payload.getApplicabilityResult();
+        ValidationRuleSettingAppliedEventPayload.TimeframeResult timeframe = payload.getTimeframeResult();
 
-        JsonNode assignmentResult = payload.get("assignmentResult");
-        JsonNode timeframeResult = payload.get("timeframeResult");
-        JsonNode applicabilityResult = payload.get("applicabilityResult");
-
-        if (assignmentResult == null) {
-            logger.warn("Applied event missing assignmentResult");
+        if (assignment == null || applicability == null) {
+            logger.warn("Applied event {} missing assignment or applicability result", event.getId());
             return;
         }
 
-        String assignmentId = getTextOrNull(assignmentResult, "assignmentId");
-        String ruleId = getTextOrNull(assignmentResult, "ruleId");
-        boolean active = assignmentResult.has("active") && assignmentResult.get("active").asBoolean(true);
-        Integer trafficPercent = getIntOrNull(assignmentResult, "trafficPercent");
-        Integer priority = getIntOrNull(assignmentResult, "priority");
+        String subjectType = applicability.getSubjectType();
+        String subjectKey = applicability.getSubjectKey();
+        String ruleId = assignment.getRuleId() != null ? assignment.getRuleId() : assignment.getAssignmentId();
 
-        // pp-validation uses assignmentId (binding ID) as the ruleId for compilation
-        // When ruleId is null in the event, fall back to assignmentId
-        if (ruleId == null) {
-            ruleId = assignmentId;
+        if (subjectType == null || subjectKey == null || ruleId == null) {
+            logger.warn("Applied event {} missing subjectType/subjectKey/ruleId: {}:{}:{}",
+                    event.getId(), subjectType, subjectKey, ruleId);
+            return;
         }
 
-        // Use DISCOUNT_COUPON as default subjectType for campaign-originated events
-        // applicabilityResult.subjectType is "PRODUCT" (scope), not the campaign subject type
-        String subjectType = "DISCOUNT_COUPON";
-        String subjectKey = subject;
-
-        if (subjectKey == null) {
-            subjectKey = ruleId;
-        }
-
-        // Extract timeframe
         Instant validFrom = null;
         Instant validTo = null;
         String timezone = null;
-        if (timeframeResult != null) {
-            Long validFromMs = getLongOrNull(timeframeResult, "validFrom");
-            Long validToMs = getLongOrNull(timeframeResult, "validTo");
-            if (validFromMs != null) {
-                validFrom = Instant.ofEpochMilli(validFromMs);
+        if (timeframe != null) {
+            if (timeframe.getValidFrom() != null) {
+                validFrom = Instant.ofEpochMilli(timeframe.getValidFrom());
             }
-            if (validToMs != null) {
-                validTo = Instant.ofEpochMilli(validToMs);
+            if (timeframe.getValidTo() != null) {
+                validTo = Instant.ofEpochMilli(timeframe.getValidTo());
             }
-            timezone = getTextOrNull(timeframeResult, "timezone");
+            timezone = timeframe.getTimezone();
         }
 
         AssignmentSyncService.SyncResult result = assignmentSyncService.upsertFromEvent(
-                assignmentId, ruleId, subjectType, subjectKey,
-                active, trafficPercent, priority,
-                null, validFrom, validTo, timezone);
+                assignment.getAssignmentId(), ruleId, subjectType, subjectKey,
+                Boolean.TRUE.equals(assignment.getActive()) || assignment.getActive() == null,
+                assignment.getTrafficPercent(), assignment.getPriority(),
+                assignment.getBundleHash(), validFrom, validTo, timezone);
 
-        logger.info("Processed applied event: assignmentId={}, ruleId={}, subjectType={}, subjectKey={}, needsCompile={}",
-                assignmentId, ruleId, subjectType, subjectKey, result.needsCompile());
-    }
+        logger.info("Applied event processed: subject={}:{}, ruleId={}, bundleHash={}, needsCompile={}",
+                subjectType, subjectKey, ruleId, assignment.getBundleHash(), result.needsCompile());
 
-    private void handleDeletedEvent(JsonNode root) {
-        String ruleId = extractRuleId(root);
-        String subject = getTextOrNull(root, "subject");
-
-        if (ruleId != null && subject != null) {
-            assignmentSyncService.deleteAssignment("CAMPAIGN", subject, ruleId);
-            logger.info("Processed deleted event: ruleId={}, subject={}", ruleId, subject);
+        if (payload.getFastCheckConfig() != null) {
+            ruleConfigurationAdapter.upsert(subjectType, subjectKey,
+                    payload.getFastCheckConfig(), assignment.getSourceVersion());
         }
     }
 
-    private void handleDisabledEvent(JsonNode root) {
-        String ruleId = extractRuleId(root);
-        String subject = getTextOrNull(root, "subject");
-
-        if (ruleId != null && subject != null) {
-            assignmentSyncService.deactivateAssignment("CAMPAIGN", subject, ruleId);
-            logger.info("Processed disabled event: ruleId={}, subject={}", ruleId, subject);
+    private void handleEnabled(ValidationRuleEnabledEvent event) {
+        var payload = event.getPayload();
+        if (payload == null) {
+            logger.warn("Enabled event {} missing payload", event.getId());
+            return;
         }
+
+        String subjectType = payload.getSubjectType();
+        String subjectKey = payload.getSubjectKey();
+        String ruleId = payload.getValidationRuleId();
+
+        if (subjectType == null || subjectKey == null || ruleId == null) {
+            logger.warn("Enabled event {} missing subject/rule fields: {}:{}:{}",
+                    event.getId(), subjectType, subjectKey, ruleId);
+            return;
+        }
+
+        assignmentSyncService.upsertFromEvent(
+                null, ruleId, subjectType, subjectKey,
+                true, null, null, payload.getBundleHash(),
+                null, null, null);
+        logger.info("Enabled event processed: subject={}:{}, ruleId={}", subjectType, subjectKey, ruleId);
     }
 
-    private void handleEnabledEvent(JsonNode root) {
-        String ruleId = extractRuleId(root);
-        String subject = getTextOrNull(root, "subject");
-
-        if (ruleId != null && subject != null) {
-            AssignmentSyncService.SyncResult result = assignmentSyncService.upsertFromEvent(
-                    null, ruleId, "CAMPAIGN", subject,
-                    true, null, null,
-                    null, null, null, null);
-            logger.info("Processed enabled event: ruleId={}, subject={}", ruleId, subject);
-        }
-    }
-
-    private void handleCompensationEvent(JsonNode root) {
-        JsonNode payload = root.get("payload");
+    private void handleDisabled(ValidationRuleDisabledEvent event) {
+        var payload = event.getPayload();
         if (payload == null) {
             return;
         }
+        String subjectType = payload.getSubjectType();
+        String subjectKey = payload.getSubjectKey();
+        String ruleId = payload.getValidationRuleId();
 
-        JsonNode compensationResult = payload.get("compensationResult");
-        if (compensationResult == null) {
+        if (subjectType == null || subjectKey == null || ruleId == null) {
+            logger.warn("Disabled event {} missing subject/rule fields", event.getId());
             return;
         }
 
-        String rollbackAction = getTextOrNull(compensationResult, "rollbackAction");
-        String ruleId = getTextOrNull(compensationResult, "ruleId");
-        String assignmentId = getTextOrNull(compensationResult, "assignmentId");
-        String subject = getTextOrNull(root, "subject");
+        assignmentSyncService.deactivateAssignment(subjectType, subjectKey, ruleId);
+        logger.info("Disabled event processed: subject={}:{}, ruleId={}", subjectType, subjectKey, ruleId);
+    }
 
-        if (rollbackAction == null || ruleId == null) {
+    private void handleDeleted(ValidationRuleDeletedEvent event) {
+        var payload = event.getPayload();
+        if (payload == null) {
+            return;
+        }
+        String subjectType = payload.getSubjectType();
+        String subjectKey = payload.getSubjectKey();
+        String ruleId = payload.getValidationRuleId();
+
+        if (subjectType == null || subjectKey == null || ruleId == null) {
+            logger.warn("Deleted event {} missing subject/rule fields", event.getId());
             return;
         }
 
-        switch (rollbackAction) {
-            case "DELETE" -> {
-                if (subject != null) {
-                    assignmentSyncService.deleteAssignment("CAMPAIGN", subject, ruleId);
-                }
-            }
-            case "DEACTIVATE", "DISABLE" -> {
-                if (subject != null) {
-                    assignmentSyncService.deactivateAssignment("CAMPAIGN", subject, ruleId);
-                }
-            }
-            case "ENABLE" -> {
-                if (subject != null) {
-                    assignmentSyncService.upsertFromEvent(
-                            assignmentId, ruleId, "CAMPAIGN", subject,
-                            true, null, null,
-                            null, null, null, null);
-                }
-            }
-            default -> logger.debug("Ignoring compensation rollbackAction: {}", rollbackAction);
-        }
-
-        logger.info("Processed compensation event: rollbackAction={}, ruleId={}, subject={}", rollbackAction, ruleId, subject);
-    }
-
-    private String extractRuleId(JsonNode root) {
-        // Try from payload first
-        JsonNode payload = root.get("payload");
-        if (payload != null) {
-            JsonNode compensationResult = payload.get("compensationResult");
-            if (compensationResult != null) {
-                String ruleId = getTextOrNull(compensationResult, "ruleId");
-                if (ruleId != null) return ruleId;
-            }
-        }
-        // Try from root level
-        return getTextOrNull(root, "ruleId");
-    }
-
-    private String getTextOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : null;
-    }
-
-    private Integer getIntOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asInt() : null;
-    }
-
-    private Long getLongOrNull(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asLong() : null;
+        assignmentSyncService.deleteAssignment(subjectType, subjectKey, ruleId);
+        ruleConfigurationAdapter.delete(subjectType, subjectKey);
+        logger.info("Deleted event processed: subject={}:{}, ruleId={}", subjectType, subjectKey, ruleId);
     }
 }

@@ -92,9 +92,11 @@ public class CompileService implements CompileUseCase {
             String artifactKey = generateArtifactKey(result.getBundleHash());
             objectStoragePort.store(artifactKey, result.getArtifactBytes());
 
-            // Create bundle entity
-            BundleEntity bundle = createBundle(request, result, artifactKey);
-            bundleRepository.save(bundle);
+            // Bundle hash is deterministic: reuse existing bundle if the same
+            // hash was already persisted to avoid optimistic-locking conflicts
+            // on re-compile of identical DRL content.
+            BundleEntity bundle = bundleRepository.findById(result.getBundleHash())
+                    .orElseGet(() -> bundleRepository.save(createBundle(request, result, artifactKey)));
 
             return handleCompilationSuccess(compileJob, request, result, bundle);
 

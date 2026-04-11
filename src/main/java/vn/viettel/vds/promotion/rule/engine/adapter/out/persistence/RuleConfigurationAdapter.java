@@ -7,14 +7,18 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.FastCheckConfigEntity;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.repository.FastCheckConfigJpaRepository;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleConfigurationPort;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RuleConfiguration;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationRuleConfig;
+import vn.viettel.vds.promotion.validation.event.FastCheckConfigDto;
 
 import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -95,6 +99,107 @@ public class RuleConfigurationAdapter implements RuleConfigurationPort {
 
     public void invalidateAll() {
         cache.invalidateAll();
+    }
+
+    /**
+     * Upsert a fast-check config row from a typed event payload.
+     * <p>
+     * Uses {@code sourceVersion} as an optimistic-concurrency guard:
+     * if the stored version is greater than or equal to the incoming one,
+     * the update is skipped to protect against out-of-order kafka delivery.
+     * Invalidates the Caffeine cache on write so subsequent lookups see
+     * the new row.
+     */
+    @Transactional
+    public void upsert(String subjectType, String subjectKey,
+                       FastCheckConfigDto dto, Long sourceVersion) {
+        if (subjectType == null || subjectKey == null || dto == null) {
+            log.warn("Refusing fast-check upsert with null key or payload: {}:{}",
+                    subjectType, subjectKey);
+            return;
+        }
+
+        Optional<FastCheckConfigEntity> existing =
+                repository.findBySubjectTypeAndSubjectKey(subjectType, subjectKey);
+
+        FastCheckConfigEntity entity;
+        if (existing.isPresent()) {
+            entity = existing.get();
+            if (sourceVersion != null && entity.getSourceVersion() != null
+                    && sourceVersion <= entity.getSourceVersion()) {
+                log.debug("Skipping stale fast-check update {}:{} version={} <= {}",
+                        subjectType, subjectKey, sourceVersion, entity.getSourceVersion());
+                return;
+            }
+        } else {
+            entity = new FastCheckConfigEntity();
+            entity.setSubjectType(subjectType);
+            entity.setSubjectKey(subjectKey);
+        }
+
+        entity.setEnabled(dto.getEnabled() != null ? dto.getEnabled() : Boolean.TRUE);
+        entity.setBusinessHoursStart(parseTime(dto.getBusinessHoursStart()));
+        entity.setBusinessHoursEnd(parseTime(dto.getBusinessHoursEnd()));
+        entity.setBusinessHoursTimezone(dto.getBusinessHoursTimezone());
+        entity.setAllowedDaysOfWeekJson(toJson(dto.getAllowedDaysOfWeek()));
+        entity.setExcludeHolidays(dto.getExcludeHolidays());
+        entity.setMinOrderValue(dto.getMinOrderValue());
+        entity.setMaxOrderValue(dto.getMaxOrderValue());
+        entity.setMinItems(dto.getMinItems());
+        entity.setMaxItems(dto.getMaxItems());
+        entity.setAllowedCurrenciesJson(toJson(dto.getAllowedCurrencies()));
+        entity.setRequiredSegmentsJson(toJson(dto.getRequiredSegments()));
+        entity.setExcludedSegmentsJson(toJson(dto.getExcludedSegments()));
+        entity.setRequireAllSegments(dto.getRequireAllSegments());
+        entity.setMaxOrderCount(dto.getMaxOrderCount());
+        entity.setMaxPerHour(dto.getMaxPerHour());
+        entity.setMaxPerDay(dto.getMaxPerDay());
+        entity.setMaxPerWeek(dto.getMaxPerWeek());
+        entity.setMaxPerMonth(dto.getMaxPerMonth());
+        entity.setWindowType(dto.getWindowType());
+        entity.setSourceVersion(sourceVersion);
+        entity.touchCreated();
+
+        repository.save(entity);
+        invalidate(subjectType, subjectKey);
+        log.info("Upserted fast-check config {}:{} version={}", subjectType, subjectKey, sourceVersion);
+    }
+
+    /**
+     * Delete a fast-check row when the upstream rule is deleted.
+     */
+    @Transactional
+    public void delete(String subjectType, String subjectKey) {
+        if (subjectType == null || subjectKey == null) {
+            return;
+        }
+        repository.deleteBySubjectTypeAndSubjectKey(subjectType, subjectKey);
+        invalidate(subjectType, subjectKey);
+        log.info("Deleted fast-check config {}:{}", subjectType, subjectKey);
+    }
+
+    private LocalTime parseTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalTime.parse(value);
+        } catch (Exception e) {
+            log.warn("Unparseable business-hour value '{}'", value);
+            return null;
+        }
+    }
+
+    private String toJson(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(list);
+        } catch (Exception e) {
+            log.warn("Failed to serialize list to JSON: {}", list, e);
+            return null;
+        }
     }
 
     private RuleConfiguration toDomain(FastCheckConfigEntity entity) {
