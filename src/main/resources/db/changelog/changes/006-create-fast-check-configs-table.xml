@@ -19,6 +19,11 @@
         single fast_check_configs row mirrors one assignment row.
     -->
     <changeSet id="006-01-create-fast-check-configs-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="fast_check_configs"/>
+            </not>
+        </preConditions>
         <createTable tableName="fast_check_configs">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
