@@ -177,12 +177,51 @@ class OwnerOnlyRuleTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Case D: voucher.ownerCustomerId == null, rule bound → guard fails → DENY
+    // Case D (spec): owner == null AND rule NOT bound → ALLOW (public promo)
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Case D: ownerCustomerId is null + rule bound → guard (ownerCustomerId != null) fails → DENY")
-    void caseD_ownerCustomerIdNull_guardFails_deny() {
+    @DisplayName("Case D (spec): public promo — OwnerOnly rule not bound → no ownership denial → ALLOW")
+    void caseD_publicPromo_noOwnerAndNoRuleBound_allow() {
+        // A public promotion does NOT bind the OwnerOnly rule.
+        // Simulate by executing with a permissive DRL that has no VoucherFact / ownership check.
+        String publicDrl = """
+                package rules;
+                import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
+                import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
+                import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;
+                import java.util.List;
+                global ValidationResult result;
+                global List<String> reasonCodes;
+                declare TemporalAllowed end
+                rule "insert_temporal_allowed" salience 9999
+                    when not TemporalAllowed() then insert(new TemporalAllowed()); end
+                rule "allow_all"
+                    when TemporalAllowed() $c: CustomerFact()
+                    then result.setDecision("ALLOW"); result.setOk(true); insert(new RuleMatched()); end
+                rule "promotion_validation_failure" salience -100
+                    when not RuleMatched()
+                    then result.setDecision("DENY"); result.setOk(false); end
+                """;
+        KieContainer publicContainer = compileAndGetContainer(publicDrl);
+
+        // No VoucherFact injected (OwnerOnly rule is not in evaluated rules)
+        CustomerFact customer = new CustomerFact("cust-456");
+
+        ExecutionResult result = executeRule(publicContainer, null, customer);
+
+        assertEquals("ALLOW", result.decision());
+        assertTrue(result.ok());
+        assertFalse(result.reasonCodes().contains("VOUCHER_NOT_OWNED_BY_CUSTOMER"));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Case E (edge): owner == null + OwnerOnly rule IS bound → guard fails → DENY
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Case E: ownerCustomerId is null + rule bound → guard (ownerCustomerId != null) fails → DENY")
+    void caseE_ownerNullRuleBoundStill_denyViaGuard() {
         VoucherFact voucher = new VoucherFact("PUBLIC-X1", null); // ownerCustomerId == null
         CustomerFact customer = new CustomerFact("cust-456");
 

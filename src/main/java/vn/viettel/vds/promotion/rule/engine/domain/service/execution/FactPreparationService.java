@@ -103,8 +103,8 @@ public class FactPreparationService {
 
             logger.warn("Unable to convert voucher object of type: {}", voucherObj.getClass());
             return null;
-        } catch (Exception e) {
-            logger.error("Error converting voucher object", e);
+        } catch (IllegalArgumentException | ClassCastException e) {
+            logger.error("Error converting voucher object: {}", e.getMessage());
             return null;
         }
     }
