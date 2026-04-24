@@ -9,9 +9,11 @@ import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderItemDto;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
+import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
 import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
 import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;
+import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -34,6 +36,7 @@ public class FactPreparationService {
         addCustomerFacts(context.get("customer"), facts);
         addOrderFacts(context.get("order"), facts);
         addCandidateFacts(context.get("candidate"), facts);
+        addVoucherFacts(context.get("voucher"), facts);
         addLimitsFacts(context.containsKey("executionContext") ? context.get("executionContext") : null, facts);
         addExecutionContextFacts(context.get("executionContext"), facts);
 
@@ -50,6 +53,59 @@ public class FactPreparationService {
         if (customer != null) {
             facts.add(customer);
             logger.debug("Added Customer fact: id={}", customer.getId());
+
+            // Also inject CustomerFact for template-compiled DRL rules (e.g. customer.is_owner)
+            CustomerFact customerFact = new CustomerFact(
+                    customer.getId(),
+                    customer.getSegments(),
+                    customer.getLoyaltyTier()
+            );
+            facts.add(customerFact);
+            logger.debug("Added CustomerFact: id={}", customer.getId());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addVoucherFacts(Object voucherObj, List<Object> facts) {
+        if (voucherObj == null) {
+            return;
+        }
+
+        VoucherFact voucher = convertToVoucherFact(voucherObj);
+        if (voucher != null) {
+            facts.add(voucher);
+            logger.debug("Added VoucherFact: code={}, ownerCustomerId={}", voucher.getCode(), voucher.getOwnerCustomerId());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private VoucherFact convertToVoucherFact(Object voucherObj) {
+        try {
+            if (voucherObj instanceof VoucherFact vf) {
+                return vf;
+            }
+
+            if (voucherObj instanceof Map<?, ?> voucherMap) {
+                Map<String, Object> m = (Map<String, Object>) voucherMap;
+                VoucherFact vf = new VoucherFact();
+                vf.setCode((String) m.get("code"));
+                vf.setOwnerCustomerId((String) m.get("ownerCustomerId"));
+                Object maxUses = m.get("maxUsesPerCode");
+                if (maxUses instanceof Number n) {
+                    vf.setMaxUsesPerCode(n.intValue());
+                }
+                Object usedCount = m.get("usedCount");
+                if (usedCount instanceof Number n) {
+                    vf.setUsedCount(n.intValue());
+                }
+                return vf;
+            }
+
+            logger.warn("Unable to convert voucher object of type: {}", voucherObj.getClass());
+            return null;
+        } catch (Exception e) {
+            logger.error("Error converting voucher object", e);
+            return null;
         }
     }
 

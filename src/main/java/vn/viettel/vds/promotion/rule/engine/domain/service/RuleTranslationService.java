@@ -78,12 +78,14 @@ public class RuleTranslationService {
         drl.append("package ").append(DEFAULT_PACKAGE).append(";\n\n");
 
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;\n");
+        drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Order;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;\n");
+        drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;\n");
         drl.append("import java.util.List;\n");
         drl.append("import java.util.ArrayList;\n");
         drl.append("import java.math.BigDecimal;\n");
