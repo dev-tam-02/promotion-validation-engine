@@ -10,8 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
+import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.QuotaContext;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.TraceEntry;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleRegistryPort;
+import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
@@ -51,28 +53,60 @@ public class SimulateEvaluationService {
     private final DroolsCompilationService compilationService;
     private final FactPreparationService factPreparationService;
     private final KieSessionManager sessionManager;
+    private final QuotaCounterService quotaCounterService;
 
     public SimulateEvaluationService(RuleRegistryPort ruleRegistry,
                                      DroolsCompilationService compilationService,
                                      FactPreparationService factPreparationService,
-                                     KieSessionManager sessionManager) {
+                                     KieSessionManager sessionManager,
+                                     QuotaCounterService quotaCounterService) {
         this.ruleRegistry = ruleRegistry;
         this.compilationService = compilationService;
         this.factPreparationService = factPreparationService;
         this.sessionManager = sessionManager;
+        this.quotaCounterService = quotaCounterService;
     }
 
     /**
      * Evaluate a list of rules against the provided facts.
      *
-     * @param ruleIds      IDs of registered rules to evaluate
-     * @param facts        flat fact map keyed by fact-type (order, customer, candidate, …)
-     * @param simulateMode when true, attach tracing listener and populate trace + matched/unmatched
+     * @param ruleIds        IDs of registered rules to evaluate
+     * @param facts          flat fact map keyed by fact-type (order, customer, candidate, …)
+     * @param simulateMode   when true, attach tracing listener and populate trace + matched/unmatched
      * @return evaluation response
      */
     public EvaluateRuleResponse evaluate(List<String> ruleIds,
                                          Map<String, Object> facts,
                                          boolean simulateMode) {
+        return evaluate(ruleIds, facts, simulateMode, false, null, null);
+    }
+
+    /**
+     * Evaluate a list of rules against the provided facts, with optional REDEMPTION mode.
+     *
+     * <p>When {@code redemptionMode=true}:
+     * <ol>
+     *   <li>Drools fires as normal.</li>
+     *   <li>If verdict=ALLOW and {@code quotaContext} is provided: call
+     *       {@link QuotaCounterService#incrementWithCheck} for <em>each</em> ruleId that
+     *       returned ALLOW.  If any counter check fails, the overall verdict becomes DENY
+     *       with reason {@code MAX_USES_EXCEEDED}.</li>
+     * </ol>
+     *
+     * @param ruleIds        IDs of registered rules to evaluate
+     * @param facts          flat fact map
+     * @param simulateMode   trace mode
+     * @param redemptionMode Layer-1 counter enforcement mode
+     * @param redemptionId   saga redemption ID (required when redemptionMode=true)
+     * @param quotaContext   quota window context (optional; skipped if null/limit=0)
+     * @return evaluation response
+     */
+    public EvaluateRuleResponse evaluate(List<String> ruleIds,
+                                         Map<String, Object> facts,
+                                         boolean simulateMode,
+                                         boolean redemptionMode,
+                                         String redemptionId,
+                                         QuotaContext quotaContext) {
 
         if (ruleIds == null || ruleIds.isEmpty()) {
             EvaluateRuleResponse resp = new EvaluateRuleResponse();
@@ -101,7 +135,8 @@ public class SimulateEvaluationService {
             }
 
             RegisteredRule rule = registered.get();
-            log.info("evaluate: ruleId={}, bundleHash={}, simulate={}", ruleId, rule.getBundleHash(), simulateMode);
+            log.info("evaluate: ruleId={}, bundleHash={}, simulate={}, redemption={}",
+                    ruleId, rule.getBundleHash(), simulateMode, redemptionMode);
 
             try {
                 SingleEvalResult result = executeSingle(rule, facts, simulateMode);
@@ -115,6 +150,22 @@ public class SimulateEvaluationService {
 
                 if (!"ALLOW".equals(result.verdict())) {
                     verdict = "DENY";
+                } else if (redemptionMode && quotaContext != null && quotaContext.getLimit() > 0) {
+                    // Layer-1 counter enforcement: INCR and check against limit
+                    boolean allowed = quotaCounterService.incrementWithCheck(
+                            ruleId,
+                            redemptionId,
+                            quotaContext.getCustomerId(),
+                            quotaContext.getBucketKey(),
+                            quotaContext.getWindowStart(),
+                            quotaContext.getWindowEnd(),
+                            quotaContext.getLimit()
+                    );
+                    if (!allowed) {
+                        verdict = "DENY";
+                        allReasonCodes.add("MAX_USES_EXCEEDED");
+                        log.info("evaluate: ruleId={} DENY MAX_USES_EXCEEDED redemptionId={}", ruleId, redemptionId);
+                    }
                 }
 
             } catch (Exception ex) {

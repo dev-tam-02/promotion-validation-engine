@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleRequest;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
+import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.QuotaContext;
 import vn.viettel.vds.promotion.rule.engine.application.usecase.SimulateEvaluationService;
 
 /**
@@ -45,6 +46,8 @@ public class EvaluateController {
         this.simulateEvaluationService = simulateEvaluationService;
     }
 
+    // Note: QuotaCounterService is invoked inside SimulateEvaluationService when mode=REDEMPTION.
+
     @Operation(
             summary = "Evaluate rules (with optional SIMULATE trace)",
             description = "Evaluates one or more registered rules against the provided facts. "
@@ -59,12 +62,16 @@ public class EvaluateController {
     public ResponseEntity<EvaluateRuleResponse> evaluate(
             @Valid @RequestBody EvaluateRuleRequest request) {
 
-        logger.info("POST /v1/rules/evaluate — mode={}, ruleIds={}", request.getMode(), request.getRuleIds());
+        logger.info("POST /v1/rules/evaluate — mode={}, ruleIds={}, redemptionId={}",
+                request.getMode(), request.getRuleIds(), request.getRedemptionId());
 
         EvaluateRuleResponse response = simulateEvaluationService.evaluate(
                 request.getRuleIds(),
                 request.getFacts(),
-                request.isSimulateMode()
+                request.isSimulateMode(),
+                request.isRedemptionMode(),
+                request.getRedemptionId(),
+                request.getQuotaContext()
         );
 
         logger.info("Evaluation completed: verdict={}, traceSize={}",

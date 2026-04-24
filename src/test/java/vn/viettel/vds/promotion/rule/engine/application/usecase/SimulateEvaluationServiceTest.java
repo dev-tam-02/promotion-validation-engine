@@ -10,8 +10,10 @@ import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.KieModule;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.StatelessKieSession;
+import org.mockito.Mockito;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.registry.InMemoryRuleRegistryAdapter;
+import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.application.usecase.SimulateEvaluationService.SimulateAgendaEventListener;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
 import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
@@ -207,7 +209,8 @@ class SimulateEvaluationServiceTest {
                     registry,
                     compilationService,
                     factPreparationService,
-                    sessionManager
+                    sessionManager,
+                    Mockito.mock(QuotaCounterService.class)
             );
         }
 

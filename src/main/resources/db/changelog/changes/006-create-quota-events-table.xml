@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ==================== QUOTA_EVENTS TABLE (Layer-1 backstore) ==================== -->
+    <changeSet id="006-01-create-quota-events-table" author="system">
+        <comment>Layer-1 quota event log: audit trail for Redis INCR/DECR/ROLLBACK operations.
+            Enables disaster-recovery rebuild of Redis counters from durable storage.</comment>
+
+        <createTable tableName="quota_events">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rule_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="redemption_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="customer_id" type="VARCHAR(36)"/>
+            <column name="bucket_key" type="VARCHAR(200)"/>
+            <column name="window_start" type="DATETIME"/>
+            <column name="window_end" type="DATETIME"/>
+            <column name="event_type" type="ENUM('INCR','DECR','ROLLBACK')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count_delta" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="quota_events" indexName="idx_qe_rule_window">
+            <column name="rule_id"/>
+            <column name="bucket_key"/>
+            <column name="window_start"/>
+        </createIndex>
+
+        <createIndex tableName="quota_events" indexName="idx_qe_redemption">
+            <column name="redemption_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

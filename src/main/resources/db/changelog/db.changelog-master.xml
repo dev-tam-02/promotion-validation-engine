@@ -11,5 +11,6 @@
     <include file="db/changelog/changes/003-add-audit-columns-to-bundles.xml"/>
     <include file="db/changelog/changes/004-add-audit-columns-to-outbox-events.xml"/>
     <include file="db/changelog/changes/005-create-assignments-table.xml"/>
+    <include file="db/changelog/changes/006-create-quota-events-table.xml"/>
 
 </databaseChangeLog>

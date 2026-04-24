@@ -8,13 +8,22 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
-@Schema(description = "Request for rule evaluation (including SIMULATE mode)")
+@Schema(description = "Request for rule evaluation (including SIMULATE and REDEMPTION modes)")
 public class EvaluateRuleRequest {
 
-    @Schema(description = "Evaluation mode: NORMAL or SIMULATE", example = "SIMULATE", allowableValues = {"NORMAL", "SIMULATE"})
+    @Schema(description = "Evaluation mode: NORMAL, SIMULATE, or REDEMPTION",
+            example = "SIMULATE", allowableValues = {"NORMAL", "SIMULATE", "REDEMPTION"})
     @NotNull(message = "mode is required")
     @JsonProperty("mode")
     private String mode = "NORMAL";
+
+    @Schema(description = "Redemption ID — required when mode=REDEMPTION; correlates quota_events rows")
+    @JsonProperty("redemptionId")
+    private String redemptionId;
+
+    @Schema(description = "Quota window context for Layer-1 counter enforcement — used when mode=REDEMPTION")
+    @JsonProperty("quotaContext")
+    private QuotaContext quotaContext;
 
     @Schema(description = "Fact map: keys are fact type names (order, customer, candidate, voucher), "
             + "values are objects matching those types")
@@ -53,7 +62,27 @@ public class EvaluateRuleRequest {
         this.ruleIds = ruleIds;
     }
 
+    public String getRedemptionId() {
+        return redemptionId;
+    }
+
+    public void setRedemptionId(String redemptionId) {
+        this.redemptionId = redemptionId;
+    }
+
+    public QuotaContext getQuotaContext() {
+        return quotaContext;
+    }
+
+    public void setQuotaContext(QuotaContext quotaContext) {
+        this.quotaContext = quotaContext;
+    }
+
     public boolean isSimulateMode() {
         return "SIMULATE".equalsIgnoreCase(mode);
+    }
+
+    public boolean isRedemptionMode() {
+        return "REDEMPTION".equalsIgnoreCase(mode);
     }
 }
