@@ -10,13 +10,14 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import vn.viettel.vds.promotion.rule.engine.application.port.in.RegisterDrlUseCase;
-import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleRegistryPort;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
-import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
+import vn.viettel.vds.promotion.rule.engine.domain.service.execution.IncrementalKieContainerService;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +27,15 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link DrlRegistrationService}.
+ *
+ * <p>After Task 09 V5 the service no longer directly compiles DRL or calls
+ * {@code warmupBundle}. Instead it delegates to {@link IncrementalKieContainerService}
+ * which is mocked here to isolate the application-layer orchestration logic.
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("DrlRegistrationService Tests")
+@DisplayName("DrlRegistrationService Tests — V5 incremental path")
 class DrlRegistrationServiceTest {
 
     private static final String RULE_ID = "rule-promo-001";
@@ -40,13 +48,10 @@ class DrlRegistrationServiceTest {
     private static final String BUNDLE_HASH = "sha256:abc123def456";
 
     @Mock
-    private DroolsCompilationService compilationService;
-
-    @Mock
     private RuleRegistryPort ruleRegistry;
 
     @Mock
-    private RuleEnginePort ruleEnginePort;
+    private IncrementalKieContainerService incrementalKieSvc;
 
     @Captor
     private ArgumentCaptor<RegisteredRule> savedRuleCaptor;
@@ -55,7 +60,7 @@ class DrlRegistrationServiceTest {
 
     @BeforeEach
     void setUp() {
-        sut = new DrlRegistrationService(compilationService, ruleRegistry, ruleEnginePort);
+        sut = new DrlRegistrationService(ruleRegistry, incrementalKieSvc);
     }
 
     // ------------------------------------------------------------------
@@ -67,16 +72,13 @@ class DrlRegistrationServiceTest {
     class RegisterTests {
 
         @Test
-        @DisplayName("Should compile DRL, warm up bundle, save to registry and return bundleHash")
+        @DisplayName("Should delegate to incremental service, save to registry and return bundleHash")
         void shouldRegisterNewRule() {
             // Given
-            DroolsCompilationService.CompilationResult compiled =
-                    new DroolsCompilationService.CompilationResult(
-                            BUNDLE_HASH, new byte[]{1, 2, 3}, 3L, List.of(), "10.1.0");
-
             when(ruleRegistry.findById(RULE_ID)).thenReturn(Optional.empty());
-            when(compilationService.compileDrl(eq(RULE_ID), eq(1), eq(VALID_DRL)))
-                    .thenReturn(compiled);
+            when(ruleRegistry.findAll()).thenReturn(Collections.emptyList());
+            when(incrementalKieSvc.registerOrUpdate(eq(RULE_ID), eq(VALID_DRL), any(Map.class)))
+                    .thenReturn(BUNDLE_HASH);
 
             // When
             RegisterDrlUseCase.RegisterRuleResult result = sut.register(RULE_ID, VALID_DRL);
@@ -85,7 +87,7 @@ class DrlRegistrationServiceTest {
             assertThat(result.ruleId()).isEqualTo(RULE_ID);
             assertThat(result.bundleHash()).isEqualTo(BUNDLE_HASH);
 
-            verify(ruleEnginePort).warmupBundle(eq(BUNDLE_HASH), any(byte[].class));
+            verify(incrementalKieSvc).registerOrUpdate(eq(RULE_ID), eq(VALID_DRL), any(Map.class));
             verify(ruleRegistry).save(savedRuleCaptor.capture());
 
             RegisteredRule saved = savedRuleCaptor.getValue();
@@ -110,8 +112,8 @@ class DrlRegistrationServiceTest {
             assertThat(result.ruleId()).isEqualTo(RULE_ID);
             assertThat(result.bundleHash()).isEqualTo(BUNDLE_HASH);
 
-            // No re-compilation, no warmup, no save
-            verifyNoInteractions(compilationService, ruleEnginePort);
+            // No incremental update, no save
+            verifyNoInteractions(incrementalKieSvc);
             verify(ruleRegistry, never()).save(any());
         }
 
@@ -128,17 +130,18 @@ class DrlRegistrationServiceTest {
                     .isInstanceOf(RegisterDrlUseCase.DrlConflictException.class)
                     .hasMessageContaining(RULE_ID);
 
-            verifyNoInteractions(compilationService, ruleEnginePort);
+            verifyNoInteractions(incrementalKieSvc);
         }
 
         @Test
-        @DisplayName("Should throw DrlCompileException when DRL has syntax errors")
+        @DisplayName("Should throw DrlCompileException when incremental service fails compilation")
         void shouldThrowCompileExceptionForInvalidDrl() {
             // Given
             String badDrl = "this is not valid DRL !!!";
             when(ruleRegistry.findById(RULE_ID)).thenReturn(Optional.empty());
-            when(compilationService.compileDrl(anyString(), eq(1), eq(badDrl)))
-                    .thenThrow(new DroolsCompilationService.CompilationException(
+            when(ruleRegistry.findAll()).thenReturn(Collections.emptyList());
+            when(incrementalKieSvc.registerOrUpdate(anyString(), eq(badDrl), any(Map.class)))
+                    .thenThrow(new IncrementalKieContainerService.IncrementalCompileException(
                             "DRL compilation failed", List.of("[ERROR] syntax error near '!!!'")
                     ));
 
@@ -148,7 +151,6 @@ class DrlRegistrationServiceTest {
                     .hasMessageContaining("DRL compilation failed");
 
             verify(ruleRegistry, never()).save(any());
-            verifyNoInteractions(ruleEnginePort);
         }
     }
 
@@ -161,7 +163,7 @@ class DrlRegistrationServiceTest {
     class UpdateTests {
 
         @Test
-        @DisplayName("Should compile new DRL, warm up bundle, update registry and return new bundleHash")
+        @DisplayName("Should delegate to incremental service, update registry and return new bundleHash")
         void shouldUpdateExistingRule() {
             // Given
             String newDrl = "package rules; rule \"updated\" when eval(true) then end";
@@ -170,11 +172,9 @@ class DrlRegistrationServiceTest {
             RegisteredRule existing = new RegisteredRule(
                     RULE_ID, VALID_DRL, BUNDLE_HASH, Instant.parse("2024-01-01T00:00:00Z"), Instant.now());
             when(ruleRegistry.findById(RULE_ID)).thenReturn(Optional.of(existing));
-
-            DroolsCompilationService.CompilationResult compiled =
-                    new DroolsCompilationService.CompilationResult(
-                            newHash, new byte[]{9, 8, 7}, 3L, List.of(), "10.1.0");
-            when(compilationService.compileDrl(eq(RULE_ID), eq(1), eq(newDrl))).thenReturn(compiled);
+            when(ruleRegistry.findAll()).thenReturn(List.of(existing));
+            when(incrementalKieSvc.registerOrUpdate(eq(RULE_ID), eq(newDrl), any(Map.class)))
+                    .thenReturn(newHash);
 
             // When
             RegisterDrlUseCase.RegisterRuleResult result = sut.update(RULE_ID, newDrl);
@@ -183,7 +183,7 @@ class DrlRegistrationServiceTest {
             assertThat(result.ruleId()).isEqualTo(RULE_ID);
             assertThat(result.bundleHash()).isEqualTo(newHash);
 
-            verify(ruleEnginePort).warmupBundle(eq(newHash), any(byte[].class));
+            verify(incrementalKieSvc).registerOrUpdate(eq(RULE_ID), eq(newDrl), any(Map.class));
             verify(ruleRegistry).save(savedRuleCaptor.capture());
 
             RegisteredRule saved = savedRuleCaptor.getValue();
@@ -204,19 +204,20 @@ class DrlRegistrationServiceTest {
                     .isInstanceOf(RegisterDrlUseCase.RuleNotFoundException.class)
                     .hasMessageContaining(RULE_ID);
 
-            verifyNoInteractions(compilationService, ruleEnginePort);
+            verifyNoInteractions(incrementalKieSvc);
         }
 
         @Test
-        @DisplayName("Should throw DrlCompileException when new DRL is invalid")
+        @DisplayName("Should throw DrlCompileException when incremental service fails on new DRL")
         void shouldThrowCompileExceptionForInvalidNewDrl() {
             // Given
             String badDrl = "not valid drl";
             RegisteredRule existing = new RegisteredRule(
                     RULE_ID, VALID_DRL, BUNDLE_HASH, Instant.now(), Instant.now());
             when(ruleRegistry.findById(RULE_ID)).thenReturn(Optional.of(existing));
-            when(compilationService.compileDrl(anyString(), eq(1), eq(badDrl)))
-                    .thenThrow(new DroolsCompilationService.CompilationException(
+            when(ruleRegistry.findAll()).thenReturn(List.of(existing));
+            when(incrementalKieSvc.registerOrUpdate(anyString(), eq(badDrl), any(Map.class)))
+                    .thenThrow(new IncrementalKieContainerService.IncrementalCompileException(
                             "parse error", List.of("[ERROR] unexpected token")));
 
             // When / Then

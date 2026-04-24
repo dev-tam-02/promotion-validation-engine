@@ -2,6 +2,7 @@ package vn.viettel.vds.promotion.rule.engine.application.port.out;
 
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
 
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -19,6 +20,15 @@ public interface RuleRegistryPort {
      * @return the rule if it exists
      */
     Optional<RegisteredRule> findById(String ruleId);
+
+    /**
+     * Return all currently registered rules.
+     * Used by the incremental KieContainer update (Task 09 V5) to rebuild the
+     * full DRL snapshot when applying a new rule version.
+     *
+     * @return unmodifiable snapshot of all registered rules
+     */
+    Collection<RegisteredRule> findAll();
 
     /**
      * Persist (insert or replace) a registered rule.

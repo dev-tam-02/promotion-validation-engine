@@ -2,47 +2,52 @@ package vn.viettel.vds.promotion.rule.engine.application.usecase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.rule.engine.application.port.in.RegisterDrlUseCase;
-import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleRegistryPort;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
-import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
+import vn.viettel.vds.promotion.rule.engine.domain.service.execution.IncrementalKieContainerService;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Application service for DRL rule CRUD operations exposed at POST/PUT/DELETE /v1/rules.
  *
- * <p><b>POST idempotency</b>: If the same (ruleId, drl) pair is submitted again, the existing
- * bundleHash is returned without re-compiling. If ruleId exists with different DRL, a 409 conflict
- * is raised — callers must use PUT to update.
+ * <h3>Task 09 V5 — incremental KieBase update</h3>
+ * <p>Each successful register/update call delegates to
+ * {@link IncrementalKieContainerService#registerOrUpdate} which:
+ * <ol>
+ *   <li>Compiles all currently-registered rules <em>plus</em> the new/updated DRL into a
+ *       fresh versioned {@link org.kie.api.builder.ReleaseId}.</li>
+ *   <li>Calls {@link org.kie.api.runtime.KieContainer#updateToVersion(org.kie.api.builder.ReleaseId)}
+ *       for an atomic, in-place KieBase swap with zero downtime.</li>
+ * </ol>
+ * Concurrent evaluations that started before the swap continue on the previous KieBase;
+ * new sessions transparently use the updated one.
  *
- * <p><b>Persistence</b>: Delegates to {@link RuleRegistryPort}. MVP uses an in-memory store;
- * Task 09 V2 will swap in a JPA-backed adapter.
+ * <h3>POST idempotency</h3>
+ * Same (ruleId, drl) → return existing bundleHash without recompiling.
+ * Same ruleId, different drl → {@link RegisterDrlUseCase.DrlConflictException} (409).
  *
- * <p><b>KieBase lifecycle</b>: Each successful compile is warmed up immediately via
- * {@link RuleEnginePort#warmupBundle(String, byte[])} so the bundle is ready for execution
- * without a cold-start round-trip to MinIO. Full KieBase rebuild per change (MVP).
- * Task 09 V5 will introduce incremental KieContainer.updateToVersion().
+ * <h3>Persistence</h3>
+ * Delegates to {@link RuleRegistryPort}. MVP uses an in-memory ConcurrentHashMap;
+ * Task 09 V2 introduced a JPA-backed adapter.
  */
 @Service
 public class DrlRegistrationService implements RegisterDrlUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(DrlRegistrationService.class);
 
-    private final DroolsCompilationService compilationService;
     private final RuleRegistryPort ruleRegistry;
-    private final RuleEnginePort ruleEnginePort;
+    private final IncrementalKieContainerService incrementalKieSvc;
 
-    public DrlRegistrationService(DroolsCompilationService compilationService,
-                                  RuleRegistryPort ruleRegistry,
-                                  @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
-        this.compilationService = compilationService;
+    public DrlRegistrationService(RuleRegistryPort ruleRegistry,
+                                   IncrementalKieContainerService incrementalKieSvc) {
         this.ruleRegistry = ruleRegistry;
-        this.ruleEnginePort = ruleEnginePort;
+        this.incrementalKieSvc = incrementalKieSvc;
     }
 
     @Override
@@ -61,16 +66,16 @@ public class DrlRegistrationService implements RegisterDrlUseCase {
                     "Rule '" + ruleId + "' already exists with different DRL content. Use PUT /v1/rules/{id} to update.");
         }
 
-        DroolsCompilationService.CompilationResult compiled = compileDrl(ruleId, drl);
+        // Build snapshot of all currently registered DRLs (new rule not yet in registry)
+        Map<String, String> currentDrls = buildCurrentDrlsMap();
 
-        ruleEnginePort.warmupBundle(compiled.getBundleHash(), compiled.getArtifactBytes());
+        String bundleHash = applyIncrementalUpdate(ruleId, drl, currentDrls);
 
-        RegisteredRule rule = new RegisteredRule(
-                ruleId, drl, compiled.getBundleHash(), Instant.now(), Instant.now());
+        RegisteredRule rule = new RegisteredRule(ruleId, drl, bundleHash, Instant.now(), Instant.now());
         ruleRegistry.save(rule);
 
-        logger.info("Rule registered: ruleId={}, bundleHash={}", ruleId, compiled.getBundleHash());
-        return new RegisterRuleResult(ruleId, compiled.getBundleHash());
+        logger.info("Rule registered (incremental KieBase): ruleId={}, bundleHash={}", ruleId, bundleHash);
+        return new RegisterRuleResult(ruleId, bundleHash);
     }
 
     @Override
@@ -80,16 +85,17 @@ public class DrlRegistrationService implements RegisterDrlUseCase {
         RegisteredRule existing = ruleRegistry.findById(ruleId)
                 .orElseThrow(() -> new RuleNotFoundException("Rule not found: " + ruleId));
 
-        DroolsCompilationService.CompilationResult compiled = compileDrl(ruleId, drl);
+        // Snapshot includes the old DRL for ruleId — registerOrUpdate will overwrite it
+        Map<String, String> currentDrls = buildCurrentDrlsMap();
 
-        ruleEnginePort.warmupBundle(compiled.getBundleHash(), compiled.getArtifactBytes());
+        String bundleHash = applyIncrementalUpdate(ruleId, drl, currentDrls);
 
-        RegisteredRule updated = new RegisteredRule(
-                ruleId, drl, compiled.getBundleHash(), existing.getRegisteredAt(), Instant.now());
+        RegisteredRule updated = new RegisteredRule(ruleId, drl, bundleHash,
+                existing.getRegisteredAt(), Instant.now());
         ruleRegistry.save(updated);
 
-        logger.info("Rule updated: ruleId={}, newBundleHash={}", ruleId, compiled.getBundleHash());
-        return new RegisterRuleResult(ruleId, compiled.getBundleHash());
+        logger.info("Rule updated (incremental KieBase): ruleId={}, bundleHash={}", ruleId, bundleHash);
+        return new RegisterRuleResult(ruleId, bundleHash);
     }
 
     @Override
@@ -104,17 +110,32 @@ public class DrlRegistrationService implements RegisterDrlUseCase {
         logger.info("Rule deleted: ruleId={}", ruleId);
     }
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Compile DRL via Drools KieBuilder. Translates {@link DroolsCompilationService.CompilationException}
-     * (DRL syntax errors) into {@link DrlCompileException} for clean exception boundary.
+     * Snapshot of ruleId→drl for all rules currently in the registry.
+     * Called <em>before</em> saving the new/updated rule so the incremental service
+     * receives the pre-change state (it will overwrite the target ruleId itself).
      */
-    private DroolsCompilationService.CompilationResult compileDrl(String ruleId, String drl) {
+    private Map<String, String> buildCurrentDrlsMap() {
+        return ruleRegistry.findAll().stream()
+                .collect(Collectors.toMap(RegisteredRule::getRuleId, RegisteredRule::getDrl));
+    }
+
+    /**
+     * Delegate compilation + atomic KieBase swap to the incremental service.
+     * Translates domain {@link IncrementalKieContainerService.IncrementalCompileException}
+     * into application-layer {@link DrlCompileException}.
+     */
+    private String applyIncrementalUpdate(String ruleId, String drl, Map<String, String> currentDrls) {
         try {
-            return compilationService.compileDrl(ruleId, 1, drl);
-        } catch (DroolsCompilationService.CompilationException e) {
+            return incrementalKieSvc.registerOrUpdate(ruleId, drl, currentDrls);
+        } catch (IncrementalKieContainerService.IncrementalCompileException e) {
             String message = "DRL compilation failed for rule '" + ruleId + "': " + e.getMessage();
             logger.warn(message);
-            throw new DrlCompileException(message, e.getLogs());
+            throw new DrlCompileException(message, e.getCompileLogs());
         }
     }
 }

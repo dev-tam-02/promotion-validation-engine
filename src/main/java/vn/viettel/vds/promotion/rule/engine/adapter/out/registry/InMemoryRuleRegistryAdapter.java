@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleRegistryPort;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +35,11 @@ public class InMemoryRuleRegistryAdapter implements RuleRegistryPort {
     @Override
     public Optional<RegisteredRule> findById(String ruleId) {
         return Optional.ofNullable(registry.get(ruleId));
+    }
+
+    @Override
+    public Collection<RegisteredRule> findAll() {
+        return Collections.unmodifiableCollection(registry.values());
     }
 
     @Override
