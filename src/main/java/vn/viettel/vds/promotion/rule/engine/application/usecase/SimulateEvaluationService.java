@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.application.usecase;
 
+import io.micrometer.core.instrument.Timer;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.event.rule.MatchCancelledEvent;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.QuotaContext;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.TraceEntry;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.metrics.RuleAnalyticsMetrics;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleRegistryPort;
 import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
@@ -54,17 +56,20 @@ public class SimulateEvaluationService {
     private final FactPreparationService factPreparationService;
     private final KieSessionManager sessionManager;
     private final QuotaCounterService quotaCounterService;
+    private final RuleAnalyticsMetrics analyticsMetrics;
 
     public SimulateEvaluationService(RuleRegistryPort ruleRegistry,
                                      DroolsCompilationService compilationService,
                                      FactPreparationService factPreparationService,
                                      KieSessionManager sessionManager,
-                                     QuotaCounterService quotaCounterService) {
+                                     QuotaCounterService quotaCounterService,
+                                     RuleAnalyticsMetrics analyticsMetrics) {
         this.ruleRegistry = ruleRegistry;
         this.compilationService = compilationService;
         this.factPreparationService = factPreparationService;
         this.sessionManager = sessionManager;
         this.quotaCounterService = quotaCounterService;
+        this.analyticsMetrics = analyticsMetrics;
     }
 
     /**
@@ -139,7 +144,17 @@ public class SimulateEvaluationService {
                     ruleId, rule.getBundleHash(), simulateMode, redemptionMode);
 
             try {
+                // --- analytics: start per-rule timer ---
+                Timer.Sample evalSample = analyticsMetrics.startEvaluationTimer();
+
                 SingleEvalResult result = executeSingle(rule, facts, simulateMode);
+
+                // --- analytics: stop timer, record fire + rejects ---
+                analyticsMetrics.stopEvaluationTimer(evalSample, ruleId);
+                analyticsMetrics.recordFire(ruleId, result.verdict());
+                if (!"ALLOW".equals(result.verdict())) {
+                    analyticsMetrics.recordRejects(ruleId, result.reasonCodes());
+                }
 
                 if (simulateMode) {
                     allTrace.addAll(result.trace());
@@ -172,6 +187,8 @@ public class SimulateEvaluationService {
                 log.error("evaluate: execution failed for ruleId={}: {}", ruleId, ex.getMessage(), ex);
                 verdict = "DENY";
                 allReasonCodes.add("EXECUTION_ERROR");
+                analyticsMetrics.recordFire(ruleId, "DENY");
+                analyticsMetrics.recordRejects(ruleId, List.of("EXECUTION_ERROR"));
                 if (simulateMode) {
                     allUnmatched.add(ruleId);
                 }
