@@ -13,5 +13,6 @@
     <include file="db/changelog/changes/005-create-assignments-table.xml"/>
     <include file="db/changelog/changes/006-create-quota-events-table.xml"/>
     <include file="db/changelog/changes/007-add-audit-columns-to-compile-jobs.xml"/>
+    <include file="db/changelog/changes/008-create-fast-check-configs-table.xml"/>
 
 </databaseChangeLog>

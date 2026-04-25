@@ -17,7 +17,11 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FastCheckRequest {
 
-    @Schema(description = "Campaign/Bundle identifier", example = "tet-2025", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Subject type (canonical, e.g. DISCOUNT_COUPON, DISCOUNT_CAMPAIGN)", example = "DISCOUNT_COUPON")
+    @JsonProperty("subjectType")
+    private String subjectType;
+
+    @Schema(description = "Campaign/Bundle identifier (aka canonical subjectKey)", example = "tet-2025", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Campaign ID is required")
     @JsonProperty("campaignId")
     private String campaignId;
@@ -73,6 +77,14 @@ public class FastCheckRequest {
     }
 
     // Getters and setters
+    public String getSubjectType() {
+        return subjectType != null ? subjectType : "DISCOUNT_COUPON";
+    }
+
+    public void setSubjectType(String subjectType) {
+        this.subjectType = subjectType;
+    }
+
     public String getCampaignId() {
         return campaignId;
     }

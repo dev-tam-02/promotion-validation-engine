@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.application.usecase;
 
+import com.promix.platform.core.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,7 +45,8 @@ public class BundleLookupService implements BundleLookupUseCase {
                 .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
 
         if (latestBundle.isEmpty()) {
-            throw new IllegalArgumentException("No bundle found for ruleId: " + ruleId);
+            throw new ResourceNotFoundException("NO_RULE_CONFIGURED",
+                    "No bundle found for ruleId: " + ruleId);
         }
 
         BundleEntity bundle = latestBundle.get();
@@ -97,9 +99,12 @@ public class BundleLookupService implements BundleLookupUseCase {
             }
         }
 
-        // No matching assignment or bundle found for this subject
+        // Fail-closed: no assignment or bundle → deny caller with
+        // NO_RULE_CONFIGURED so pp-redemption never silently allows a
+        // redemption when no rule is present.
         logger.warn("No active assignment or bundle found for subject: {}/{}", subjectType, subjectKey);
-        throw new IllegalArgumentException("No bundle found for subject: " + subjectType + "/" + subjectKey);
+        throw new ResourceNotFoundException("NO_RULE_CONFIGURED",
+                "No active rule configured for " + subjectType + ":" + subjectKey);
     }
 
     @Override
@@ -108,7 +113,8 @@ public class BundleLookupService implements BundleLookupUseCase {
 
         Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);
         if (bundleOpt.isEmpty()) {
-            throw new IllegalArgumentException("Bundle not found: " + bundleHash);
+            throw new ResourceNotFoundException("BUNDLE_NOT_FOUND",
+                    "Bundle not found: " + bundleHash);
         }
 
         BundleEntity bundle = bundleOpt.get();
@@ -130,7 +136,8 @@ public class BundleLookupService implements BundleLookupUseCase {
 
         Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);
         if (bundleOpt.isEmpty()) {
-            throw new IllegalArgumentException("Bundle not found: " + bundleHash);
+            throw new ResourceNotFoundException("BUNDLE_NOT_FOUND",
+                    "Bundle not found: " + bundleHash);
         }
 
         BundleEntity bundle = bundleOpt.get();
