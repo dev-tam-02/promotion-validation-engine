@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Add missing audit columns to bundle_time_links table (required by BaseEntity) -->
+    <!-- bundle_time_links was created in 001-02 without BaseEntity audit columns,      -->
+    <!-- causing Unknown column 'tl1_0.created_at' SQL errors on every Bundle load.     -->
+    <changeSet id="009-01-add-audit-columns-to-bundle-time-links" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="bundle_time_links"/>
+            <not>
+                <columnExists tableName="bundle_time_links" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="bundle_time_links">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(36)"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(36)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add version column to bundle_time_links table (required by BaseEntity @Version) -->
+    <changeSet id="009-02-add-version-column-to-bundle-time-links" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="bundle_time_links"/>
+            <not>
+                <columnExists tableName="bundle_time_links" columnName="version"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="bundle_time_links">
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

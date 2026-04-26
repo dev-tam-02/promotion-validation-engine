@@ -14,5 +14,6 @@
     <include file="db/changelog/changes/006-create-quota-events-table.xml"/>
     <include file="db/changelog/changes/007-add-audit-columns-to-compile-jobs.xml"/>
     <include file="db/changelog/changes/008-create-fast-check-configs-table.xml"/>
+    <include file="db/changelog/changes/009-add-audit-columns-to-bundle-time-links.xml"/>
 
 </databaseChangeLog>
