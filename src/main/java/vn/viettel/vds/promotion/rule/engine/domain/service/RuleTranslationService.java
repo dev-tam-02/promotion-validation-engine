@@ -86,6 +86,7 @@ public class RuleTranslationService {
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;\n");
+        drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.QuotaPolicy;\n");
         drl.append("import java.util.List;\n");
         drl.append("import java.util.ArrayList;\n");
         drl.append("import java.math.BigDecimal;\n");
@@ -128,9 +129,14 @@ public class RuleTranslationService {
         drl.append("        TemporalAllowed()\n");
 
         Set<String> boundVars = new HashSet<>();
-        generateConditions(drl, rootNode, nodeMap, 2, boundVars);
+        List<String> counterPolicyStatements = new ArrayList<>();
+        generateConditions(drl, rootNode, nodeMap, 2, boundVars, counterPolicyStatements);
 
         drl.append(DRL_THEN);
+        // Emit counter-policy addPolicy statements before the ALLOW verdict
+        for (String stmt : counterPolicyStatements) {
+            drl.append("        ").append(stmt).append("\n");
+        }
         drl.append("        result.setDecision(\"ALLOW\");\n");
         drl.append("        result.setOk(true);\n");
         drl.append("        insert(new RuleMatched());  // Mark rule as matched to prevent failure rules from firing\n");
@@ -145,19 +151,25 @@ public class RuleTranslationService {
     private void generateConditions(StringBuilder drl, Map<String, Object> node,
                                     Map<String, Map<String, Object>> nodeMap, int indent,
                                     Set<String> boundVars) {
+        generateConditions(drl, node, nodeMap, indent, boundVars, null);
+    }
+
+    private void generateConditions(StringBuilder drl, Map<String, Object> node,
+                                    Map<String, Map<String, Object>> nodeMap, int indent,
+                                    Set<String> boundVars, List<String> counterPolicyStatements) {
 
         String type = (String) node.get("type");
 
         if (NODE_TYPE_GROUP.equals(type)) {
-            generateGroupConditions(drl, node, nodeMap, indent, boundVars);
+            generateGroupConditions(drl, node, nodeMap, indent, boundVars, counterPolicyStatements);
         } else if (NODE_TYPE_COND.equals(type)) {
-            generateConditionNode(drl, node, indent, boundVars);
+            generateConditionNode(drl, node, indent, boundVars, counterPolicyStatements);
         }
     }
 
     private void generateGroupConditions(StringBuilder drl, Map<String, Object> groupNode,
                                          Map<String, Map<String, Object>> nodeMap, int indent,
-                                         Set<String> boundVars) {
+                                         Set<String> boundVars, List<String> counterPolicyStatements) {
 
         String groupLogic = (String) groupNode.get("groupLogic");
         List<String> children = extractChildIds(groupNode);
@@ -169,17 +181,17 @@ public class RuleTranslationService {
         String indentStr = " ".repeat(indent);
 
         switch (groupLogic) {
-            case "ALL" -> generateAllConditions(drl, children, nodeMap, indent, boundVars);
-            case "ANY" -> generateAnyConditions(drl, children, nodeMap, indent, indentStr, boundVars);
-            case "NONE" -> generateNoneConditions(drl, children, nodeMap, indent, indentStr, boundVars);
-            case "XOR" -> generateXorConditions(drl, children, nodeMap, indent, indentStr, boundVars);
+            case "ALL" -> generateAllConditions(drl, children, nodeMap, indent, boundVars, counterPolicyStatements);
+            case "ANY" -> generateAnyConditions(drl, children, nodeMap, indent, indentStr, boundVars, counterPolicyStatements);
+            case "NONE" -> generateNoneConditions(drl, children, nodeMap, indent, indentStr, boundVars, counterPolicyStatements);
+            case "XOR" -> generateXorConditions(drl, children, nodeMap, indent, indentStr, boundVars, counterPolicyStatements);
             default -> logger.warn("Unknown groupLogic value: {}", groupLogic);
         }
     }
 
     private void generateAllConditions(StringBuilder drl, List<String> children,
                                        Map<String, Map<String, Object>> nodeMap, int indent,
-                                       Set<String> boundVars) {
+                                       Set<String> boundVars, List<String> counterPolicyStatements) {
         // Sort children to ensure deterministic order
         List<String> sortedChildren = new ArrayList<>(children);
         Collections.sort(sortedChildren);
@@ -187,14 +199,14 @@ public class RuleTranslationService {
         for (String childId : sortedChildren) {
             Map<String, Object> childNode = nodeMap.get(childId);
             if (childNode != null) {
-                generateConditions(drl, childNode, nodeMap, indent, boundVars);
+                generateConditions(drl, childNode, nodeMap, indent, boundVars, counterPolicyStatements);
             }
         }
     }
 
     private void generateAnyConditions(StringBuilder drl, List<String> children,
                                        Map<String, Map<String, Object>> nodeMap, int indent, String indentStr,
-                                       Set<String> boundVars) {
+                                       Set<String> boundVars, List<String> counterPolicyStatements) {
         // Sort children to ensure deterministic order
         List<String> sortedChildren = new ArrayList<>(children);
         Collections.sort(sortedChildren);
@@ -207,7 +219,7 @@ public class RuleTranslationService {
                 if (i > 0) {
                     drl.append(indentStr).append("    or\n");
                 }
-                generateConditions(drl, childNode, nodeMap, indent + 4, boundVars);
+                generateConditions(drl, childNode, nodeMap, indent + 4, boundVars, counterPolicyStatements);
             }
         }
         drl.append(indentStr).append(")\n");
@@ -215,7 +227,7 @@ public class RuleTranslationService {
 
     private void generateNoneConditions(StringBuilder drl, List<String> children,
                                         Map<String, Map<String, Object>> nodeMap, int indent, String indentStr,
-                                        Set<String> boundVars) {
+                                        Set<String> boundVars, List<String> counterPolicyStatements) {
         // Sort children to ensure deterministic order
         List<String> sortedChildren = new ArrayList<>(children);
         Collections.sort(sortedChildren);
@@ -228,7 +240,7 @@ public class RuleTranslationService {
                 if (i > 0) {
                     drl.append(indentStr).append("    or\n");
                 }
-                generateConditions(drl, childNode, nodeMap, indent + 4, boundVars);
+                generateConditions(drl, childNode, nodeMap, indent + 4, boundVars, counterPolicyStatements);
             }
         }
         drl.append(indentStr).append(")\n");
@@ -242,7 +254,7 @@ public class RuleTranslationService {
      */
     private void generateXorConditions(StringBuilder drl, List<String> children,
                                         Map<String, Map<String, Object>> nodeMap, int indent, String indentStr,
-                                        Set<String> boundVars) {
+                                        Set<String> boundVars, List<String> counterPolicyStatements) {
         List<String> sortedChildren = new ArrayList<>(children);
         Collections.sort(sortedChildren);
 
@@ -259,11 +271,11 @@ public class RuleTranslationService {
 
                 if (j == i) {
                     // This child MUST match
-                    generateConditions(drl, childNode, nodeMap, indent + 8, boundVars);
+                    generateConditions(drl, childNode, nodeMap, indent + 8, boundVars, counterPolicyStatements);
                 } else {
                     // Other children must NOT match
                     drl.append(indentStr).append("        not (\n");
-                    generateConditions(drl, childNode, nodeMap, indent + 12, boundVars);
+                    generateConditions(drl, childNode, nodeMap, indent + 12, boundVars, counterPolicyStatements);
                     drl.append(indentStr).append("        )\n");
                 }
             }
@@ -272,8 +284,9 @@ public class RuleTranslationService {
         drl.append(indentStr).append(")\n");
     }
 
+    @SuppressWarnings("unchecked")
     private void generateConditionNode(StringBuilder drl, Map<String, Object> condNode, int indent,
-                                       Set<String> boundVars) {
+                                       Set<String> boundVars, List<String> counterPolicyStatements) {
         String nodeId = (String) condNode.get("id");
         String operatorName = (String) condNode.get("operatorName");
         Integer operatorVersion = (Integer) condNode.get("operatorVersion");
@@ -288,6 +301,40 @@ public class RuleTranslationService {
         }
 
         OperatorTranslator translator = translatorRegistry.getTranslator(operatorName, operatorVersion);
+
+        // Counter-policy translators: fact pattern goes to when; then-statement collected separately
+        if (translator.isCounterPolicy() && counterPolicyStatements != null) {
+            String factPattern = translator.getCounterFactPattern();
+            if (factPattern != null && !factPattern.isBlank()) {
+                String trimmed = factPattern.trim();
+                Matcher bareMatcher = BARE_BINDING_PATTERN.matcher(trimmed);
+                if (bareMatcher.matches()) {
+                    String varName = bareMatcher.group(1);
+                    if (!boundVars.contains(varName)) {
+                        boundVars.add(varName);
+                        drl.append(" ".repeat(indent)).append(trimmed).append("\n");
+                    }
+                } else {
+                    Matcher varMatcher = VAR_BINDING_PATTERN.matcher(trimmed);
+                    if (varMatcher.find()) {
+                        String varName = varMatcher.group(1);
+                        if (!boundVars.contains(varName)) {
+                            boundVars.add(varName);
+                            drl.append(" ".repeat(indent)).append(trimmed).append("\n");
+                        }
+                    } else {
+                        drl.append(" ".repeat(indent)).append(trimmed).append("\n");
+                    }
+                }
+            }
+            // Collect the then-clause statement
+            String thenStmt = translator.translate(nodeId, params, reasonCode);
+            if (thenStmt != null && !thenStmt.isBlank()) {
+                counterPolicyStatements.add(thenStmt.trim());
+            }
+            return;
+        }
+
         String condition = translator.translate(nodeId, params, reasonCode);
 
         String indentStr = " ".repeat(indent);
@@ -340,6 +387,12 @@ public class RuleTranslationService {
             }
 
             OperatorTranslator translator = translatorRegistry.getTranslator(operatorName, operatorVersion);
+
+            // Counter-policy translators emit RHS statements — they do not have a when-clause condition to negate
+            if (translator.isCounterPolicy()) {
+                continue;
+            }
+
             String condition = translator.translate(nodeId, params, reasonCode);
 
             // Generate negative rule for this condition
