@@ -87,6 +87,7 @@ public class RuleTranslationService {
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;\n");
         drl.append("import vn.viettel.vds.promotion.rule.engine.domain.model.QuotaPolicy;\n");
+        drl.append("import vn.viettel.vds.promotion.rule.engine.application.service.BucketKeys;\n");
         drl.append("import java.util.List;\n");
         drl.append("import java.util.ArrayList;\n");
         drl.append("import java.math.BigDecimal;\n");
