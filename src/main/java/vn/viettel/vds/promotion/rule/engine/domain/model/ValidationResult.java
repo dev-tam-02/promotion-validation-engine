@@ -1,5 +1,7 @@
 package vn.viettel.vds.promotion.rule.engine.domain.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ValidationResult {
@@ -11,6 +13,9 @@ public class ValidationResult {
     private Boolean ok;
     private String decision;
     private List<String> reasonCodes;
+
+    // Quota policies emitted by counter rules; enforced post-eval by QuotaCounterService
+    private final List<QuotaPolicy> policies = new ArrayList<>();
 
     public ValidationResult() {
     }
@@ -66,5 +71,17 @@ public class ValidationResult {
 
     public void setReasonCodes(List<String> reasonCodes) {
         this.reasonCodes = reasonCodes;
+    }
+
+    public void addPolicy(QuotaPolicy policy) {
+        policies.add(policy);
+    }
+
+    public List<QuotaPolicy> getPolicies() {
+        return Collections.unmodifiableList(policies);
+    }
+
+    public boolean hasPolicies() {
+        return !policies.isEmpty();
     }
 }
