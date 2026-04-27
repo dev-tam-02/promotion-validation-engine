@@ -175,6 +175,53 @@ public class QuotaCounterService {
         return totalDb == 0 ? 0.0 : (double) totalDrift / totalDb;
     }
 
+    // -------- Phase-1 simplified API (no explicit time window — bucket key already encodes date) --------
+
+    /**
+     * Simplified increment-with-check for Phase 1 counter policies.
+     *
+     * <p>The bucket key already contains the time dimension (e.g., {@code :day:20260427}),
+     * so no explicit window TTL management is performed here. The counter persists until
+     * the next Redis eviction or a manual reset.
+     *
+     * @param ruleId    rule identifier used as Redis key namespace prefix
+     * @param bucketKey scope key (from {@link BucketKeys})
+     * @param limit     maximum allowed count
+     * @return {@link CounterResult} with {@code ok=true} if increment accepted, {@code false} if exceeded
+     */
+    public CounterResult incrementWithCheck(String ruleId, String bucketKey, long limit) {
+        String redisKey = KEY_PREFIX + ruleId + ":" + bucketKey;
+        RAtomicLong counter = redissonClient.getAtomicLong(redisKey);
+
+        long current = counter.incrementAndGet();
+        log.debug("QuotaCounter INCR key={} current={} limit={}", redisKey, current, limit);
+
+        if (current > limit) {
+            counter.decrementAndGet();
+            log.info("QuotaCounter DENY ruleId={} bucketKey={} limit={}", ruleId, bucketKey, limit);
+            return CounterResult.exceeded(limit);
+        }
+
+        log.info("QuotaCounter ALLOW ruleId={} bucketKey={} current={}", ruleId, bucketKey, current);
+        return CounterResult.ok(current);
+    }
+
+    /**
+     * Simplified decrement for Phase-1 rollback (no window params needed).
+     *
+     * @param ruleId    rule identifier
+     * @param bucketKey scope key (same key used in {@link #incrementWithCheck(String, String, long)})
+     */
+    public void decrement(String ruleId, String bucketKey) {
+        String redisKey = KEY_PREFIX + ruleId + ":" + bucketKey;
+        RAtomicLong counter = redissonClient.getAtomicLong(redisKey);
+        long newValue = counter.decrementAndGet();
+        if (newValue < 0) {
+            counter.set(0);
+        }
+        log.debug("QuotaCounter DECR (rollback) key={} newValue={}", redisKey, newValue);
+    }
+
     // -------- private helpers --------
 
     private String buildKey(String ruleId, String bucketKey, LocalDateTime windowStart) {

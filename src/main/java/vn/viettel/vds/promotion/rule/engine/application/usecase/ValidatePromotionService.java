@@ -10,8 +10,11 @@ import vn.viettel.vds.promotion.rule.engine.application.port.in.ValidatePromotio
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RulesServicePort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.SessionLockPort;
+import vn.viettel.vds.promotion.rule.engine.application.service.CounterResult;
+import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Decision;
+import vn.viettel.vds.promotion.rule.engine.domain.model.QuotaPolicy;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ReasonCode;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 
@@ -29,13 +32,16 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
     private final RuleEnginePort ruleEnginePort;
     private final RulesServicePort rulesServicePort;
     private final SessionLockPort sessionLockPort;
+    private final QuotaCounterService quotaCounterService;
 
     public ValidatePromotionService(@Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort,
                                     RulesServicePort rulesServicePort,
-                                    SessionLockPort sessionLockPort) {
+                                    SessionLockPort sessionLockPort,
+                                    QuotaCounterService quotaCounterService) {
         this.ruleEnginePort = ruleEnginePort;
         this.rulesServicePort = rulesServicePort;
         this.sessionLockPort = sessionLockPort;
+        this.quotaCounterService = quotaCounterService;
     }
 
     @Override
@@ -169,15 +175,24 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
             ValidationResult ruleResult = ruleEnginePort.executeRules(
                     request.customer(), request.order(), candidate, ruleBundle.getBundleHash());
 
-            // 5. Compose final decision based only on rule execution
-            boolean finalValid = ruleResult.isMatched();
-            List<ReasonCode> reasons = new ArrayList<>();
-
-            if (!ruleResult.isMatched()) {
-                reasons.add(new ReasonCode("RULE_FAILED", Map.of(MESSAGE_KEY, ruleResult.getMessage())));
+            // 5. Post-eval: counter quota enforcement (Phase-1)
+            if (ruleResult.hasPolicies() && "ALLOW".equals(ruleResult.getDecision())) {
+                enforceQuotaPolicies(ruleResult, ruleBundle.getBundleHash());
             }
 
-            // 6. Create decision
+            // 7. Compose final decision based on rule execution (verdict may have been updated by quota enforcement)
+            boolean finalValid = ruleResult.isMatched() && !"DENY".equals(ruleResult.getDecision());
+            List<ReasonCode> reasons = new ArrayList<>();
+
+            if (!finalValid) {
+                if (ruleResult.getReasonCodes() != null) {
+                    ruleResult.getReasonCodes().forEach(rc -> reasons.add(new ReasonCode(rc)));
+                } else if (ruleResult.getMessage() != null) {
+                    reasons.add(new ReasonCode("RULE_FAILED", Map.of(MESSAGE_KEY, ruleResult.getMessage())));
+                }
+            }
+
+            // 8. Create decision
             Decision decision = new Decision(candidate, finalValid);
             decision.setReasons(reasons);
 
@@ -199,6 +214,40 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
                 }
             }
         }
+    }
+
+    /**
+     * Phase-1 quota policy enforcement: for each emitted {@link QuotaPolicy},
+     * atomically increments the counter. If any limit is exceeded, rolls back all
+     * previously incremented counters and flips the verdict to DENY.
+     *
+     * @param result   the {@link ValidationResult} whose verdict may be mutated
+     * @param ruleId   rule identifier used as Redis key namespace
+     */
+    void enforceQuotaPolicies(ValidationResult result, String ruleId) {
+        List<QuotaPolicy> incremented = new ArrayList<>();
+
+        for (QuotaPolicy policy : result.getPolicies()) {
+            CounterResult cr = quotaCounterService.incrementWithCheck(
+                    ruleId, policy.getBucketKey(), policy.getLimit());
+
+            if (cr.isOk()) {
+                incremented.add(policy);
+            } else {
+                // Limit exceeded — roll back all previously incremented counters
+                logger.info("[QuotaEnforce] Policy {} exceeded — current={}, limit={}, rolling back {} prior increment(s)",
+                        policy.getPolicyName(), cr.getCurrent(), policy.getLimit(), incremented.size());
+                for (QuotaPolicy prev : incremented) {
+                    quotaCounterService.decrement(ruleId, prev.getBucketKey());
+                }
+                // Flip verdict to DENY
+                result.setDecision("DENY");
+                result.setOk(false);
+                result.addReasonCode("QUOTA_EXCEEDED_" + policy.getPolicyName().toUpperCase());
+                return;
+            }
+        }
+        logger.debug("[QuotaEnforce] All {} policy(ies) passed for ruleId={}", result.getPolicies().size(), ruleId);
     }
 
     private boolean isValidCandidate(Candidate candidate) {

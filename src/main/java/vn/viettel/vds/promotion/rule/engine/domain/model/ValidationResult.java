@@ -77,6 +77,16 @@ public class ValidationResult {
         policies.add(policy);
     }
 
+    /**
+     * Convenience method for adding a reason code to the result (used by quota enforcement).
+     */
+    public void addReasonCode(String reasonCode) {
+        if (this.reasonCodes == null) {
+            this.reasonCodes = new ArrayList<>();
+        }
+        this.reasonCodes.add(reasonCode);
+    }
+
     public List<QuotaPolicy> getPolicies() {
         return Collections.unmodifiableList(policies);
     }
