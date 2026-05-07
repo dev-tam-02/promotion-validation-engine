@@ -61,14 +61,18 @@ public class RebuildQuotaCountersJob {
                 .register(meterRegistry);
     }
 
-    /** Daily rebuild at 02:00 UTC. Cron: second minute hour day month weekday. */
+    /**
+     * Daily rebuild at 02:00 UTC. Cron: second minute hour day month weekday.
+     */
     @Scheduled(cron = "0 0 2 * * *")
     public void rebuildScheduled() {
         log.info("RebuildQuotaCountersJob: starting scheduled rebuild");
         runRebuild();
     }
 
-    /** Manual trigger endpoint for ops/admin use. */
+    /**
+     * Manual trigger endpoint for ops/admin use.
+     */
     @PostMapping("/quota-rebuild")
     public Map<String, Object> triggerManual() {
         log.info("RebuildQuotaCountersJob: manual trigger via HTTP");
@@ -94,13 +98,13 @@ public class RebuildQuotaCountersJob {
                     log.warn("RebuildQuotaCountersJob: skipping malformed key={}", entry.getKey());
                     continue;
                 }
-                String ruleId         = parts[0];
-                String bucketKey      = parts[1];
+                String ruleId = parts[0];
+                String bucketKey = parts[1];
                 long windowStartEpoch = Long.parseLong(parts[2]);
-                long windowEndEpoch   = Long.parseLong(parts[4]);
+                long windowEndEpoch = Long.parseLong(parts[4]);
 
                 LocalDateTime windowStart = LocalDateTime.ofEpochSecond(windowStartEpoch, 0, ZoneOffset.UTC);
-                LocalDateTime windowEnd   = LocalDateTime.ofEpochSecond(windowEndEpoch,   0, ZoneOffset.UTC);
+                LocalDateTime windowEnd = LocalDateTime.ofEpochSecond(windowEndEpoch, 0, ZoneOffset.UTC);
 
                 long netValue = Math.max(0, entry.getValue()); // clamp to 0
                 quotaCounterService.overwrite(ruleId, bucketKey, windowStart, windowEnd, netValue);

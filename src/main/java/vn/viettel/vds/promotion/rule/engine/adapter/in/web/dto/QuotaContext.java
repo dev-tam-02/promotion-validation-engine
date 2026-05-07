@@ -37,18 +37,43 @@ public class QuotaContext {
 
     // ---- getters / setters ----
 
-    public String getCustomerId()        { return customerId; }
-    public void setCustomerId(String v)  { this.customerId = v; }
+    public String getCustomerId() {
+        return customerId;
+    }
 
-    public String getBucketKey()         { return bucketKey; }
-    public void setBucketKey(String v)   { this.bucketKey = v; }
+    public void setCustomerId(String v) {
+        this.customerId = v;
+    }
 
-    public LocalDateTime getWindowStart()           { return windowStart; }
-    public void setWindowStart(LocalDateTime v)     { this.windowStart = v; }
+    public String getBucketKey() {
+        return bucketKey;
+    }
 
-    public LocalDateTime getWindowEnd()             { return windowEnd; }
-    public void setWindowEnd(LocalDateTime v)       { this.windowEnd = v; }
+    public void setBucketKey(String v) {
+        this.bucketKey = v;
+    }
 
-    public int getLimit()                { return limit; }
-    public void setLimit(int v)          { this.limit = v; }
+    public LocalDateTime getWindowStart() {
+        return windowStart;
+    }
+
+    public void setWindowStart(LocalDateTime v) {
+        this.windowStart = v;
+    }
+
+    public LocalDateTime getWindowEnd() {
+        return windowEnd;
+    }
+
+    public void setWindowEnd(LocalDateTime v) {
+        this.windowEnd = v;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int v) {
+        this.limit = v;
+    }
 }

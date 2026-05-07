@@ -25,7 +25,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -36,12 +35,18 @@ import static org.mockito.Mockito.*;
 @DisplayName("DroolsRuleEngineAdapter — compile & execute with mocked adapters")
 class DroolsRuleEngineAdapterTest {
 
-    @Mock private KieSessionManager sessionManager;
-    @Mock private RuleExecutionOrchestrator executionOrchestrator;
-    @Mock private ExecutionMetricsService metricsService;
-    @Mock private BundleRepositoryPort bundleRepositoryPort;
-    @Mock private ObjectStoragePort objectStoragePort;
-    @Mock private TemporalDrlGenerator temporalDrlGenerator;
+    @Mock
+    private KieSessionManager sessionManager;
+    @Mock
+    private RuleExecutionOrchestrator executionOrchestrator;
+    @Mock
+    private ExecutionMetricsService metricsService;
+    @Mock
+    private BundleRepositoryPort bundleRepositoryPort;
+    @Mock
+    private ObjectStoragePort objectStoragePort;
+    @Mock
+    private TemporalDrlGenerator temporalDrlGenerator;
 
     // Real services (no mocks — we test actual DRL generation + Drools compilation)
     private RuleTranslationService translationService;

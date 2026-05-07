@@ -10,7 +10,6 @@ import org.kie.api.builder.KieModule;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.StatelessKieSession;
 import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
-import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;
 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;
 
@@ -43,20 +42,20 @@ class OwnerOnlyRuleTest {
      */
     private static final String OWNER_ONLY_DRL = """
             package rules;
-
+            
             import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
             import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;
             import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
             import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;
             import java.util.List;
             import java.util.ArrayList;
-
+            
             global ValidationResult result;
             global List<String> reasonCodes;
-
+            
             declare TemporalAllowed
             end
-
+            
             rule "insert_temporal_allowed"
                 salience 9999
                 when
@@ -64,7 +63,7 @@ class OwnerOnlyRuleTest {
                 then
                     insert(new TemporalAllowed());
             end
-
+            
             rule "promotion_validation_rule"
                 when
                     TemporalAllowed()
@@ -75,7 +74,7 @@ class OwnerOnlyRuleTest {
                     result.setOk(true);
                     insert(new RuleMatched());
             end
-
+            
             rule "failure_tracking_owner_check"
                 salience -10
                 when
@@ -85,7 +84,7 @@ class OwnerOnlyRuleTest {
                 then
                     reasonCodes.add("VOUCHER_NOT_OWNED_BY_CUSTOMER");
             end
-
+            
             rule "promotion_validation_failure"
                 salience -100
                 when
@@ -237,8 +236,6 @@ class OwnerOnlyRuleTest {
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {}
-
     private KieContainer compileAndGetContainer(String drl) {
         KieServices ks = KieServices.Factory.get();
         KieFileSystem kfs = ks.newKieFileSystem();
@@ -277,5 +274,8 @@ class OwnerOnlyRuleTest {
                 Boolean.TRUE.equals(result.getOk()),
                 result.getReasonCodes() != null ? result.getReasonCodes() : reasonCodes
         );
+    }
+
+    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {
     }
 }

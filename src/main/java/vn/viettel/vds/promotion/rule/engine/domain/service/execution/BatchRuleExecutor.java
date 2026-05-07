@@ -8,7 +8,10 @@ import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -38,14 +41,14 @@ public class BatchRuleExecutor {
         long batchStartTime = System.currentTimeMillis();
 
         List<CompletableFuture<ExecuteResponse>> futures = createExecutionFutures(inputs, containersByBundle);
-        
+
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             List<ExecuteResponse> responses = futures.stream().map(CompletableFuture::join).toList();
-            
+
             recordBatchMetrics(inputs, batchStartTime, responses);
             return responses;
-            
+
         } catch (Exception e) {
             logger.error("Batch rule execution failed", e);
             return createErrorResponses(futures);
@@ -82,9 +85,9 @@ public class BatchRuleExecutor {
     private List<CompletableFuture<ExecuteResponse>> createExecutionFutures(
             List<RuleEnginePort.ExecuteInput> inputs,
             Map<String, KieContainer> containersByBundle) {
-        
+
         List<CompletableFuture<ExecuteResponse>> futures = new ArrayList<>();
-        
+
         for (RuleEnginePort.ExecuteInput input : inputs) {
             KieContainer container = containersByBundle.get(input.getBundleHash());
             if (container == null) {
@@ -95,7 +98,7 @@ public class BatchRuleExecutor {
                 futures.add(future);
             }
         }
-        
+
         return futures;
     }
 

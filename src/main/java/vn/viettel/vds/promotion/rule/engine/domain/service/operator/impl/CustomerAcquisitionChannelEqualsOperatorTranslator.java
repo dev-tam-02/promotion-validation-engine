@@ -49,10 +49,10 @@ public class CustomerAcquisitionChannelEqualsOperatorTranslator implements Opera
         Object value = params.get("value");
 
         String constraint = switch (comparator) {
-            case "equals"     -> renderEquals(value);
+            case "equals" -> renderEquals(value);
             case "not_equals" -> renderNotEquals(value);
-            case "in"         -> renderIn(toList(value, "in"));
-            case "not_in"     -> renderNotIn(toList(value, "not_in"));
+            case "in" -> renderIn(toList(value, "in"));
+            case "not_in" -> renderNotIn(toList(value, "not_in"));
             default -> throw new IllegalArgumentException(
                     "Unsupported comparator '" + comparator + "' for operator " + OPERATOR_NAME
                             + ". Supported: equals, not_equals, in, not_in");

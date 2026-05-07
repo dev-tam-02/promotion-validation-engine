@@ -1,11 +1,7 @@
 package vn.viettel.vds.promotion.rule.engine.domain.service.execution;
 
 import org.kie.api.KieServices;
-import org.kie.api.builder.KieBuilder;
-import org.kie.api.builder.KieFileSystem;
-import org.kie.api.builder.Message;
-import org.kie.api.builder.ReleaseId;
-import org.kie.api.builder.Results;
+import org.kie.api.builder.*;
 import org.kie.api.runtime.KieContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,12 +10,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -179,8 +170,8 @@ public class IncrementalKieContainerService {
     // -------------------------------------------------------------------------
 
     private KieFileSystem buildKieFileSystem(String ruleId, String drl,
-                                              Map<String, String> allCurrentDrls,
-                                              ReleaseId releaseId) {
+                                             Map<String, String> allCurrentDrls,
+                                             ReleaseId releaseId) {
         KieFileSystem kfs = ks.newKieFileSystem();
         kfs.generateAndWritePomXML(releaseId);
 

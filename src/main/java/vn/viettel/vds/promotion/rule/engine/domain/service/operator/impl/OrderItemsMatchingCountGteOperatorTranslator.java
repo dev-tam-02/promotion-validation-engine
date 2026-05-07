@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Operator: order.items.matching.count.gte
  * Checks if at least N items match a given category/brand filter.
  * Uses Drools accumulate for counting.
- *
+ * <p>
  * Params: minCount (Integer), categories (List, optional), brands (List, optional)
  */
 @Component

@@ -48,9 +48,9 @@ public class BudgetRedemptionsPerCustomerInCampaignPerMonthLteOperatorTranslator
         String campaignId = extractCampaignId(params);
         return String.format(
                 "result.addPolicy(new vn.viettel.vds.promotion.rule.engine.domain.model.QuotaPolicy(" +
-                "\"%s\", %dL, " +
-                "vn.viettel.vds.promotion.rule.engine.application.service.BucketKeys" +
-                ".customerInCampaignPerMonth($c.getId(), \"%s\", java.time.Instant.now())));",
+                        "\"%s\", %dL, " +
+                        "vn.viettel.vds.promotion.rule.engine.application.service.BucketKeys" +
+                        ".customerInCampaignPerMonth($c.getId(), \"%s\", java.time.Instant.now())));",
                 POLICY_NAME, limit, escape(campaignId));
     }
 

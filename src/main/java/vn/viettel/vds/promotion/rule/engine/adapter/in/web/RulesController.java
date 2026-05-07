@@ -3,7 +3,6 @@ package vn.viettel.vds.promotion.rule.engine.adapter.in.web;
 import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -50,13 +49,11 @@ public class RulesController {
             description = "Accepts raw DRL content and registers it in the engine. "
                     + "Idempotent: same (id, drl) returns the existing bundleHash. "
                     + "Returns 409 if the id exists with different DRL — use PUT to update.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Rule registered successfully"),
-            @ApiResponse(responseCode = "400", description = "DRL syntax error"),
-            @ApiResponse(responseCode = "409", description = "Rule id already exists with different DRL")
-    })
+    @ApiResponse(responseCode = "201", description = "Rule registered successfully")
+    @ApiResponse(responseCode = "400", description = "DRL syntax error")
+    @ApiResponse(responseCode = "409", description = "Rule id already exists with different DRL")
     @PostMapping
-    public ResponseEntity<?> registerRule(@Valid @RequestBody RegisterRuleRequest request) {
+    public ResponseEntity<Object> registerRule(@Valid @RequestBody RegisterRuleRequest request) {
         logger.info("POST /v1/rules — ruleId={}", request.getId());
 
         try {
@@ -86,14 +83,12 @@ public class RulesController {
             summary = "Update a registered DRL rule",
             description = "Replaces the DRL content of an existing rule and recompiles. "
                     + "Returns 404 if the rule id is not found.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Rule updated successfully"),
-            @ApiResponse(responseCode = "400", description = "DRL syntax error"),
-            @ApiResponse(responseCode = "404", description = "Rule not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Rule updated successfully")
+    @ApiResponse(responseCode = "400", description = "DRL syntax error")
+    @ApiResponse(responseCode = "404", description = "Rule not found")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateRule(@PathVariable String id,
-                                        @Valid @RequestBody UpdateRuleRequest request) {
+    public ResponseEntity<Object> updateRule(@PathVariable String id,
+                                             @Valid @RequestBody UpdateRuleRequest request) {
         logger.info("PUT /v1/rules/{} — updating DRL", id);
 
         try {
@@ -121,10 +116,8 @@ public class RulesController {
     @Operation(
             summary = "Delete a registered DRL rule",
             description = "Removes the rule from the registry. Returns 404 if not found.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Rule deleted"),
-            @ApiResponse(responseCode = "404", description = "Rule not found")
-    })
+    @ApiResponse(responseCode = "204", description = "Rule deleted")
+    @ApiResponse(responseCode = "404", description = "Rule not found")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRule(@PathVariable String id) {
         logger.info("DELETE /v1/rules/{}", id);

@@ -9,7 +9,7 @@ import java.util.Map;
  * Operator: order.items.category.sum.gte
  * Checks if the total value of items in a specific category is >= threshold.
  * Uses Drools accumulate for aggregation.
- *
+ * <p>
  * Params: category (String), minTotal (Number)
  * Example DRL: accumulate(OrderItem(category == "electronics", $p: price * quantity) from $order.getItems(); $sum: sum($p)); eval($sum >= 100000)
  */

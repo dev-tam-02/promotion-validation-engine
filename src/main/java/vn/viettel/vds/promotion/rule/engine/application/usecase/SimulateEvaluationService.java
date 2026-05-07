@@ -22,12 +22,7 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationServ
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.FactPreparationService;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.KieSessionManager;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Evaluates registered DRL rules against a provided fact map.
@@ -50,6 +45,8 @@ import java.util.Set;
 public class SimulateEvaluationService {
 
     private static final Logger log = LoggerFactory.getLogger(SimulateEvaluationService.class);
+    private static final String VERDICT_ALLOW = "ALLOW";
+    private static final String VERDICT_DENY = "DENY";
 
     private final RuleRegistryPort ruleRegistry;
     private final DroolsCompilationService compilationService;
@@ -75,9 +72,9 @@ public class SimulateEvaluationService {
     /**
      * Evaluate a list of rules against the provided facts.
      *
-     * @param ruleIds        IDs of registered rules to evaluate
-     * @param facts          flat fact map keyed by fact-type (order, customer, candidate, …)
-     * @param simulateMode   when true, attach tracing listener and populate trace + matched/unmatched
+     * @param ruleIds      IDs of registered rules to evaluate
+     * @param facts        flat fact map keyed by fact-type (order, customer, candidate, …)
+     * @param simulateMode when true, attach tracing listener and populate trace + matched/unmatched
      * @return evaluation response
      */
     public EvaluateRuleResponse evaluate(List<String> ruleIds,
@@ -115,7 +112,7 @@ public class SimulateEvaluationService {
 
         if (ruleIds == null || ruleIds.isEmpty()) {
             EvaluateRuleResponse resp = new EvaluateRuleResponse();
-            resp.setVerdict("DENY");
+            resp.setVerdict(VERDICT_DENY);
             resp.setReasonCodes(List.of("NO_RULE_IDS"));
             resp.setTrace(List.of());
             resp.setMatchedNodes(List.of());
@@ -123,86 +120,92 @@ public class SimulateEvaluationService {
             return resp;
         }
 
-        List<TraceEntry> allTrace = new ArrayList<>();
-        List<String> allMatched = new ArrayList<>();
-        List<String> allUnmatched = new ArrayList<>();
-        List<String> allReasonCodes = new ArrayList<>();
-        String verdict = "ALLOW";
-
+        EvalAccumulator acc = new EvalAccumulator();
         for (String ruleId : ruleIds) {
-            Optional<RegisteredRule> registered = ruleRegistry.findById(ruleId);
-            if (registered.isEmpty()) {
-                log.warn("evaluate: ruleId={} not found in registry — marking DENY", ruleId);
-                allUnmatched.add(ruleId);
-                verdict = "DENY";
-                allReasonCodes.add("RULE_NOT_REGISTERED");
-                continue;
-            }
-
-            RegisteredRule rule = registered.get();
-            log.info("evaluate: ruleId={}, bundleHash={}, simulate={}, redemption={}",
-                    ruleId, rule.getBundleHash(), simulateMode, redemptionMode);
-
-            try {
-                // --- analytics: start per-rule timer ---
-                Timer.Sample evalSample = analyticsMetrics.startEvaluationTimer();
-
-                SingleEvalResult result = executeSingle(rule, facts, simulateMode);
-
-                // --- analytics: stop timer, record fire + rejects ---
-                analyticsMetrics.stopEvaluationTimer(evalSample, ruleId);
-                analyticsMetrics.recordFire(ruleId, result.verdict());
-                if (!"ALLOW".equals(result.verdict())) {
-                    analyticsMetrics.recordRejects(ruleId, result.reasonCodes());
-                }
-
-                if (simulateMode) {
-                    allTrace.addAll(result.trace());
-                    allMatched.addAll(result.matchedNodes());
-                    allUnmatched.addAll(result.unmatchedNodes());
-                }
-                allReasonCodes.addAll(result.reasonCodes());
-
-                if (!"ALLOW".equals(result.verdict())) {
-                    verdict = "DENY";
-                } else if (redemptionMode && quotaContext != null && quotaContext.getLimit() > 0) {
-                    // Layer-1 counter enforcement: INCR and check against limit
-                    boolean allowed = quotaCounterService.incrementWithCheck(
-                            ruleId,
-                            redemptionId,
-                            quotaContext.getCustomerId(),
-                            quotaContext.getBucketKey(),
-                            quotaContext.getWindowStart(),
-                            quotaContext.getWindowEnd(),
-                            quotaContext.getLimit()
-                    );
-                    if (!allowed) {
-                        verdict = "DENY";
-                        allReasonCodes.add("MAX_USES_EXCEEDED");
-                        log.info("evaluate: ruleId={} DENY MAX_USES_EXCEEDED redemptionId={}", ruleId, redemptionId);
-                    }
-                }
-
-            } catch (Exception ex) {
-                log.error("evaluate: execution failed for ruleId={}: {}", ruleId, ex.getMessage(), ex);
-                verdict = "DENY";
-                allReasonCodes.add("EXECUTION_ERROR");
-                analyticsMetrics.recordFire(ruleId, "DENY");
-                analyticsMetrics.recordRejects(ruleId, List.of("EXECUTION_ERROR"));
-                if (simulateMode) {
-                    allUnmatched.add(ruleId);
-                }
-            }
+            evaluateOneRule(ruleId, facts, simulateMode, redemptionMode, redemptionId, quotaContext, acc);
         }
 
         EvaluateRuleResponse response = new EvaluateRuleResponse();
-        response.setVerdict(verdict);
-        response.setReasonCodes(allReasonCodes);
-        response.setTrace(simulateMode ? allTrace : List.of());
-        response.setMatchedNodes(simulateMode ? allMatched : List.of());
-        response.setUnmatchedNodes(simulateMode ? allUnmatched : List.of());
+        response.setVerdict(acc.verdict);
+        response.setReasonCodes(acc.reasonCodes);
+        response.setTrace(simulateMode ? acc.trace : List.of());
+        response.setMatchedNodes(simulateMode ? acc.matched : List.of());
+        response.setUnmatchedNodes(simulateMode ? acc.unmatched : List.of());
 
         return response;
+    }
+
+    private void evaluateOneRule(String ruleId, Map<String, Object> facts, boolean simulateMode,
+                                 boolean redemptionMode, String redemptionId, QuotaContext quotaContext,
+                                 EvalAccumulator acc) {
+        Optional<RegisteredRule> registered = ruleRegistry.findById(ruleId);
+        if (registered.isEmpty()) {
+            log.warn("evaluate: ruleId={} not found in registry — marking DENY", ruleId);
+            acc.unmatched.add(ruleId);
+            acc.verdict = VERDICT_DENY;
+            acc.reasonCodes.add("RULE_NOT_REGISTERED");
+            return;
+        }
+
+        RegisteredRule rule = registered.get();
+        log.info("evaluate: ruleId={}, bundleHash={}, simulate={}, redemption={}",
+                ruleId, rule.getBundleHash(), simulateMode, redemptionMode);
+
+        try {
+            Timer.Sample evalSample = analyticsMetrics.startEvaluationTimer();
+            SingleEvalResult result = executeSingle(rule, facts, simulateMode);
+            analyticsMetrics.stopEvaluationTimer(evalSample, ruleId);
+            analyticsMetrics.recordFire(ruleId, result.verdict());
+            if (!VERDICT_ALLOW.equals(result.verdict())) {
+                analyticsMetrics.recordRejects(ruleId, result.reasonCodes());
+            }
+
+            if (simulateMode) {
+                acc.trace.addAll(result.trace());
+                acc.matched.addAll(result.matchedNodes());
+                acc.unmatched.addAll(result.unmatchedNodes());
+            }
+            acc.reasonCodes.addAll(result.reasonCodes());
+
+            if (!VERDICT_ALLOW.equals(result.verdict())) {
+                acc.verdict = VERDICT_DENY;
+            } else if (redemptionMode && quotaContext != null && quotaContext.getLimit() > 0) {
+                applyQuotaCheck(ruleId, redemptionId, quotaContext, acc);
+            }
+        } catch (Exception ex) {
+            log.error("evaluate: execution failed for ruleId={}: {}", ruleId, ex.getMessage(), ex);
+            acc.verdict = VERDICT_DENY;
+            acc.reasonCodes.add("EXECUTION_ERROR");
+            analyticsMetrics.recordFire(ruleId, VERDICT_DENY);
+            analyticsMetrics.recordRejects(ruleId, List.of("EXECUTION_ERROR"));
+            if (simulateMode) {
+                acc.unmatched.add(ruleId);
+            }
+        }
+    }
+
+    private void applyQuotaCheck(String ruleId, String redemptionId, QuotaContext quotaContext,
+                                 EvalAccumulator acc) {
+        boolean allowed = quotaCounterService.incrementWithCheck(
+                ruleId, redemptionId,
+                quotaContext.getCustomerId(),
+                quotaContext.getBucketKey(),
+                quotaContext.getWindowStart(),
+                quotaContext.getWindowEnd(),
+                quotaContext.getLimit());
+        if (!allowed) {
+            acc.verdict = VERDICT_DENY;
+            acc.reasonCodes.add("MAX_USES_EXCEEDED");
+            log.info("evaluate: ruleId={} DENY MAX_USES_EXCEEDED redemptionId={}", ruleId, redemptionId);
+        }
+    }
+
+    private static final class EvalAccumulator {
+        final List<TraceEntry> trace = new ArrayList<>();
+        final List<String> matched = new ArrayList<>();
+        final List<String> unmatched = new ArrayList<>();
+        final List<String> reasonCodes = new ArrayList<>();
+        String verdict = VERDICT_ALLOW;
     }
 
     // ------------------------------------------------------------------
@@ -230,7 +233,7 @@ public class SimulateEvaluationService {
         session.setGlobal("reasonCodes", reasonCodes);
         session.execute(preparedFacts);
 
-        String verdict = "ALLOW".equalsIgnoreCase(result.getDecision()) ? "ALLOW" : "DENY";
+        String verdict = VERDICT_ALLOW.equalsIgnoreCase(result.getDecision()) ? VERDICT_ALLOW : VERDICT_DENY;
 
         if (!simulateMode) {
             return new SingleEvalResult(verdict, List.of(), List.of(), List.of(), reasonCodes);

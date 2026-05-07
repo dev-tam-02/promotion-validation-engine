@@ -12,11 +12,7 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.RulesServicePor
 import vn.viettel.vds.promotion.rule.engine.application.port.out.SessionLockPort;
 import vn.viettel.vds.promotion.rule.engine.application.service.CounterResult;
 import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Decision;
-import vn.viettel.vds.promotion.rule.engine.domain.model.QuotaPolicy;
-import vn.viettel.vds.promotion.rule.engine.domain.model.ReasonCode;
-import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
+import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -140,6 +136,19 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
         return false;
     }
 
+    private List<ReasonCode> collectReasonsForFailure(boolean finalValid, ValidationResult ruleResult) {
+        List<ReasonCode> reasons = new ArrayList<>();
+        if (finalValid) {
+            return reasons;
+        }
+        if (ruleResult.getReasonCodes() != null) {
+            ruleResult.getReasonCodes().forEach(rc -> reasons.add(new ReasonCode(rc)));
+        } else if (ruleResult.getMessage() != null) {
+            reasons.add(new ReasonCode("RULE_FAILED", Map.of(MESSAGE_KEY, ruleResult.getMessage())));
+        }
+        return reasons;
+    }
+
     private Decision validateSingleCandidate(ValidationRequest request, Candidate candidate) {
         String customerId = request.customer().getId();
         boolean lockAcquired = false;
@@ -182,20 +191,10 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
 
             // 7. Compose final decision based on rule execution (verdict may have been updated by quota enforcement)
             boolean finalValid = ruleResult.isMatched() && !"DENY".equals(ruleResult.getDecision());
-            List<ReasonCode> reasons = new ArrayList<>();
+            List<ReasonCode> reasons = collectReasonsForFailure(finalValid, ruleResult);
 
-            if (!finalValid) {
-                if (ruleResult.getReasonCodes() != null) {
-                    ruleResult.getReasonCodes().forEach(rc -> reasons.add(new ReasonCode(rc)));
-                } else if (ruleResult.getMessage() != null) {
-                    reasons.add(new ReasonCode("RULE_FAILED", Map.of(MESSAGE_KEY, ruleResult.getMessage())));
-                }
-            }
-
-            // 8. Create decision
             Decision decision = new Decision(candidate, finalValid);
             decision.setReasons(reasons);
-
             return decision;
 
         } catch (Exception e) {
@@ -221,8 +220,8 @@ public class ValidatePromotionService implements ValidatePromotionUseCase {
      * atomically increments the counter. If any limit is exceeded, rolls back all
      * previously incremented counters and flips the verdict to DENY.
      *
-     * @param result   the {@link ValidationResult} whose verdict may be mutated
-     * @param ruleId   rule identifier used as Redis key namespace
+     * @param result the {@link ValidationResult} whose verdict may be mutated
+     * @param ruleId rule identifier used as Redis key namespace
      */
     void enforceQuotaPolicies(ValidationResult result, String ruleId) {
         List<QuotaPolicy> incremented = new ArrayList<>();

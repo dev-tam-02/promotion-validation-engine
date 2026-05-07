@@ -16,13 +16,21 @@ public class RollbackResponse {
 
     public static RollbackResponse of(String redemptionId, int revertedCount) {
         RollbackResponse r = new RollbackResponse();
-        r.redemptionId  = redemptionId;
+        r.redemptionId = redemptionId;
         r.revertedCount = revertedCount;
-        r.status        = revertedCount > 0 ? "REVERTED" : "NO_OP";
+        r.status = revertedCount > 0 ? "REVERTED" : "NO_OP";
         return r;
     }
 
-    public String getRedemptionId() { return redemptionId; }
-    public int getRevertedCount()   { return revertedCount; }
-    public String getStatus()       { return status; }
+    public String getRedemptionId() {
+        return redemptionId;
+    }
+
+    public int getRevertedCount() {
+        return revertedCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
 }

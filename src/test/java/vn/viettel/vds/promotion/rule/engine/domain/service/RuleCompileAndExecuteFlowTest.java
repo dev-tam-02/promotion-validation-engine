@@ -62,8 +62,6 @@ class RuleCompileAndExecuteFlowTest {
         return ks.newKieContainer(module.getReleaseId());
     }
 
-    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {}
-
     private ExecutionResult executeRule(String drl, Customer customer, Order order) {
         KieContainer container = compileAndGetContainer(drl);
         StatelessKieSession session = container.newStatelessKieSession();
@@ -125,6 +123,9 @@ class RuleCompileAndExecuteFlowTest {
         i.setPrice(price);
         i.setQuantity(qty);
         return i;
+    }
+
+    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {
     }
 
     // ======== Tests ========

@@ -1,10 +1,8 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.metrics;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +19,6 @@ import vn.viettel.vds.promotion.rule.engine.adapter.out.registry.InMemoryRuleReg
 import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.application.usecase.SimulateEvaluationService;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
-import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
 import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
 import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
 import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
@@ -60,17 +57,17 @@ class MetricsRecordingTest {
     // -----------------------------------------------------------------------
     private static final String ALLOW_DRL = """
             package rules;
-
+            
             import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
             import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
             import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
             import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;
             import java.math.BigDecimal;
             import java.util.List;
-
+            
             global ValidationResult result;
             global List reasonCodes;
-
+            
             rule "allow-vip-order"
             when
                 $order    : Order(total >= 500000B, currency == "VND")
@@ -80,7 +77,7 @@ class MetricsRecordingTest {
                 result.setOk(true);
                 insert(new RuleMatched());
             end
-
+            
             rule "deny-fallback"
             salience -1
             when
@@ -136,6 +133,46 @@ class MetricsRecordingTest {
     // Test: ALLOW verdict → rule_fires_total{verdict=ALLOW} incremented
     // -----------------------------------------------------------------------
 
+    private Map<String, Object> allowFacts() {
+        Customer customer = new Customer("c1", Set.of("seg_vip"));
+        Order order = new Order("o1");
+        order.setTotal(BigDecimal.valueOf(600_000));
+        order.setCurrency("VND");
+        return Map.of("customer", customer, "order", order);
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: DENY verdict → rule_fires_total{verdict=DENY} + rule_rejects_total
+    // -----------------------------------------------------------------------
+
+    private Map<String, Object> denyFacts() {
+        Customer customer = new Customer("c1", Set.of("seg_vip"));
+        Order order = new Order("o1");
+        order.setTotal(BigDecimal.valueOf(100)); // below threshold → DENY
+        order.setCurrency("VND");
+        return Map.of("customer", customer, "order", order);
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: all three metric names are registered (presence check)
+    // -----------------------------------------------------------------------
+
+    private KieContainer compileToContainer(String drl) {
+        KieServices ks = KieServices.Factory.get();
+        KieFileSystem kfs = ks.newKieFileSystem();
+        kfs.write("src/main/resources/rules/metrics-test.drl", drl);
+        KieBuilder kb = ks.newKieBuilder(kfs).buildAll();
+        if (kb.getResults().hasMessages(org.kie.api.builder.Message.Level.ERROR)) {
+            fail("DRL compile error:\n" + kb.getResults().getMessages());
+        }
+        KieModule module = kb.getKieModule();
+        return ks.newKieContainer(module.getReleaseId());
+    }
+
+    // -----------------------------------------------------------------------
+    // Test: multiple evaluations accumulate correctly
+    // -----------------------------------------------------------------------
+
     @Nested
     @DisplayName("ALLOW evaluation path")
     class AllowPath {
@@ -182,7 +219,7 @@ class MetricsRecordingTest {
     }
 
     // -----------------------------------------------------------------------
-    // Test: DENY verdict → rule_fires_total{verdict=DENY} + rule_rejects_total
+    // Helpers
     // -----------------------------------------------------------------------
 
     @Nested
@@ -241,10 +278,6 @@ class MetricsRecordingTest {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Test: all three metric names are registered (presence check)
-    // -----------------------------------------------------------------------
-
     @Nested
     @DisplayName("Metric name presence — exposed on /actuator/prometheus")
     class MetricPresence {
@@ -276,10 +309,6 @@ class MetricsRecordingTest {
                     .isNotEmpty();
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Test: multiple evaluations accumulate correctly
-    // -----------------------------------------------------------------------
 
     @Nested
     @DisplayName("Accumulation across multiple evaluations")
@@ -324,37 +353,5 @@ class MetricsRecordingTest {
                     .as("Timer count should equal 3 (total evaluations)")
                     .isEqualTo(3L);
         }
-    }
-
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
-
-    private Map<String, Object> allowFacts() {
-        Customer customer = new Customer("c1", Set.of("seg_vip"));
-        Order order = new Order("o1");
-        order.setTotal(BigDecimal.valueOf(600_000));
-        order.setCurrency("VND");
-        return Map.of("customer", customer, "order", order);
-    }
-
-    private Map<String, Object> denyFacts() {
-        Customer customer = new Customer("c1", Set.of("seg_vip"));
-        Order order = new Order("o1");
-        order.setTotal(BigDecimal.valueOf(100)); // below threshold → DENY
-        order.setCurrency("VND");
-        return Map.of("customer", customer, "order", order);
-    }
-
-    private KieContainer compileToContainer(String drl) {
-        KieServices ks = KieServices.Factory.get();
-        KieFileSystem kfs = ks.newKieFileSystem();
-        kfs.write("src/main/resources/rules/metrics-test.drl", drl);
-        KieBuilder kb = ks.newKieBuilder(kfs).buildAll();
-        if (kb.getResults().hasMessages(org.kie.api.builder.Message.Level.ERROR)) {
-            fail("DRL compile error:\n" + kb.getResults().getMessages());
-        }
-        KieModule module = kb.getKieModule();
-        return ks.newKieContainer(module.getReleaseId());
     }
 }

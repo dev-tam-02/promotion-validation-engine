@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.QuotaEventEntity;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.QuotaEventPort;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Layer-1 quota counter service using Redis (Redisson) as a hot counter store.
@@ -48,7 +48,7 @@ public class QuotaCounterService {
      * </ol>
      *
      * @return {@code true} if the increment was accepted (new value ≤ limit),
-     *         {@code false} if the limit was already reached.
+     * {@code false} if the limit was already reached.
      */
     public boolean incrementWithCheck(String ruleId,
                                       String redemptionId,
@@ -75,12 +75,12 @@ public class QuotaCounterService {
             long ttlSeconds = windowEnd.toEpochSecond(ZoneOffset.UTC)
                     - windowStart.toEpochSecond(ZoneOffset.UTC);
             if (ttlSeconds > 0) {
-                counter.expire(ttlSeconds, TimeUnit.SECONDS);
+                counter.expire(Duration.ofSeconds(ttlSeconds));
             }
         }
 
         // Journal the INCR to durable storage
-        persistEvent(ruleId, redemptionId, customerId, bucketKey, windowStart, windowEnd,
+        persistEvent(new EventContext(ruleId, redemptionId, customerId, bucketKey, windowStart, windowEnd),
                 QuotaEventEntity.EventType.INCR, 1);
 
         log.info("QuotaCounter ALLOW ruleId={} redemptionId={} current={}", ruleId, redemptionId, current);
@@ -106,7 +106,7 @@ public class QuotaCounterService {
         }
         log.debug("QuotaCounter DECR key={} newValue={}", redisKey, newValue);
 
-        persistEvent(ruleId, redemptionId, customerId, bucketKey, windowStart, windowEnd,
+        persistEvent(new EventContext(ruleId, redemptionId, customerId, bucketKey, windowStart, windowEnd),
                 QuotaEventEntity.EventType.ROLLBACK, -1);
     }
 
@@ -134,7 +134,7 @@ public class QuotaCounterService {
             long ttlSeconds = windowEnd.toEpochSecond(ZoneOffset.UTC)
                     - windowStart.toEpochSecond(ZoneOffset.UTC);
             if (ttlSeconds > 0) {
-                counter.expire(ttlSeconds, TimeUnit.SECONDS);
+                counter.expire(Duration.ofSeconds(ttlSeconds));
             }
         }
         log.debug("QuotaCounter OVERWRITE key={} value={}", redisKey, value);
@@ -159,17 +159,17 @@ public class QuotaCounterService {
             String[] parts = entry.getKey().split(":");
             if (parts.length < 5) continue;
 
-            String ruleId     = parts[0];
-            String bucketKey  = parts[1];
-            long windowEpoch  = Long.parseLong(parts[2]);
+            String ruleId = parts[0];
+            String bucketKey = parts[1];
+            long windowEpoch = Long.parseLong(parts[2]);
 
             LocalDateTime windowStart = LocalDateTime.ofEpochSecond(windowEpoch, 0, ZoneOffset.UTC);
-            String redisKey   = buildKey(ruleId, bucketKey, windowStart);
-            long redisValue   = redissonClient.getAtomicLong(redisKey).get();
-            long dbValue      = entry.getValue();
+            String redisKey = buildKey(ruleId, bucketKey, windowStart);
+            long redisValue = redissonClient.getAtomicLong(redisKey).get();
+            long dbValue = entry.getValue();
 
             totalDrift += Math.abs(redisValue - dbValue);
-            totalDb    += Math.abs(dbValue);
+            totalDb += Math.abs(dbValue);
         }
 
         return totalDb == 0 ? 0.0 : (double) totalDrift / totalDb;
@@ -229,24 +229,27 @@ public class QuotaCounterService {
         return KEY_PREFIX + ruleId + ":" + (bucketKey != null ? bucketKey : "") + ":" + epoch;
     }
 
-    private void persistEvent(String ruleId,
-                              String redemptionId,
-                              String customerId,
-                              String bucketKey,
-                              LocalDateTime windowStart,
-                              LocalDateTime windowEnd,
+    private void persistEvent(EventContext ctx,
                               QuotaEventEntity.EventType type,
                               int delta) {
         QuotaEventEntity event = new QuotaEventEntity();
-        event.setRuleId(ruleId);
-        event.setRedemptionId(redemptionId);
-        event.setCustomerId(customerId);
-        event.setBucketKey(bucketKey);
-        event.setWindowStart(windowStart);
-        event.setWindowEnd(windowEnd);
+        event.setRuleId(ctx.ruleId());
+        event.setRedemptionId(ctx.redemptionId());
+        event.setCustomerId(ctx.customerId());
+        event.setBucketKey(ctx.bucketKey());
+        event.setWindowStart(ctx.windowStart());
+        event.setWindowEnd(ctx.windowEnd());
         event.setEventType(type);
         event.setCountDelta(delta);
         event.setCreatedAt(LocalDateTime.now());
         quotaEventPort.save(event);
+    }
+
+    private record EventContext(String ruleId,
+                                String redemptionId,
+                                String customerId,
+                                String bucketKey,
+                                LocalDateTime windowStart,
+                                LocalDateTime windowEnd) {
     }
 }

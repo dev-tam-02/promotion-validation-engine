@@ -64,38 +64,13 @@ public class BundleLookupService implements BundleLookupUseCase {
     public LatestBundleResponse getLatestBundle(String subjectType, String subjectKey) {
         logger.info("Getting latest bundle for subject: {}/{}", subjectType, subjectKey);
 
-        // First: lookup via assignment table (primary path)
         List<AssignmentEntity> assignments = assignmentRepositoryPort.findActiveBySubjectOrderByPriority(
                 subjectType, subjectKey);
 
         for (AssignmentEntity assignment : assignments) {
-            if (assignment.getBundleHash() != null) {
-                Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(assignment.getBundleHash());
-                if (bundleOpt.isPresent()) {
-                    BundleEntity bundle = bundleOpt.get();
-                    if (!ruleEnginePort.isRuleBundleLoaded(bundle.getId())) {
-                        logger.info("Bundle not loaded, warming up: {}", bundle.getId());
-                        warmupSingleBundle(bundle.getId());
-                    }
-                    LatestBundleResponse response = mapToLatestBundleResponse(bundle);
-                    response.setAssignmentVersion(assignment.getSourceVersion() != null
-                            ? assignment.getSourceVersion().intValue() : 0);
-                    return response;
-                }
-            }
-
-            // Assignment exists but bundle not found: try by ruleId
-            if (assignment.getRuleId() != null) {
-                Optional<BundleEntity> byRule = bundleRepositoryPort.findActiveBundles().stream()
-                        .filter(b -> assignment.getRuleId().equals(b.getRuleId()))
-                        .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
-                if (byRule.isPresent()) {
-                    BundleEntity bundle = byRule.get();
-                    if (!ruleEnginePort.isRuleBundleLoaded(bundle.getId())) {
-                        warmupSingleBundle(bundle.getId());
-                    }
-                    return mapToLatestBundleResponse(bundle);
-                }
+            LatestBundleResponse resolved = resolveAssignment(assignment);
+            if (resolved != null) {
+                return resolved;
             }
         }
 
@@ -105,6 +80,52 @@ public class BundleLookupService implements BundleLookupUseCase {
         logger.warn("No active assignment or bundle found for subject: {}/{}", subjectType, subjectKey);
         throw new ResourceNotFoundException("NO_RULE_CONFIGURED",
                 "No active rule configured for " + subjectType + ":" + subjectKey);
+    }
+
+    private LatestBundleResponse resolveAssignment(AssignmentEntity assignment) {
+        LatestBundleResponse byHash = resolveByBundleHash(assignment);
+        if (byHash != null) {
+            return byHash;
+        }
+        return resolveByRuleId(assignment);
+    }
+
+    private LatestBundleResponse resolveByBundleHash(AssignmentEntity assignment) {
+        if (assignment.getBundleHash() == null) {
+            return null;
+        }
+        Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(assignment.getBundleHash());
+        if (bundleOpt.isEmpty()) {
+            return null;
+        }
+        BundleEntity bundle = bundleOpt.get();
+        ensureLoaded(bundle.getId());
+        LatestBundleResponse response = mapToLatestBundleResponse(bundle);
+        response.setAssignmentVersion(assignment.getSourceVersion() != null
+                ? assignment.getSourceVersion().intValue() : 0);
+        return response;
+    }
+
+    private LatestBundleResponse resolveByRuleId(AssignmentEntity assignment) {
+        if (assignment.getRuleId() == null) {
+            return null;
+        }
+        Optional<BundleEntity> byRule = bundleRepositoryPort.findActiveBundles().stream()
+                .filter(b -> assignment.getRuleId().equals(b.getRuleId()))
+                .max((b1, b2) -> b1.getRuleVersion().compareTo(b2.getRuleVersion()));
+        if (byRule.isEmpty()) {
+            return null;
+        }
+        BundleEntity bundle = byRule.get();
+        ensureLoaded(bundle.getId());
+        return mapToLatestBundleResponse(bundle);
+    }
+
+    private void ensureLoaded(String bundleHash) {
+        if (!ruleEnginePort.isRuleBundleLoaded(bundleHash)) {
+            logger.info("Bundle not loaded, warming up: {}", bundleHash);
+            warmupSingleBundle(bundleHash);
+        }
     }
 
     @Override

@@ -12,7 +12,7 @@ public class CustomerMetadataEqualsOperatorTranslator implements OperatorTransla
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         Object key = params.get("key");
         Object value = params.get("value");
-        
+
         if (key == null || value == null) {
             throw new IllegalArgumentException("Missing required parameters 'key' and 'value' for customer.metadata.equals operator");
         }

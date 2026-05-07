@@ -22,8 +22,8 @@ public interface RegisterDrlUseCase {
      * @param ruleId unique rule identifier (e.g. "promo-rule-abc123")
      * @param drl    raw Drools DRL content
      * @return registration result containing ruleId and deterministic bundleHash
-     * @throws DrlCompileException   if the DRL has syntax errors (→ 400)
-     * @throws DrlConflictException  if ruleId already exists with different DRL (→ 409)
+     * @throws DrlCompileException  if the DRL has syntax errors (→ 400)
+     * @throws DrlConflictException if ruleId already exists with different DRL (→ 409)
      */
     RegisterRuleResult register(String ruleId, String drl);
 
@@ -53,7 +53,9 @@ public interface RegisterDrlUseCase {
 
     // --- Exceptions ---
 
-    /** Thrown when DRL content fails Drools compilation (syntax error). */
+    /**
+     * Thrown when DRL content fails Drools compilation (syntax error).
+     */
     class DrlCompileException extends RuntimeException {
         private final List<String> compileLogs;
 
@@ -67,14 +69,18 @@ public interface RegisterDrlUseCase {
         }
     }
 
-    /** Thrown when POST is called with an id that already exists but has different DRL. */
+    /**
+     * Thrown when POST is called with an id that already exists but has different DRL.
+     */
     class DrlConflictException extends RuntimeException {
         public DrlConflictException(String message) {
             super(message);
         }
     }
 
-    /** Thrown when PUT or DELETE targets an id that does not exist in the registry. */
+    /**
+     * Thrown when PUT or DELETE targets an id that does not exist in the registry.
+     */
     class RuleNotFoundException extends RuntimeException {
         public RuleNotFoundException(String message) {
             super(message);

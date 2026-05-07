@@ -248,12 +248,12 @@ class TemporalDrlExecutionIntegrationTest {
     private String createSimpleBusinessRule() {
         return """
                 package rules;
-
+                
                 import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
-
+                
                 global ValidationResult result;
                 global java.util.List reasonCodes;
-
+                
                 rule "simple_allow_rule"
                     salience 0
                 when

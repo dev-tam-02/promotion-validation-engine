@@ -19,9 +19,9 @@ spring:
   # Spring Kafka defaults (fallback for kafkaListenerContainerFactory)
   kafka:
     bootstrap-servers:
-      - kafka-1:19092
-      - kafka-2:19093
-      - kafka-3:19094
+      - kafka-1:9192
+      - kafka-2:9193
+      - kafka-3:9194
     properties:
       security.protocol: SASL_PLAINTEXT
       sasl.mechanism: PLAIN
@@ -133,10 +133,7 @@ promix:
   messaging:
     enabled: true
     kafka:
-      bootstrap-servers:
-        - kafka-1:19092
-        - kafka-2:19093
-        - kafka-3:19094
+      bootstrap-servers: kafka-1:9192,kafka-2:9193,kafka-3:9194
       client-id: rule-engine
       enable-avro: false
 

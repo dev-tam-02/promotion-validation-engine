@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.application.usecase;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,18 +11,13 @@ import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.KieModule;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.StatelessKieSession;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.mockito.Mockito;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.metrics.RuleAnalyticsMetrics;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.registry.InMemoryRuleRegistryAdapter;
 import vn.viettel.vds.promotion.rule.engine.application.service.QuotaCounterService;
 import vn.viettel.vds.promotion.rule.engine.application.usecase.SimulateEvaluationService.SimulateAgendaEventListener;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
-import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
-import vn.viettel.vds.promotion.rule.engine.domain.model.RegisteredRule;
-import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
+import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 import vn.viettel.vds.promotion.rule.engine.domain.service.DroolsCompilationService;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.FactPreparationService;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.KieSessionManager;
@@ -57,17 +53,17 @@ class SimulateEvaluationServiceTest {
     // -----------------------------------------------------------------------
     private static final String SPEC_DRL = """
             package rules;
-
+            
             import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
             import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
             import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
             import vn.viettel.vds.promotion.rule.engine.domain.model.RuleMatched;
             import java.math.BigDecimal;
             import java.util.List;
-
+            
             global ValidationResult result;
             global List reasonCodes;
-
+            
             rule "spec-4-4-4-example"
             when
                 $order    : Order(total >= 500000B, currency == "VND")
@@ -77,7 +73,7 @@ class SimulateEvaluationServiceTest {
                 result.setOk(true);
                 insert(new RuleMatched());
             end
-
+            
             rule "spec-4-4-4-example-deny"
             salience -1
             when
@@ -103,6 +99,24 @@ class SimulateEvaluationServiceTest {
 
     // -----------------------------------------------------------------------
     // Direct listener tests (no service layer)
+    // -----------------------------------------------------------------------
+
+    private KieContainer compileToContainer(String drl) {
+        KieServices ks = KieServices.Factory.get();
+        KieFileSystem kfs = ks.newKieFileSystem();
+        kfs.write("src/main/resources/rules/simulate-test.drl", drl);
+        KieBuilder kb = ks.newKieBuilder(kfs).buildAll();
+
+        if (kb.getResults().hasMessages(org.kie.api.builder.Message.Level.ERROR)) {
+            fail("DRL compile error:\n" + kb.getResults().getMessages());
+        }
+
+        KieModule module = kb.getKieModule();
+        return ks.newKieContainer(module.getReleaseId());
+    }
+
+    // -----------------------------------------------------------------------
+    // SimulateEvaluationService integration tests
     // -----------------------------------------------------------------------
 
     @Nested
@@ -173,7 +187,7 @@ class SimulateEvaluationServiceTest {
     }
 
     // -----------------------------------------------------------------------
-    // SimulateEvaluationService integration tests
+    // Helper
     // -----------------------------------------------------------------------
 
     @Nested
@@ -222,7 +236,6 @@ class SimulateEvaluationServiceTest {
         void allowFacts_viaService_verdictAllowTwoNodes() {
             // Pass domain objects directly (FactPreparationService handles Customer/Order/CustomerFact)
             Customer customer = new Customer("c1", Set.of("seg_vip"));
-            CustomerFact customerFact = new CustomerFact("c1", Set.of("seg_vip"), null);
             Order order = new Order("o1");
             order.setTotal(BigDecimal.valueOf(600_000));
             order.setCurrency("VND");
@@ -283,23 +296,5 @@ class SimulateEvaluationServiceTest {
             assertThat(response.getMatchedNodes()).isEmpty();
             assertThat(response.getUnmatchedNodes()).isEmpty();
         }
-    }
-
-    // -----------------------------------------------------------------------
-    // Helper
-    // -----------------------------------------------------------------------
-
-    private KieContainer compileToContainer(String drl) {
-        KieServices ks = KieServices.Factory.get();
-        KieFileSystem kfs = ks.newKieFileSystem();
-        kfs.write("src/main/resources/rules/simulate-test.drl", drl);
-        KieBuilder kb = ks.newKieBuilder(kfs).buildAll();
-
-        if (kb.getResults().hasMessages(org.kie.api.builder.Message.Level.ERROR)) {
-            fail("DRL compile error:\n" + kb.getResults().getMessages());
-        }
-
-        KieModule module = kb.getKieModule();
-        return ks.newKieContainer(module.getReleaseId());
     }
 }

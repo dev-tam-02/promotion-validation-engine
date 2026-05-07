@@ -1,10 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.domain.service.execution;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.IncrementalKieContainerService.IncrementalCompileException;
@@ -14,11 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -362,7 +354,11 @@ class IncrementalKieContainerServiceTest {
                                 // Container may be in KieBase-swap transition — not a bug
                             } finally {
                                 if (session != null) {
-                                    try { session.dispose(); } catch (Exception ignored) {}
+                                    try {
+                                        session.dispose();
+                                    } catch (Exception ignored) {
+                                        // session already in invalid state — safe to ignore on cleanup
+                                    }
                                 }
                             }
                         }
@@ -429,7 +425,11 @@ class IncrementalKieContainerServiceTest {
                                 // Acceptable: container may be in mid-swap transition
                             } finally {
                                 if (s != null) {
-                                    try { s.dispose(); } catch (Exception ignored) {}
+                                    try {
+                                        s.dispose();
+                                    } catch (Exception ignored) {
+                                        // session already in invalid state — safe to ignore on cleanup
+                                    }
                                 }
                             }
                         }

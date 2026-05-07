@@ -22,9 +22,6 @@ public class EvaluateRuleResponse {
     @Schema(description = "Reason codes emitted by fired DENY rules")
     private List<String> reasonCodes;
 
-    public EvaluateRuleResponse() {
-    }
-
     public String getVerdict() {
         return verdict;
     }

@@ -17,15 +17,11 @@ import vn.viettel.vds.promotion.rule.engine.application.port.in.FastCheckUseCase
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Orchestrates the single-hop redemption pipeline:
- *   bundle resolve → fast-check → Drools execute → per-subject result.
+ * bundle resolve → fast-check → Drools execute → per-subject result.
  * <p>
  * Fail-closed at every stage: a missing rule, a fast-check denial, or a
  * Drools execution failure each produce an explicit DENY with a stable

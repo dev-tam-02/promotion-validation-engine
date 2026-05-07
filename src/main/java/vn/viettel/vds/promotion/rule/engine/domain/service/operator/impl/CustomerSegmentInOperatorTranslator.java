@@ -5,7 +5,6 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.operator.OperatorTran
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 public class CustomerSegmentInOperatorTranslator implements OperatorTranslator {

@@ -24,6 +24,7 @@ import java.util.List;
 @RestController
 @ResponseWrapper
 @RequestMapping("${spring.application.context-path}/v1/compiler")
+@SuppressWarnings("java:S1133")
 public class CompileController {
 
     private final CompileUseCase compileUseCase;

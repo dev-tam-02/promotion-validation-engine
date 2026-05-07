@@ -53,17 +53,27 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 10,
       "title": "Rule Fires",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "Top-10 rules by total fires in the last 1 hour. High values = hot rules worth monitoring for performance.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "displayMode": "gradient-gauge",
             "orientation": "horizontal"
@@ -72,22 +82,38 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1000 },
-              { "color": "red", "value": 10000 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
             ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 1 },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
       "id": 1,
       "options": {
         "displayMode": "gradient",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -96,7 +122,10 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "expr": "topk(10, sum(rate(rule_fires_total[1h])) by (rule_id))",
           "legendFormat": "{{rule_id}}",
           "refId": "A"
@@ -106,11 +135,16 @@
       "type": "bargauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "Top reject reasons across all rules in the last 1 hour. Use this to spot systematic DENY patterns.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "displayMode": "gradient-gauge",
             "orientation": "horizontal"
@@ -118,22 +152,38 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 100 },
-              { "color": "red", "value": 1000 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
             ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 1 },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
       "id": 2,
       "options": {
         "displayMode": "gradient",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -142,7 +192,10 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "expr": "topk(10, sum(rate(rule_rejects_total[1h])) by (reason_code))",
           "legendFormat": "{{reason_code}}",
           "refId": "A"
@@ -153,17 +206,27 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
       "id": 11,
       "title": "Evaluation Duration",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "P95 evaluation duration per rule over the last 5 minutes. Rules above 50ms are candidates for optimisation. Alert fires when p95 > 50ms for 5 consecutive minutes.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "lineWidth": 2,
             "spanNulls": false
@@ -171,25 +234,48 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.03 },
-              { "color": "red", "value": 0.05 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.03
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
             ]
           },
           "unit": "s"
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
       "id": 3,
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom" },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "expr": "histogram_quantile(0.95, sum(rate(rule_evaluation_duration_seconds_bucket[5m])) by (le, rule_id))",
           "legendFormat": "p95 {{rule_id}}",
           "refId": "A"
@@ -200,17 +286,27 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
       "id": 12,
       "title": "Dead Rules",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "Rules with zero fires over the last 30 days. Consider retiring or reviewing these rules — they add compile overhead with no value.",
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "custom": {
             "align": "auto",
             "displayMode": "auto"
@@ -218,38 +314,74 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null }
+              {
+                "color": "red",
+                "value": null
+              }
             ]
           }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "rule_id" },
+            "matcher": {
+              "id": "byName",
+              "options": "rule_id"
+            },
             "properties": [
-              { "id": "displayName", "value": "Rule ID" },
-              { "id": "custom.width", "value": 400 }
+              {
+                "id": "displayName",
+                "value": "Rule ID"
+              },
+              {
+                "id": "custom.width",
+                "value": 400
+              }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "Value" },
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
             "properties": [
-              { "id": "displayName", "value": "Fires (30d)" },
-              { "id": "custom.width", "value": 120 }
+              {
+                "id": "displayName",
+                "value": "Fires (30d)"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
             ]
           }
         ]
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 23 },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
       "id": 4,
       "options": {
-        "footer": { "show": false },
+        "footer": {
+          "show": false
+        },
         "showHeader": true,
-        "sortBy": [{ "displayName": "rule_id", "desc": false }]
+        "sortBy": [
+          {
+            "displayName": "rule_id",
+            "desc": false
+          }
+        ]
       },
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "expr": "sum(rate(rule_fires_total[30d])) by (rule_id) == 0",
           "format": "table",
           "instant": true,
@@ -262,8 +394,14 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": { "Time": true, "__name__": true },
-            "renameByName": { "rule_id": "Rule ID", "Value": "Fires (30d)" }
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "rule_id": "Rule ID",
+              "Value": "Fires (30d)"
+            }
           }
         }
       ],
@@ -273,12 +411,19 @@
   "refresh": "1m",
   "schemaVersion": 36,
   "style": "dark",
-  "tags": ["rule-engine", "pp", "analytics"],
+  "tags": [
+    "rule-engine",
+    "pp",
+    "analytics"
+  ],
   "templating": {
     "list": [
       {
         "current": {},
-        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
         "definition": "label_values(rule_fires_total, rule_id)",
         "hide": 0,
         "includeAll": true,
@@ -297,7 +442,10 @@
       }
     ]
   },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "Asia/Ho_Chi_Minh",
   "title": "Rule Engine — Rule Analytics (Task 09 V10)",

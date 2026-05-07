@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 public class MetadataAccessOperatorTranslator implements OperatorTranslator {
 
     private static final String OPERATOR_NAME = "metadata.access";
+    private static final String CMP_EQUALS = "equals";
 
     @Override
     public String getOperatorName() {
@@ -61,29 +62,29 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     @Override
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         String schemaType = required(params, "schema_type");
-        String fieldKey   = required(params, "field_key");
-        String dataType   = required(params, "data_type");
+        String fieldKey = required(params, "field_key");
+        String dataType = required(params, "data_type");
         String comparator = required(params, "comparator");
-        Object value      = params.get("value");
+        Object value = params.get("value");
 
-        String mapField   = mapFieldName(schemaType);   // "attrs" or "metadata"
-        String accessor   = mapField + "[\"" + escape(fieldKey) + "\"]";  // attrs["vip_tier"]
-        String constraint = renderConstraint(dataType, accessor, mapField, comparator, value);
+        String mapField = mapFieldName(schemaType);   // "attrs" or "metadata"
+        String accessor = mapField + "[\"" + escape(fieldKey) + "\"]";  // attrs["vip_tier"]
+        String constraint = renderConstraint(dataType, accessor, comparator, value);
 
-        String factVar    = factVariable(schemaType);   // "$customer: Customer" or "$order: Order"
+        String factVar = factVariable(schemaType);   // "$customer: Customer" or "$order: Order"
         return "        " + factVar + "(" + mapField + " != null && " + constraint + ")\n";
     }
 
     // --- routing ---
 
-    private String renderConstraint(String dataType, String accessor, String mapField,
+    private String renderConstraint(String dataType, String accessor,
                                     String comparator, Object value) {
         return switch (dataType.toUpperCase()) {
-            case "STRING"  -> renderString(accessor, comparator, value);
-            case "NUMBER"  -> renderNumber(accessor, comparator, value);
+            case "STRING" -> renderString(accessor, comparator, value);
+            case "NUMBER" -> renderNumber(accessor, comparator, value);
             case "BOOLEAN" -> renderBoolean(accessor, comparator);
-            case "DATE"    -> renderDate(accessor, comparator, value);
-            case "LIST"    -> renderList(accessor, comparator, value);
+            case "DATE" -> renderDate(accessor, comparator, value);
+            case "LIST" -> renderList(accessor, comparator, value);
             default -> throw new IllegalArgumentException(
                     "Unsupported data_type '" + dataType + "' for operator " + OPERATOR_NAME);
         };
@@ -93,11 +94,11 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
 
     private String renderString(String accessor, String comparator, Object value) {
         return switch (comparator) {
-            case "equals"      -> accessor + " == \"" + escape(value) + "\"";
-            case "not_equals"  -> accessor + " != \"" + escape(value) + "\"";
-            case "in"          -> accessor + " in (" + toQuotedList(asList(value)) + ")";
-            case "not_in"      -> accessor + " not in (" + toQuotedList(asList(value)) + ")";
-            case "contains"    -> "((String) " + accessor + ").contains(\"" + escape(value) + "\")";
+            case CMP_EQUALS -> accessor + " == \"" + escape(value) + "\"";
+            case "not_equals" -> accessor + " != \"" + escape(value) + "\"";
+            case "in" -> accessor + " in (" + toQuotedList(asList(value)) + ")";
+            case "not_in" -> accessor + " not in (" + toQuotedList(asList(value)) + ")";
+            case "contains" -> "((String) " + accessor + ").contains(\"" + escape(value) + "\")";
             case "starts_with" -> "((String) " + accessor + ").startsWith(\"" + escape(value) + "\")";
             default -> throw new IllegalArgumentException(
                     "STRING does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
@@ -109,9 +110,9 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     private String renderNumber(String accessor, String comparator, Object value) {
         String num = "((Number) " + accessor + ").doubleValue()";
         return switch (comparator) {
-            case "equals" -> num + " == " + value;
-            case "gte"    -> num + " >= " + value;
-            case "lte"    -> num + " <= " + value;
+            case CMP_EQUALS -> num + " == " + value;
+            case "gte" -> num + " >= " + value;
+            case "lte" -> num + " <= " + value;
             case "between" -> {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> range = (Map<String, Object>) value;
@@ -126,7 +127,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
 
     private String renderBoolean(String accessor, String comparator) {
         return switch (comparator) {
-            case "is_true"  -> "Boolean.TRUE.equals(" + accessor + ")";
+            case "is_true" -> "Boolean.TRUE.equals(" + accessor + ")";
             case "is_false" -> "Boolean.FALSE.equals(" + accessor + ")";
             default -> throw new IllegalArgumentException(
                     "BOOLEAN does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
@@ -138,8 +139,8 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     private String renderDate(String accessor, String comparator, Object value) {
         String inst = "((java.time.Instant) " + accessor + ")";
         return switch (comparator) {
-            case "equals" -> inst + ".equals(java.time.Instant.parse(\"" + value + "\"))";
-            case "after"  -> inst + ".isAfter(java.time.Instant.parse(\"" + value + "\"))";
+            case CMP_EQUALS -> inst + ".equals(java.time.Instant.parse(\"" + value + "\"))";
+            case "after" -> inst + ".isAfter(java.time.Instant.parse(\"" + value + "\"))";
             case "before" -> inst + ".isBefore(java.time.Instant.parse(\"" + value + "\"))";
             case "between" -> {
                 @SuppressWarnings("unchecked")
@@ -157,10 +158,10 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     private String renderList(String accessor, String comparator, Object value) {
         String list = "((java.util.List) " + accessor + ")";
         return switch (comparator) {
-            case "contains"     -> list + ".contains(\"" + escape(value) + "\")";
+            case "contains" -> list + ".contains(\"" + escape(value) + "\")";
             case "not_contains" -> "!" + list + ".contains(\"" + escape(value) + "\")";
-            case "size_gte"     -> list + ".size() >= " + value;
-            case "size_lte"     -> list + ".size() <= " + value;
+            case "size_gte" -> list + ".size() >= " + value;
+            case "size_lte" -> list + ".size() <= " + value;
             default -> throw new IllegalArgumentException(
                     "LIST does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
         };
@@ -176,7 +177,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     private String mapFieldName(String schemaType) {
         return switch (schemaType.toLowerCase()) {
             case "customer", "customer_metadata" -> "attrs";
-            case "order", "order_metadata"       -> "metadata";
+            case "order", "order_metadata" -> "metadata";
             default -> throw new IllegalArgumentException(
                     "Unsupported schema_type '" + schemaType + "' for Pha 1 of " + OPERATOR_NAME
                             + ". Supported: customer, customer_metadata, order, order_metadata");
@@ -189,7 +190,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
     private String factVariable(String schemaType) {
         return switch (schemaType.toLowerCase()) {
             case "customer", "customer_metadata" -> "$customer: Customer";
-            case "order", "order_metadata"       -> "$order: Order";
+            case "order", "order_metadata" -> "$order: Order";
             default -> throw new IllegalArgumentException(
                     "Unsupported schema_type '" + schemaType + "' for Pha 1 of " + OPERATOR_NAME);
         };

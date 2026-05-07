@@ -1,12 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "quota_events",
         indexes = {
                 @Index(name = "idx_qe_rule_window", columnList = "rule_id, bucket_key, window_start"),
-                @Index(name = "idx_qe_redemption",  columnList = "redemption_id")
+                @Index(name = "idx_qe_redemption", columnList = "redemption_id")
         })
 @Getter
 @Setter
@@ -60,7 +54,9 @@ public class QuotaEventEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    /** Event type matching the ENUM in the DB schema. */
+    /**
+     * Event type matching the ENUM in the DB schema.
+     */
     public enum EventType {
         INCR, DECR, ROLLBACK
     }

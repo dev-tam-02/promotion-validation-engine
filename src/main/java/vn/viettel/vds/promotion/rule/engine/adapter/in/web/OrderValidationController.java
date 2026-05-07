@@ -31,8 +31,8 @@ public class OrderValidationController {
         this.orderValidationService = orderValidationService;
     }
 
-    @Operation(summary = "Validate order against campaigns", 
-               description = "Validate an order against applicable campaigns with filtering options")
+    @Operation(summary = "Validate order against campaigns",
+            description = "Validate an order against applicable campaigns with filtering options")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Validation completed successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request"),
@@ -42,15 +42,15 @@ public class OrderValidationController {
     public ResponseEntity<ValidateOrderResponse> validateOrder(
             @Valid @RequestBody ValidateOrderRequest request) {
 
-        logger.info("Validating order: customerId={}, orderId={}, campaignFilter={}", 
-                request.getCustomer().id(), 
+        logger.info("Validating order: customerId={}, orderId={}, campaignFilter={}",
+                request.getCustomer().id(),
                 request.getOrder().id(),
                 request.getCampaignFilter() != null ? "present" : "none");
 
         try {
             ValidateOrderResponse response = orderValidationService.validateOrder(request);
-            
-            logger.info("Order validation completed: success={}, totalCampaigns={}, validCampaigns={}", 
+
+            logger.info("Order validation completed: success={}, totalCampaigns={}, validCampaigns={}",
                     response.getSuccess(),
                     response.getSummary() != null ? response.getSummary().getTotalCampaigns() : 0,
                     response.getSummary() != null ? response.getSummary().getValidCampaigns() : 0);
@@ -58,7 +58,7 @@ public class OrderValidationController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            logger.error("Order validation failed: customerId={}, orderId={}", 
+            logger.error("Order validation failed: customerId={}, orderId={}",
                     request.getCustomer().id(), request.getOrder().id(), e);
 
             ValidateOrderResponse errorResponse = new ValidateOrderResponse();
