@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Add missing audit columns to compile_jobs table (required by BaseEntity) -->
+    <!-- compile_jobs was created in 001-03 without BaseEntity audit columns,        -->
+    <!-- causing Unknown column 'created_at' SQL errors on every compile attempt.    -->
+    <changeSet id="007-01-add-audit-columns-to-compile-jobs" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="compile_jobs"/>
+            <not>
+                <columnExists tableName="compile_jobs" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="compile_jobs">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(36)"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(36)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add version column to compile_jobs table (required by BaseEntity @Version) -->
+    <changeSet id="007-02-add-version-column-to-compile-jobs" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="compile_jobs"/>
+            <not>
+                <columnExists tableName="compile_jobs" columnName="version"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="compile_jobs">
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

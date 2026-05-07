@@ -1,0 +1,57 @@
+groups:
+  - name: rule-engine
+    rules:
+      - alert: RuleEvaluationP95High
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(rule_evaluation_duration_seconds_bucket[5m])) by (le)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: pp-platform
+          service: pp-rule-engine
+        annotations:
+          summary: "Rule evaluation p95 > 50ms for 5 minutes"
+          description: >
+            The 95th-percentile evaluation duration across all rules has exceeded 50ms
+            and remained above that threshold for 5 consecutive minutes.
+            Current value: {{ $value | humanizeDuration }}.
+            Investigate slow rules via the Grafana "P95 Evaluation Duration" panel.
+          runbook_url: "https://wiki.promixhub.com/pp/rule-engine/runbooks/slow-evaluation"
+
+      - alert: RuleEvaluationP95HighPerRule
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(rule_evaluation_duration_seconds_bucket[5m])) by (le, rule_id)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: pp-platform
+          service: pp-rule-engine
+        annotations:
+          summary: "Rule {{ $labels.rule_id }} p95 > 50ms for 5 minutes"
+          description: >
+            Rule {{ $labels.rule_id }} has sustained p95 evaluation latency above 50ms
+            for 5 consecutive minutes. Current p95: {{ $value | humanizeDuration }}.
+            Consider simplifying the DRL conditions or splitting the rule bundle.
+          runbook_url: "https://wiki.promixhub.com/pp/rule-engine/runbooks/slow-evaluation"
+
+      - alert: RuleRejectRateSpiking
+        expr: >
+          sum(rate(rule_rejects_total[5m])) by (rule_id, reason_code)
+          /
+          sum(rate(rule_fires_total[5m])) by (rule_id)
+          > 0.9
+        for: 10m
+        labels:
+          severity: info
+          team: pp-platform
+          service: pp-rule-engine
+        annotations:
+          summary: "Rule {{ $labels.rule_id }} reject rate > 90% (reason: {{ $labels.reason_code }})"
+          description: >
+            Rule {{ $labels.rule_id }} is rejecting more than 90% of evaluations
+            with reason {{ $labels.reason_code }} over the last 10 minutes.
+            Verify rule conditions are correctly configured and facts are valid.

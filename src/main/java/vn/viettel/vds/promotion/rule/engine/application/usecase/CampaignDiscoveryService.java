@@ -43,22 +43,52 @@ public class CampaignDiscoveryService {
         private Integer maxResults;
 
         // Getters and setters...
-        public List<String> getCampaignIds() { return campaignIds; }
-        public void setCampaignIds(List<String> campaignIds) { this.campaignIds = campaignIds; }
+        public List<String> getCampaignIds() {
+            return campaignIds;
+        }
 
-        public List<String> getCampaignTypes() { return campaignTypes; }
-        public void setCampaignTypes(List<String> campaignTypes) { this.campaignTypes = campaignTypes; }
+        public void setCampaignIds(List<String> campaignIds) {
+            this.campaignIds = campaignIds;
+        }
 
-        public List<String> getTags() { return tags; }
-        public void setTags(List<String> tags) { this.tags = tags; }
+        public List<String> getCampaignTypes() {
+            return campaignTypes;
+        }
 
-        public Instant getEffectiveTime() { return effectiveTime; }
-        public void setEffectiveTime(Instant effectiveTime) { this.effectiveTime = effectiveTime; }
+        public void setCampaignTypes(List<String> campaignTypes) {
+            this.campaignTypes = campaignTypes;
+        }
 
-        public Boolean getActiveOnly() { return activeOnly; }
-        public void setActiveOnly(Boolean activeOnly) { this.activeOnly = activeOnly; }
+        public List<String> getTags() {
+            return tags;
+        }
 
-        public Integer getMaxResults() { return maxResults; }
-        public void setMaxResults(Integer maxResults) { this.maxResults = maxResults; }
+        public void setTags(List<String> tags) {
+            this.tags = tags;
+        }
+
+        public Instant getEffectiveTime() {
+            return effectiveTime;
+        }
+
+        public void setEffectiveTime(Instant effectiveTime) {
+            this.effectiveTime = effectiveTime;
+        }
+
+        public Boolean getActiveOnly() {
+            return activeOnly;
+        }
+
+        public void setActiveOnly(Boolean activeOnly) {
+            this.activeOnly = activeOnly;
+        }
+
+        public Integer getMaxResults() {
+            return maxResults;
+        }
+
+        public void setMaxResults(Integer maxResults) {
+            this.maxResults = maxResults;
+        }
     }
 }

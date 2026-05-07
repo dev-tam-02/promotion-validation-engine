@@ -10,17 +10,17 @@ public class ExecutionErrorHandler {
     public void handleExecutionError(String executionId, String bundleHash, Exception e) {
         if (e instanceof SessionCreationException) {
             throw new RuleExecutionException(
-                    "Failed to create session for rule execution", 
-                    bundleHash, 
-                    executionId, 
+                    "Failed to create session for rule execution",
+                    bundleHash,
+                    executionId,
                     e
             );
         }
-        
+
         throw new RuleExecutionException(
-                "Rule execution failed: " + e.getMessage(), 
-                bundleHash, 
-                executionId, 
+                "Rule execution failed: " + e.getMessage(),
+                bundleHash,
+                executionId,
                 e
         );
     }

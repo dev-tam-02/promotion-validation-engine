@@ -18,6 +18,7 @@ import java.util.List;
 public class ValidationServiceAdapter implements ValidationServicePort {
 
     private static final Logger logger = LoggerFactory.getLogger(ValidationServiceAdapter.class);
+    private static final String FIELD_TIME_WINDOWS = "timeWindows";
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -93,8 +94,8 @@ public class ValidationServiceAdapter implements ValidationServicePort {
 
     private RuleBindingDto parseBindingNode(JsonNode node) {
         List<TimeWindowDto> timeWindows = new ArrayList<>();
-        if (node.has("timeWindows") && node.get("timeWindows").isArray()) {
-            for (JsonNode tw : node.get("timeWindows")) {
+        if (node.has(FIELD_TIME_WINDOWS) && node.get(FIELD_TIME_WINDOWS).isArray()) {
+            for (JsonNode tw : node.get(FIELD_TIME_WINDOWS)) {
                 timeWindows.add(new TimeWindowDto(
                         getTextOrNull(tw, "start"),
                         getTextOrNull(tw, "end")));

@@ -42,7 +42,7 @@ public class SingleRuleExecutor {
 
         try {
             StatelessKieSession session = sessionManager.createStatelessSession(container);
-            
+
             ExecutionTracingService.TracingAgendaEventListener tracingListener = null;
             if (shouldEnableExplain(input.getOptions())) {
                 tracingListener = tracingService.createTracingListener(executionId);
@@ -62,12 +62,12 @@ public class SingleRuleExecutor {
 
         } catch (Exception e) {
             logger.error("Single rule execution failed: executionId={}", executionId, e);
-            
+
             // Attempt recovery if possible
             if (errorHandler.isRecoverableError(e)) {
                 errorHandler.attemptRecovery(e);
             }
-            
+
             // Handle the error appropriately
             errorHandler.handleExecutionError(executionId, input.getBundleHash(), e);
             return responseBuilder.buildErrorResponse(startTime);

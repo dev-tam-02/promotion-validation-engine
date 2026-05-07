@@ -51,6 +51,7 @@ public class CompileJobEntity extends BaseEntity {
     private String operatorsFingerprint;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private EngineInfo engine;
 
     @Column(name = "tenant_id", length = 100)

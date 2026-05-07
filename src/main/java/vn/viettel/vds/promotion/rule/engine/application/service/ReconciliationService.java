@@ -24,17 +24,13 @@ public class ReconciliationService {
     private final ValidationServicePort validationService;
     private final AssignmentSyncService assignmentSyncService;
     private final AssignmentRepositoryPort assignmentRepository;
-
+    private final AtomicBoolean startupCompleted = new AtomicBoolean(false);
     @Value("${validation.sync.startup-enabled:true}")
     private boolean startupSyncEnabled;
-
     @Value("${validation.sync.reconciliation-enabled:true}")
     private boolean reconciliationEnabled;
-
     @Value("${validation.sync.page-size:100}")
     private int pageSize;
-
-    private final AtomicBoolean startupCompleted = new AtomicBoolean(false);
 
     public ReconciliationService(ValidationServicePort validationService,
                                  AssignmentSyncService assignmentSyncService,
@@ -72,7 +68,7 @@ public class ReconciliationService {
      * Detects and fixes drift between pp-validation and local assignment store.
      */
     @Scheduled(fixedDelayString = "${validation.sync.reconciliation-interval-ms:900000}",
-               initialDelayString = "${validation.sync.reconciliation-initial-delay-ms:450000}")
+            initialDelayString = "${validation.sync.reconciliation-initial-delay-ms:450000}")
     public void reconcile() {
         if (!reconciliationEnabled || !startupCompleted.get()) {
             return;
@@ -102,62 +98,64 @@ public class ReconciliationService {
     private SyncStats performFullSync() {
         SyncStats stats = new SyncStats();
         int page = 0;
+        boolean lastPage = false;
 
-        while (true) {
+        while (!lastPage) {
             List<ValidationServicePort.RuleBindingDto> bindings =
                     validationService.fetchActiveBindings(page, pageSize);
 
-            if (bindings.isEmpty()) {
-                break;
+            if (bindings.isEmpty() || bindings.size() < pageSize) {
+                lastPage = true;
             }
 
             for (ValidationServicePort.RuleBindingDto binding : bindings) {
-                try {
-                    if (binding.objectType() == null || binding.objectId() == null) {
-                        logger.debug("Skipping binding with null objectType/objectId: id={}", binding.id());
-                        continue;
-                    }
-
-                    if (binding.ruleId() == null) {
-                        // Track subject pair so we don't deactivate event-created assignments
-                        // (Kafka consumer uses assignmentId as fallback ruleId)
-                        stats.remoteSubjectPairs.add(binding.objectType() + ":" + binding.objectId());
-                        logger.debug("Binding has null ruleId, tracking subject pair: {}:{}", binding.objectType(), binding.objectId());
-                        continue;
-                    }
-
-                    String compositeKey = binding.objectType() + ":" + binding.objectId() + ":" + binding.ruleId();
-                    stats.remoteIds.add(compositeKey);
-
-                    AssignmentSyncService.SyncResult result = assignmentSyncService.upsertFromBinding(binding);
-                    if (result.assignment() == null) {
-                        continue;
-                    }
-                    stats.total++;
-
-                    if (result.assignment().getCreatedAt() != null
-                            && result.assignment().getCreatedAt().equals(result.assignment().getUpdatedAt())) {
-                        stats.created++;
-                    } else {
-                        stats.updated++;
-                    }
-
-                    if (result.needsCompile()) {
-                        stats.needsCompile++;
-                    }
-                } catch (Exception e) {
-                    logger.error("Failed to sync binding: id={}, ruleId={}", binding.id(), binding.ruleId(), e);
-                    stats.failed++;
-                }
+                processBinding(binding, stats);
             }
 
-            if (bindings.size() < pageSize) {
-                break;
-            }
             page++;
         }
 
         return stats;
+    }
+
+    private void processBinding(ValidationServicePort.RuleBindingDto binding, SyncStats stats) {
+        try {
+            if (binding.objectType() == null || binding.objectId() == null) {
+                logger.debug("Skipping binding with null objectType/objectId: id={}", binding.id());
+                return;
+            }
+
+            if (binding.ruleId() == null) {
+                // Track subject pair so we don't deactivate event-created assignments
+                // (Kafka consumer uses assignmentId as fallback ruleId)
+                stats.remoteSubjectPairs.add(binding.objectType() + ":" + binding.objectId());
+                logger.debug("Binding has null ruleId, tracking subject pair: {}:{}", binding.objectType(), binding.objectId());
+                return;
+            }
+
+            String compositeKey = binding.objectType() + ":" + binding.objectId() + ":" + binding.ruleId();
+            stats.remoteIds.add(compositeKey);
+
+            AssignmentSyncService.SyncResult result = assignmentSyncService.upsertFromBinding(binding);
+            if (result.assignment() == null) {
+                return;
+            }
+            stats.total++;
+
+            if (result.assignment().getCreatedAt() != null
+                    && result.assignment().getCreatedAt().equals(result.assignment().getUpdatedAt())) {
+                stats.created++;
+            } else {
+                stats.updated++;
+            }
+
+            if (result.needsCompile()) {
+                stats.needsCompile++;
+            }
+        } catch (Exception e) {
+            logger.error("Failed to sync binding: id={}, ruleId={}", binding.id(), binding.ruleId(), e);
+            stats.failed++;
+        }
     }
 
     private void cleanupStaleAssignments(SyncStats stats) {
@@ -169,22 +167,9 @@ public class ReconciliationService {
         int removed = 0;
 
         for (AssignmentEntity local : localActive) {
-            String compositeKey = local.getSubjectType() + ":" + local.getSubjectKey() + ":" + local.getRuleId();
-            String subjectPair = local.getSubjectType() + ":" + local.getSubjectKey();
-
-            // Keep if compositeKey matches a fully-synced remote binding
-            if (stats.remoteIds.contains(compositeKey)) {
+            if (shouldKeep(local, stats)) {
                 continue;
             }
-
-            // Keep if subject pair matches a remote binding with null ruleId
-            // (assignment was created via Kafka event with fallback ruleId)
-            if (stats.remoteSubjectPairs.contains(subjectPair)) {
-                logger.debug("Keeping event-created assignment for subject pair: {}, ruleId={}",
-                        subjectPair, local.getRuleId());
-                continue;
-            }
-
             local.setActive(false);
             assignmentRepository.save(local);
             removed++;
@@ -193,6 +178,21 @@ public class ReconciliationService {
         }
 
         stats.staleRemoved = removed;
+    }
+
+    private boolean shouldKeep(AssignmentEntity local, SyncStats stats) {
+        String compositeKey = local.getSubjectType() + ":" + local.getSubjectKey() + ":" + local.getRuleId();
+        String subjectPair = local.getSubjectType() + ":" + local.getSubjectKey();
+
+        if (stats.remoteIds.contains(compositeKey)) {
+            return true;
+        }
+        if (stats.remoteSubjectPairs.contains(subjectPair)) {
+            logger.debug("Keeping event-created assignment for subject pair: {}, ruleId={}",
+                    subjectPair, local.getRuleId());
+            return true;
+        }
+        return false;
     }
 
     public static class SyncStats {
@@ -205,11 +205,28 @@ public class ReconciliationService {
         Set<String> remoteIds = new HashSet<>();
         Set<String> remoteSubjectPairs = new HashSet<>();
 
-        public int getTotal() { return total; }
-        public int getCreated() { return created; }
-        public int getUpdated() { return updated; }
-        public int getNeedsCompile() { return needsCompile; }
-        public int getFailed() { return failed; }
-        public int getStaleRemoved() { return staleRemoved; }
+        public int getTotal() {
+            return total;
+        }
+
+        public int getCreated() {
+            return created;
+        }
+
+        public int getUpdated() {
+            return updated;
+        }
+
+        public int getNeedsCompile() {
+            return needsCompile;
+        }
+
+        public int getFailed() {
+            return failed;
+        }
+
+        public int getStaleRemoved() {
+            return staleRemoved;
+        }
     }
 }

@@ -22,34 +22,34 @@ public class RuleDiscoveryController {
         this.ruleDiscoveryService = ruleDiscoveryService;
     }
 
-    @Operation(summary = "Discover valid campaigns", 
-               description = "Find all valid campaigns for given context")
+    @Operation(summary = "Discover valid campaigns",
+            description = "Find all valid campaigns for given context")
     @PostMapping("/campaigns")
     public ResponseEntity<List<String>> discoverValidCampaigns(
             @RequestBody Map<String, Object> context) {
 
-        RuleDiscoveryService.DiscoveryRequest request = 
+        RuleDiscoveryService.DiscoveryRequest request =
                 new RuleDiscoveryService.DiscoveryRequest(context);
 
         List<String> validCampaigns = ruleDiscoveryService.discoverValidCampaigns(request);
-        
+
         return ResponseEntity.ok(validCampaigns);
     }
 
-    @Operation(summary = "Discover campaigns with details", 
-               description = "Find all campaigns with detailed validation results")
+    @Operation(summary = "Discover campaigns with details",
+            description = "Find all campaigns with detailed validation results")
     @PostMapping("/campaigns/details")
     public ResponseEntity<List<RuleDiscoveryService.CampaignValidationResult>> discoverWithDetails(
             @RequestBody Map<String, Object> context,
             @RequestParam(defaultValue = "false") boolean explain) {
 
-        RuleDiscoveryService.DiscoveryRequest request = 
+        RuleDiscoveryService.DiscoveryRequest request =
                 new RuleDiscoveryService.DiscoveryRequest(context);
         request.setExplainResults(explain);
 
-        List<RuleDiscoveryService.CampaignValidationResult> results = 
+        List<RuleDiscoveryService.CampaignValidationResult> results =
                 ruleDiscoveryService.discoverWithDetails(request);
-        
+
         return ResponseEntity.ok(results);
     }
 }

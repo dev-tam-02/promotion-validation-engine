@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
 import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.*;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.CompileJobEntity;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.TimeLinkEntity;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileResponse;
@@ -92,9 +95,11 @@ public class CompileService implements CompileUseCase {
             String artifactKey = generateArtifactKey(result.getBundleHash());
             objectStoragePort.store(artifactKey, result.getArtifactBytes());
 
-            // Create bundle entity
-            BundleEntity bundle = createBundle(request, result, artifactKey);
-            bundleRepository.save(bundle);
+            // Bundle hash is deterministic: reuse existing bundle if the same
+            // hash was already persisted to avoid optimistic-locking conflicts
+            // on re-compile of identical DRL content.
+            BundleEntity bundle = bundleRepository.findById(result.getBundleHash())
+                    .orElseGet(() -> bundleRepository.save(createBundle(request, result, artifactKey)));
 
             return handleCompilationSuccess(compileJob, request, result, bundle);
 

@@ -37,6 +37,12 @@ class BundleCacheInvalidationListenerTest {
         sut = new BundleCacheInvalidationListener(kieSessionManager, bundlePreloadService, broadcastKafkaConfig);
     }
 
+    private BundleCacheInvalidationEvent createEvent(String bundleHash, String ruleId, Integer ruleVersion,
+                                                     BundleCacheInvalidationEvent.InvalidationType type,
+                                                     String sourceInstanceId) {
+        return new BundleCacheInvalidationEvent(bundleHash, ruleId, ruleVersion, type, sourceInstanceId);
+    }
+
     @Nested
     @DisplayName("onCacheInvalidation()")
     class OnCacheInvalidationTests {
@@ -145,11 +151,5 @@ class BundleCacheInvalidationListenerTest {
             // Then
             verify(kieSessionManager).evictContainer("sha256:abc");
         }
-    }
-
-    private BundleCacheInvalidationEvent createEvent(String bundleHash, String ruleId, Integer ruleVersion,
-                                                      BundleCacheInvalidationEvent.InvalidationType type,
-                                                      String sourceInstanceId) {
-        return new BundleCacheInvalidationEvent(bundleHash, ruleId, ruleVersion, type, sourceInstanceId);
     }
 }

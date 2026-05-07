@@ -21,9 +21,11 @@ import java.util.Map;
 public class EngineConfigEntity extends BaseEntity {
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private ExecuteConfig execute;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private CompileConfig compile;
 
     @Embeddable

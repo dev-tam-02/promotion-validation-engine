@@ -10,8 +10,10 @@ import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class TestFixtures {
 
@@ -54,8 +56,7 @@ public final class TestFixtures {
     }
 
     public static Customer customerWithSegments(String id, Set<String> segments) {
-        Customer customer = new Customer(id, segments);
-        return customer;
+        return new Customer(id, segments);
     }
 
     public static Candidate voucher(String code, String id) {
@@ -143,7 +144,7 @@ public final class TestFixtures {
     }
 
     public static CompileJobEntity compileJob(String jobId, String ruleId, int version,
-                                               CompileJobEntity.JobStatus status) {
+                                              CompileJobEntity.JobStatus status) {
         CompileJobEntity job = new CompileJobEntity();
         job.setId(jobId);
         job.setRuleId(ruleId);
@@ -172,7 +173,7 @@ public final class TestFixtures {
     }
 
     public static ExecuteRequest executeRequestWithOptions(String bundleHash, Map<String, Object> context,
-                                                            Integer timeoutMs, Integer maxRulesFired) {
+                                                           Integer timeoutMs, Integer maxRulesFired) {
         ExecuteRequest.Bundle bundle = new ExecuteRequest.Bundle(bundleHash, 1, 1);
         ExecuteRequest.ExecuteOptions options = new ExecuteRequest.ExecuteOptions("NONE", timeoutMs, maxRulesFired);
         return new ExecuteRequest(bundle, context, options);
