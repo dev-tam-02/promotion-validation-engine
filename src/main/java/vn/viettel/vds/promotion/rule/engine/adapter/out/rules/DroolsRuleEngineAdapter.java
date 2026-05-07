@@ -97,7 +97,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             // Generate business rule DRL with temporal policy awareness
             String businessRuleDrl = ruleTranslationService.translateToDrl(
                     input.getNodes(),
-                    hasTemporalPolicy
+                    hasTemporalPolicy,
+                    input.getRuleId()
             );
 
             logger.debug("Generated business rule DRL:\n{}", businessRuleDrl);

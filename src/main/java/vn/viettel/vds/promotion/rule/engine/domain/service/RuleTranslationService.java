@@ -38,10 +38,14 @@ public class RuleTranslationService {
     }
 
     public String translateToDrl(List<Map<String, Object>> nodes) {
-        return translateToDrl(nodes, false);
+        return translateToDrl(nodes, false, "default");
     }
 
     public String translateToDrl(List<Map<String, Object>> nodes, boolean hasTemporalPolicy) {
+        return translateToDrl(nodes, hasTemporalPolicy, "default");
+    }
+
+    public String translateToDrl(List<Map<String, Object>> nodes, boolean hasTemporalPolicy, String ruleId) {
 
         // Sort nodes by ID to ensure deterministic DRL generation
         List<Map<String, Object>> sortedNodes = nodes.stream()
@@ -68,7 +72,7 @@ public class RuleTranslationService {
         StringBuilder drl = new StringBuilder();
 
         generateDrlHeader(drl, hasTemporalPolicy);
-        generateRule(drl, rootNode, nodeMap, hasTemporalPolicy);
+        generateRule(drl, rootNode, nodeMap, hasTemporalPolicy, ruleId);
 
         return drl.toString();
     }
@@ -109,11 +113,13 @@ public class RuleTranslationService {
     }
 
     private void generateRule(StringBuilder drl, Map<String, Object> rootNode,
-                              Map<String, Map<String, Object>> nodeMap, boolean hasTemporalPolicy) {
+                              Map<String, Map<String, Object>> nodeMap, boolean hasTemporalPolicy,
+                              String ruleId) {
+        String safeId = sanitizeRuleName(ruleId != null ? ruleId : "default");
 
         // When no temporal policy, add rule to insert TemporalAllowed automatically
         if (!hasTemporalPolicy) {
-            drl.append("rule \"insert_temporal_allowed\"\n");
+            drl.append("rule \"insert_temporal_allowed__").append(safeId).append("\"\n");
             drl.append("    salience 9999\n");  // Very high priority to run first
             drl.append(DRL_WHEN);
             drl.append("        not TemporalAllowed()\n");
@@ -122,7 +128,7 @@ public class RuleTranslationService {
             drl.append(DRL_END);
         }
 
-        drl.append("rule \"promotion_validation_rule\"\n");
+        drl.append("rule \"promotion_validation_rule__").append(safeId).append("\"\n");
         drl.append(DRL_WHEN);
 
         // Require temporal check to pass first (TemporalAllowed is inserted by timeframe.drl or by insert_temporal_allowed rule)
@@ -145,7 +151,7 @@ public class RuleTranslationService {
         // Generate negative rules for each condition to track failures
         generateConditionFailureRules(drl, rootNode, nodeMap);
 
-        generateFailureRule(drl);
+        generateFailureRule(drl, safeId);
     }
 
     private void generateConditions(StringBuilder drl, Map<String, Object> node,
@@ -439,8 +445,8 @@ public class RuleTranslationService {
         }
     }
 
-    private void generateFailureRule(StringBuilder drl) {
-        drl.append("rule \"promotion_validation_failure\"\n");
+    private void generateFailureRule(StringBuilder drl, String safeId) {
+        drl.append("rule \"promotion_validation_failure__").append(safeId).append("\"\n");
         drl.append("    salience -100\n");
         drl.append(DRL_WHEN);
         drl.append("        not RuleMatched()  // Only fire if main rule didn't match\n");
