@@ -8,12 +8,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.RuleConfigurationAdapter;
 import vn.viettel.vds.promotion.rule.engine.application.service.AssignmentSyncService;
-import vn.viettel.vds.promotion.validation.event.ValidationEvent;
-import vn.viettel.vds.promotion.validation.event.ValidationRuleDeletedEvent;
-import vn.viettel.vds.promotion.validation.event.ValidationRuleDisabledEvent;
-import vn.viettel.vds.promotion.validation.event.ValidationRuleEnabledEvent;
-import vn.viettel.vds.promotion.validation.event.ValidationRuleSettingAppliedEvent;
-import vn.viettel.vds.promotion.validation.event.ValidationRuleSettingAppliedEventPayload;
+import vn.viettel.vds.promotion.validation.event.*;
 
 import java.time.Instant;
 
@@ -114,10 +109,11 @@ public class ValidationEventConsumer {
         }
 
         AssignmentSyncService.SyncResult result = assignmentSyncService.upsertFromEvent(
-                assignment.getAssignmentId(), ruleId, subjectType, subjectKey,
-                Boolean.TRUE.equals(assignment.getActive()) || assignment.getActive() == null,
-                assignment.getTrafficPercent(), assignment.getPriority(),
-                assignment.getBundleHash(), validFrom, validTo, timezone);
+                new AssignmentSyncService.EventUpsertCommand(
+                        assignment.getAssignmentId(), ruleId, subjectType, subjectKey,
+                        Boolean.TRUE.equals(assignment.getActive()) || assignment.getActive() == null,
+                        assignment.getTrafficPercent(), assignment.getPriority(),
+                        assignment.getBundleHash(), validFrom, validTo, timezone));
 
         logger.info("Applied event processed: subject={}:{}, ruleId={}, bundleHash={}, needsCompile={}",
                 subjectType, subjectKey, ruleId, assignment.getBundleHash(), result.needsCompile());
@@ -146,9 +142,10 @@ public class ValidationEventConsumer {
         }
 
         assignmentSyncService.upsertFromEvent(
-                null, ruleId, subjectType, subjectKey,
-                true, null, null, payload.getBundleHash(),
-                null, null, null);
+                new AssignmentSyncService.EventUpsertCommand(
+                        null, ruleId, subjectType, subjectKey,
+                        true, null, null, payload.getBundleHash(),
+                        null, null, null));
         logger.info("Enabled event processed: subject={}:{}, ruleId={}", subjectType, subjectKey, ruleId);
     }
 

@@ -24,12 +24,16 @@ public final class CounterResult {
         return new CounterResult(false, current);
     }
 
-    /** {@code true} if the increment was accepted (not exceeded). */
+    /**
+     * {@code true} if the increment was accepted (not exceeded).
+     */
     public boolean isOk() {
         return ok;
     }
 
-    /** Current counter value after the attempted increment. */
+    /**
+     * Current counter value after the attempted increment.
+     */
     public long getCurrent() {
         return current;
     }

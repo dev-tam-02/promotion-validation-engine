@@ -11,7 +11,8 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.operator.impl.*;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -196,7 +197,7 @@ class NewOperatorsDrlGenerationTest {
         assertTrue(drl.contains("reasonCodes.add(\"BRAND_NOT_ALLOWED\")"));
         assertTrue(drl.contains("reasonCodes.add(\"LIFETIME_VALUE_TOO_LOW\")"));
         assertTrue(drl.contains("reasonCodes.add(\"CHANNEL_NOT_ALLOWED\")"));
-        
+
         System.out.println("Complex Rule DRL:\n" + drl);
     }
 }

@@ -6,7 +6,6 @@ import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Micrometer metrics for per-rule analytics observability (Task 09 V10).

@@ -45,7 +45,7 @@ public class DrlRegistrationService implements RegisterDrlUseCase {
     private final IncrementalKieContainerService incrementalKieSvc;
 
     public DrlRegistrationService(RuleRegistryPort ruleRegistry,
-                                   IncrementalKieContainerService incrementalKieSvc) {
+                                  IncrementalKieContainerService incrementalKieSvc) {
         this.ruleRegistry = ruleRegistry;
         this.incrementalKieSvc = incrementalKieSvc;
     }

@@ -21,7 +21,8 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Standalone MockMvc tests for {@link RulesController}.
@@ -55,10 +56,6 @@ class RulesControllerTest {
                 .build();
         objectMapper = new ObjectMapper();
     }
-
-    // ------------------------------------------------------------------
-    // POST /v1/rules
-    // ------------------------------------------------------------------
 
     @Nested
     @DisplayName("POST /v1/rules")
@@ -117,10 +114,6 @@ class RulesControllerTest {
         }
     }
 
-    // ------------------------------------------------------------------
-    // PUT /v1/rules/{id}
-    // ------------------------------------------------------------------
-
     @Nested
     @DisplayName("PUT /v1/rules/{id}")
     class PutTests {
@@ -176,10 +169,6 @@ class RulesControllerTest {
                     .andExpect(jsonPath("$.code").value("DRL_COMPILE_ERROR"));
         }
     }
-
-    // ------------------------------------------------------------------
-    // DELETE /v1/rules/{id}
-    // ------------------------------------------------------------------
 
     @Nested
     @DisplayName("DELETE /v1/rules/{id}")

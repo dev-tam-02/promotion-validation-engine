@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 @Schema(description = "Request to rollback Layer-1 quota counters for a redemption")
 public class RollbackRequest {
 
-    @Schema(description = "Redemption ID whose Layer-1 counters should be decremented", required = true)
+    @Schema(description = "Redemption ID whose Layer-1 counters should be decremented", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "redemptionId is required")
     @JsonProperty("redemptionId")
     private String redemptionId;

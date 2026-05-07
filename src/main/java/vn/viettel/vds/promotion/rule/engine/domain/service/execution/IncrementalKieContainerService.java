@@ -1,11 +1,7 @@
 package vn.viettel.vds.promotion.rule.engine.domain.service.execution;
 
 import org.kie.api.KieServices;
-import org.kie.api.builder.KieBuilder;
-import org.kie.api.builder.KieFileSystem;
-import org.kie.api.builder.Message;
-import org.kie.api.builder.ReleaseId;
-import org.kie.api.builder.Results;
+import org.kie.api.builder.*;
 import org.kie.api.runtime.KieContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +10,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -177,22 +170,34 @@ public class IncrementalKieContainerService {
     // -------------------------------------------------------------------------
 
     private KieFileSystem buildKieFileSystem(String ruleId, String drl,
-                                              Map<String, String> allCurrentDrls,
-                                              ReleaseId releaseId) {
+                                             Map<String, String> allCurrentDrls,
+                                             ReleaseId releaseId) {
         KieFileSystem kfs = ks.newKieFileSystem();
         kfs.generateAndWritePomXML(releaseId);
+
+        // Deduplicate by DRL content hash: multiple ruleIds may share the same bundle
+        // (identical DRL content with identical rule names). Writing the same DRL content
+        // under different filenames causes Drools to reject with "Duplicate rule name".
+        // Only the first occurrence of each unique DRL content is written to the KieFileSystem.
+        Set<String> writtenContentHashes = new HashSet<>();
 
         // Write all existing rules that are NOT the one being updated/created
         for (Map.Entry<String, String> entry : allCurrentDrls.entrySet()) {
             if (!entry.getKey().equals(ruleId)) {
-                kfs.write("src/main/resources/rules/" + entry.getKey() + ".drl",
-                        entry.getValue().getBytes(StandardCharsets.UTF_8));
+                String contentHash = sha256Hex(entry.getValue());
+                if (writtenContentHashes.add(contentHash)) {
+                    kfs.write("src/main/resources/rules/" + entry.getKey() + ".drl",
+                            entry.getValue().getBytes(StandardCharsets.UTF_8));
+                }
             }
         }
 
-        // Write the new / updated rule (overwrites if key was already in allCurrentDrls)
-        kfs.write("src/main/resources/rules/" + ruleId + ".drl",
-                drl.getBytes(StandardCharsets.UTF_8));
+        // Write the new / updated rule only if its content is not already present
+        String newContentHash = sha256Hex(drl);
+        if (writtenContentHashes.add(newContentHash)) {
+            kfs.write("src/main/resources/rules/" + ruleId + ".drl",
+                    drl.getBytes(StandardCharsets.UTF_8));
+        }
 
         return kfs;
     }

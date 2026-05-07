@@ -54,6 +54,62 @@ public class BatchEvaluateRequest {
     @JsonProperty("subjects")
     private List<Subject> subjects;
 
+    public CustomerDto getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(CustomerDto customer) {
+        this.customer = customer;
+    }
+
+    public OrderDto getOrder() {
+        return order;
+    }
+
+    public void setOrder(OrderDto order) {
+        this.order = order;
+    }
+
+    public CandidateDto getCandidate() {
+        return candidate;
+    }
+
+    public void setCandidate(CandidateDto candidate) {
+        this.candidate = candidate;
+    }
+
+    public ExecutionContextDto getExecutionContext() {
+        return executionContext;
+    }
+
+    public void setExecutionContext(ExecutionContextDto executionContext) {
+        this.executionContext = executionContext;
+    }
+
+    public OffsetDateTime getEvaluationTime() {
+        return evaluationTime;
+    }
+
+    public void setEvaluationTime(OffsetDateTime evaluationTime) {
+        this.evaluationTime = evaluationTime;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
+
+    public List<Subject> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(List<Subject> subjects) {
+        this.subjects = subjects;
+    }
+
     @Schema(description = "Subject reference — canonical (type, key) pair")
     public static class Subject {
         @NotBlank
@@ -64,38 +120,28 @@ public class BatchEvaluateRequest {
         @JsonProperty("subjectKey")
         private String subjectKey;
 
-        public Subject() {}
+        public Subject() {
+        }
 
         public Subject(String subjectType, String subjectKey) {
             this.subjectType = subjectType;
             this.subjectKey = subjectKey;
         }
 
-        public String getSubjectType() { return subjectType; }
-        public void setSubjectType(String subjectType) { this.subjectType = subjectType; }
+        public String getSubjectType() {
+            return subjectType;
+        }
 
-        public String getSubjectKey() { return subjectKey; }
-        public void setSubjectKey(String subjectKey) { this.subjectKey = subjectKey; }
+        public void setSubjectType(String subjectType) {
+            this.subjectType = subjectType;
+        }
+
+        public String getSubjectKey() {
+            return subjectKey;
+        }
+
+        public void setSubjectKey(String subjectKey) {
+            this.subjectKey = subjectKey;
+        }
     }
-
-    public CustomerDto getCustomer() { return customer; }
-    public void setCustomer(CustomerDto customer) { this.customer = customer; }
-
-    public OrderDto getOrder() { return order; }
-    public void setOrder(OrderDto order) { this.order = order; }
-
-    public CandidateDto getCandidate() { return candidate; }
-    public void setCandidate(CandidateDto candidate) { this.candidate = candidate; }
-
-    public ExecutionContextDto getExecutionContext() { return executionContext; }
-    public void setExecutionContext(ExecutionContextDto executionContext) { this.executionContext = executionContext; }
-
-    public OffsetDateTime getEvaluationTime() { return evaluationTime; }
-    public void setEvaluationTime(OffsetDateTime evaluationTime) { this.evaluationTime = evaluationTime; }
-
-    public String getTimezone() { return timezone; }
-    public void setTimezone(String timezone) { this.timezone = timezone; }
-
-    public List<Subject> getSubjects() { return subjects; }
-    public void setSubjects(List<Subject> subjects) { this.subjects = subjects; }
 }

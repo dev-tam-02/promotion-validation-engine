@@ -38,7 +38,8 @@ import java.util.Set;
 public class RuleConfigurationAdapter implements RuleConfigurationPort {
 
     private static final TypeReference<List<String>> LIST_STRING =
-            new TypeReference<>() {};
+            new TypeReference<>() {
+            };
 
     private final FastCheckConfigJpaRepository repository;
     private final ObjectMapper objectMapper;

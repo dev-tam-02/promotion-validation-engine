@@ -13,12 +13,11 @@ import org.redisson.api.RedissonClient;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.QuotaEventEntity;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.QuotaEventPort;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -99,7 +98,7 @@ class QuotaCounterServiceTest {
 
             sut.incrementWithCheck("rule-x", "redeem-x", null, "bucket-x", ws, we, 5);
 
-            verify(atomicLong).expire(anyLong(), any());
+            verify(atomicLong).expire(any(Duration.class));
         }
     }
 
@@ -146,7 +145,7 @@ class QuotaCounterServiceTest {
             sut.overwrite("rule-1", "bucket-1", ws, we, 42L);
 
             verify(atomicLong).set(42L);
-            verify(atomicLong).expire(anyLong(), any());
+            verify(atomicLong).expire(any(Duration.class));
         }
     }
 }

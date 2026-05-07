@@ -33,7 +33,9 @@ public interface ValidationServicePort {
             String stickyKeyStrategy,
             String bundleHash,
             Long version
-    ) {}
+    ) {
+    }
 
-    record TimeWindowDto(String start, String end) {}
+    record TimeWindowDto(String start, String end) {
+    }
 }

@@ -10,7 +10,8 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.operator.impl.*;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("RuleTranslationService — DRL generation")
 class RuleTranslationServiceTest {
@@ -32,6 +33,15 @@ class RuleTranslationServiceTest {
         );
         OperatorTranslatorRegistry registry = new OperatorTranslatorRegistry(translators);
         service = new RuleTranslationService(registry);
+    }
+
+    private List<Map<String, Object>> singleConditionNodes(String operatorName, Map<String, Object> params) {
+        return List.of(
+                Map.of("id", "root", "type", "GROUP", "groupLogic", "ALL",
+                        "children", List.of("c1")),
+                Map.of("id", "c1", "type", "COND", "operatorName", operatorName,
+                        "operatorVersion", 1, "params", params, "reasonCode", "TEST_REASON")
+        );
     }
 
     @Nested
@@ -259,6 +269,8 @@ class RuleTranslationServiceTest {
         }
     }
 
+    // ============= Helper Methods =============
+
     @Nested
     @DisplayName("Accumulate operators")
     class AccumulateOperators {
@@ -300,16 +312,5 @@ class RuleTranslationServiceTest {
             assertTrue(drl.contains("accumulate"));
             assertTrue(drl.contains("average("));
         }
-    }
-
-    // ============= Helper Methods =============
-
-    private List<Map<String, Object>> singleConditionNodes(String operatorName, Map<String, Object> params) {
-        return List.of(
-                Map.of("id", "root", "type", "GROUP", "groupLogic", "ALL",
-                        "children", List.of("c1")),
-                Map.of("id", "c1", "type", "COND", "operatorName", operatorName,
-                        "operatorVersion", 1, "params", params, "reasonCode", "TEST_REASON")
-        );
     }
 }

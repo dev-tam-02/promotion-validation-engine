@@ -8,7 +8,8 @@
     <!-- ==================== QUOTA_EVENTS TABLE (Layer-1 backstore) ==================== -->
     <changeSet id="006-01-create-quota-events-table" author="system">
         <comment>Layer-1 quota event log: audit trail for Redis INCR/DECR/ROLLBACK operations.
-            Enables disaster-recovery rebuild of Redis counters from durable storage.</comment>
+            Enables disaster-recovery rebuild of Redis counters from durable storage.
+        </comment>
 
         <createTable tableName="quota_events">
             <column name="id" type="VARCHAR(36)">

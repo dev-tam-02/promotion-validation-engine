@@ -5,17 +5,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class ValidationResult {
+    // Quota policies emitted by counter rules; enforced post-eval by QuotaCounterService
+    private final List<QuotaPolicy> policies = new ArrayList<>();
     private boolean matched;
     private String message;
     private String candidateId;
-
     // Additional fields for rule execution
     private Boolean ok;
     private String decision;
     private List<String> reasonCodes;
-
-    // Quota policies emitted by counter rules; enforced post-eval by QuotaCounterService
-    private final List<QuotaPolicy> policies = new ArrayList<>();
 
     public ValidationResult() {
     }

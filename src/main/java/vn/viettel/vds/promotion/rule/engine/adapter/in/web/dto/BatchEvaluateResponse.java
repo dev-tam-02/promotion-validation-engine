@@ -13,14 +13,20 @@ public class BatchEvaluateResponse {
     @JsonProperty("results")
     private List<SubjectResult> results;
 
-    public BatchEvaluateResponse() {}
+    public BatchEvaluateResponse() {
+    }
 
     public BatchEvaluateResponse(List<SubjectResult> results) {
         this.results = results;
     }
 
-    public List<SubjectResult> getResults() { return results; }
-    public void setResults(List<SubjectResult> results) { this.results = results; }
+    public List<SubjectResult> getResults() {
+        return results;
+    }
+
+    public void setResults(List<SubjectResult> results) {
+        this.results = results;
+    }
 
     @Schema(description = "Decision for a single subject")
     public static class SubjectResult {
@@ -33,7 +39,9 @@ public class BatchEvaluateResponse {
         @JsonProperty("bundleHash")
         private String bundleHash;
 
-        /** ALLOW or DENY. */
+        /**
+         * ALLOW or DENY.
+         */
         @JsonProperty("decision")
         private String decision;
 
@@ -52,31 +60,76 @@ public class BatchEvaluateResponse {
         @JsonProperty("latencyMs")
         private Long latencyMs;
 
-        public String getSubjectType() { return subjectType; }
-        public void setSubjectType(String subjectType) { this.subjectType = subjectType; }
+        public String getSubjectType() {
+            return subjectType;
+        }
 
-        public String getSubjectKey() { return subjectKey; }
-        public void setSubjectKey(String subjectKey) { this.subjectKey = subjectKey; }
+        public void setSubjectType(String subjectType) {
+            this.subjectType = subjectType;
+        }
 
-        public String getBundleHash() { return bundleHash; }
-        public void setBundleHash(String bundleHash) { this.bundleHash = bundleHash; }
+        public String getSubjectKey() {
+            return subjectKey;
+        }
 
-        public String getDecision() { return decision; }
-        public void setDecision(String decision) { this.decision = decision; }
+        public void setSubjectKey(String subjectKey) {
+            this.subjectKey = subjectKey;
+        }
 
-        public Boolean getOk() { return ok; }
-        public void setOk(Boolean ok) { this.ok = ok; }
+        public String getBundleHash() {
+            return bundleHash;
+        }
 
-        public String getStage() { return stage; }
-        public void setStage(String stage) { this.stage = stage; }
+        public void setBundleHash(String bundleHash) {
+            this.bundleHash = bundleHash;
+        }
 
-        public List<String> getReasonCodes() { return reasonCodes; }
-        public void setReasonCodes(List<String> reasonCodes) { this.reasonCodes = reasonCodes; }
+        public String getDecision() {
+            return decision;
+        }
 
-        public String getExplanation() { return explanation; }
-        public void setExplanation(String explanation) { this.explanation = explanation; }
+        public void setDecision(String decision) {
+            this.decision = decision;
+        }
 
-        public Long getLatencyMs() { return latencyMs; }
-        public void setLatencyMs(Long latencyMs) { this.latencyMs = latencyMs; }
+        public Boolean getOk() {
+            return ok;
+        }
+
+        public void setOk(Boolean ok) {
+            this.ok = ok;
+        }
+
+        public String getStage() {
+            return stage;
+        }
+
+        public void setStage(String stage) {
+            this.stage = stage;
+        }
+
+        public List<String> getReasonCodes() {
+            return reasonCodes;
+        }
+
+        public void setReasonCodes(List<String> reasonCodes) {
+            this.reasonCodes = reasonCodes;
+        }
+
+        public String getExplanation() {
+            return explanation;
+        }
+
+        public void setExplanation(String explanation) {
+            this.explanation = explanation;
+        }
+
+        public Long getLatencyMs() {
+            return latencyMs;
+        }
+
+        public void setLatencyMs(Long latencyMs) {
+            this.latencyMs = latencyMs;
+        }
     }
 }

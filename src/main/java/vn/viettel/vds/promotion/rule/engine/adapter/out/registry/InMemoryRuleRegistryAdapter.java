@@ -57,7 +57,9 @@ public class InMemoryRuleRegistryAdapter implements RuleRegistryPort {
         }
     }
 
-    /** For observability / health checks. Not part of the port contract. */
+    /**
+     * For observability / health checks. Not part of the port contract.
+     */
     public int size() {
         return registry.size();
     }

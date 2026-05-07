@@ -3,7 +3,6 @@ package vn.viettel.vds.promotion.rule.engine.adapter.in.web;
 import com.promix.platform.web.annotation.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleRequest;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.EvaluateRuleResponse;
-import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.QuotaContext;
 import vn.viettel.vds.promotion.rule.engine.application.usecase.SimulateEvaluationService;
 
 /**
@@ -53,11 +51,9 @@ public class EvaluateController {
             description = "Evaluates one or more registered rules against the provided facts. "
                     + "When mode=SIMULATE the response includes a per-node trace showing which "
                     + "Drools patterns matched, which did not, and the overall verdict.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Evaluation completed"),
-            @ApiResponse(responseCode = "400", description = "Invalid request (missing ruleIds or facts)"),
-            @ApiResponse(responseCode = "404", description = "One or more ruleIds not registered in engine")
-    })
+    @ApiResponse(responseCode = "200", description = "Evaluation completed")
+    @ApiResponse(responseCode = "400", description = "Invalid request (missing ruleIds or facts)")
+    @ApiResponse(responseCode = "404", description = "One or more ruleIds not registered in engine")
     @PostMapping("/evaluate")
     public ResponseEntity<EvaluateRuleResponse> evaluate(
             @Valid @RequestBody EvaluateRuleRequest request) {

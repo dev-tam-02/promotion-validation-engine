@@ -39,6 +39,7 @@ public class CompileQueueService {
      * Submit a compile request with distributed lock to prevent race conditions.
      * Returns true if compilation was triggered or already exists, false on failure.
      */
+    @SuppressWarnings("java:S2222")
     public boolean submitCompile(CompileRequest request) {
         String ruleId = request.getRuleId();
         int version = request.getVersion();
@@ -46,45 +47,14 @@ public class CompileQueueService {
 
         RLock lock = redissonClient.getLock(lockKey);
         boolean acquired = false;
-
         try {
             acquired = lock.tryLock(0, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
             if (!acquired) {
                 logger.info("Compile lock held by another instance, skipping: ruleId={}, version={}", ruleId, version);
                 return true;
             }
-
-            // Check idempotency: already compiled?
-            Optional<CompileJobEntity> existingJob = compileJobRepository.findByRuleIdAndTargetVersion(ruleId, version);
-            if (existingJob.isPresent()) {
-                CompileJobEntity job = existingJob.get();
-                if (job.getStatus() == CompileJobEntity.JobStatus.SUCCESS) {
-                    logger.info("Compile already successful, skipping: ruleId={}, version={}, bundleHash={}",
-                            ruleId, version, job.getBundleHash());
-                    return true;
-                }
-                if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
-                    Duration age = Duration.between(job.getRequestedAt(), Instant.now());
-                    if (age.compareTo(STALE_JOB_THRESHOLD) < 0) {
-                        logger.info("Compile job still running, skipping: ruleId={}, version={}, age={}",
-                                ruleId, version, age);
-                        return true;
-                    }
-                    logger.warn("Stale RUNNING compile job detected, marking as FAILED: ruleId={}, version={}",
-                            ruleId, version);
-                    job.setStatus(CompileJobEntity.JobStatus.FAILED);
-                    job.setCompletedAt(Instant.now());
-                    job.getErrors().add("Timed out after " + STALE_JOB_THRESHOLD.toMinutes() + " minutes");
-                    compileJobRepository.save(job);
-                }
-                // FAILED status: allow recompile by falling through
-            }
-
-            logger.info("Submitting compile: ruleId={}, version={}", ruleId, version);
-            compileUseCase.compile(request);
-            logger.info("Compile completed successfully: ruleId={}, version={}", ruleId, version);
+            runCompileLocked(request, ruleId, version);
             return true;
-
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Interrupted while acquiring compile lock: ruleId={}, version={}", ruleId, version);
@@ -101,5 +71,35 @@ public class CompileQueueService {
                 }
             }
         }
+    }
+
+    private void runCompileLocked(CompileRequest request, String ruleId, int version) {
+        Optional<CompileJobEntity> existingJob = compileJobRepository.findByRuleIdAndTargetVersion(ruleId, version);
+        if (existingJob.isPresent()) {
+            CompileJobEntity job = existingJob.get();
+            if (job.getStatus() == CompileJobEntity.JobStatus.SUCCESS) {
+                logger.info("Compile already successful, skipping: ruleId={}, version={}, bundleHash={}",
+                        ruleId, version, job.getBundleHash());
+                return;
+            }
+            if (job.getStatus() == CompileJobEntity.JobStatus.RUNNING) {
+                Duration age = Duration.between(job.getRequestedAt(), Instant.now());
+                if (age.compareTo(STALE_JOB_THRESHOLD) < 0) {
+                    logger.info("Compile job still running, skipping: ruleId={}, version={}, age={}",
+                            ruleId, version, age);
+                    return;
+                }
+                logger.warn("Stale RUNNING compile job detected, marking as FAILED: ruleId={}, version={}",
+                        ruleId, version);
+                job.setStatus(CompileJobEntity.JobStatus.FAILED);
+                job.setCompletedAt(Instant.now());
+                job.getErrors().add("Timed out after " + STALE_JOB_THRESHOLD.toMinutes() + " minutes");
+                compileJobRepository.save(job);
+            }
+        }
+
+        logger.info("Submitting compile: ruleId={}, version={}", ruleId, version);
+        compileUseCase.compile(request);
+        logger.info("Compile completed successfully: ruleId={}, version={}", ruleId, version);
     }
 }

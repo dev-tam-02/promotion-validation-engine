@@ -8,7 +8,10 @@ import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.ValidateOrderResp
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderValidationService {
@@ -25,7 +28,7 @@ public class OrderValidationService {
     }
 
     public ValidateOrderResponse validateOrder(ValidateOrderRequest request) {
-        logger.info("Starting order validation: customerId={}, orderId={}", 
+        logger.info("Starting order validation: customerId={}, orderId={}",
                 request.getCustomer().id(), request.getOrder().id());
 
         long startTime = System.currentTimeMillis();
@@ -33,13 +36,13 @@ public class OrderValidationService {
         try {
             // 1. Discover applicable campaigns
             List<CampaignInfo> campaigns = discoverCampaigns(request);
-            
+
             if (campaigns.isEmpty()) {
                 return buildEmptyResponse("No applicable campaigns found");
             }
 
             // 2. Execute validation for all campaigns
-            List<ValidateOrderResponse.CampaignValidationResult> results = 
+            List<ValidateOrderResponse.CampaignValidationResult> results =
                     executeValidations(request, campaigns);
 
             // 3. Build response with summary
@@ -86,16 +89,16 @@ public class OrderValidationService {
                 .toList();
 
         // Execute in batch for better performance
-        List<vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse> executeResponses = 
+        List<vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse> executeResponses =
                 ruleEnginePort.executeBatch(executeInputs);
 
         // Map results back to campaigns
         List<ValidateOrderResponse.CampaignValidationResult> results = new ArrayList<>();
         for (int i = 0; i < campaigns.size(); i++) {
             CampaignInfo campaign = campaigns.get(i);
-            vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse executeResponse = 
+            vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse executeResponse =
                     executeResponses.get(i);
-            
+
             results.add(mapToValidationResult(campaign, executeResponse));
         }
 
@@ -114,22 +117,22 @@ public class OrderValidationService {
         if (options == null) {
             return new RuleEnginePort.ExecuteOptions("NONE", 30000, 1000);
         }
-        
+
         String explainLevel = Boolean.TRUE.equals(options.getExplainResults()) ? "FULL" : "NONE";
         return new RuleEnginePort.ExecuteOptions(
-                explainLevel, 
-                options.getTimeoutMs(), 
+                explainLevel,
+                options.getTimeoutMs(),
                 1000
         );
     }
 
     private ValidateOrderResponse.CampaignValidationResult mapToValidationResult(
-            CampaignInfo campaign, 
+            CampaignInfo campaign,
             vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse executeResponse) {
-        
-        ValidateOrderResponse.CampaignValidationResult result = 
+
+        ValidateOrderResponse.CampaignValidationResult result =
                 new ValidateOrderResponse.CampaignValidationResult();
-        
+
         result.setCampaignId(campaign.getCampaignId());
         result.setCampaignName(campaign.getCampaignName());
         result.setCampaignType(campaign.getCampaignType());
@@ -137,31 +140,31 @@ public class OrderValidationService {
         result.setValid(executeResponse.getOk());
         result.setDecision(executeResponse.getDecision());
         result.setReasonCodes(executeResponse.getReasonCodes());
-        
+
         // Convert explain entries to strings
         List<String> explainStrings = executeResponse.getExplain().stream()
                 .map(entry -> entry.getNode() + ": " + entry.getOperator() + " = " + entry.getResult())
                 .toList();
         result.setExplain(explainStrings);
-        
+
         // Map execution info
-        ValidateOrderResponse.CampaignValidationResult.ExecutionInfo executionInfo = 
+        ValidateOrderResponse.CampaignValidationResult.ExecutionInfo executionInfo =
                 new ValidateOrderResponse.CampaignValidationResult.ExecutionInfo();
         executionInfo.setVersion(executeResponse.getEngine().getVersion());
         executionInfo.setLatencyMs(executeResponse.getEngine().getLatencyMs());
         executionInfo.setCacheHit(executeResponse.getEngine().getCacheHit());
         result.setExecution(executionInfo);
-        
+
         return result;
     }
 
     private ValidateOrderResponse buildSuccessResponse(
             List<ValidateOrderResponse.CampaignValidationResult> results, long startTime) {
-        
+
         ValidateOrderResponse response = new ValidateOrderResponse();
         response.setSuccess(true);
         response.setResults(results);
-        
+
         // Build summary
         ValidateOrderResponse.ValidationSummary summary = new ValidateOrderResponse.ValidationSummary();
         summary.setTotalCampaigns(results.size());
@@ -170,7 +173,7 @@ public class OrderValidationService {
         summary.setTotalLatencyMs((int) (System.currentTimeMillis() - startTime));
         summary.setCacheHitCount((int) results.stream()
                 .filter(r -> Boolean.TRUE.equals(r.getExecution().getCacheHit())).count());
-        
+
         response.setSummary(summary);
         return response;
     }
@@ -180,7 +183,7 @@ public class OrderValidationService {
         response.setSuccess(true);
         response.setMessage(message);
         response.setResults(List.of());
-        
+
         ValidateOrderResponse.ValidationSummary summary = new ValidateOrderResponse.ValidationSummary();
         summary.setTotalCampaigns(0);
         summary.setValidCampaigns(0);
@@ -188,7 +191,7 @@ public class OrderValidationService {
         summary.setTotalLatencyMs(0);
         summary.setCacheHitCount(0);
         response.setSummary(summary);
-        
+
         return response;
     }
 
@@ -206,18 +209,38 @@ public class OrderValidationService {
         private String campaignName;
         private String campaignType;
         private String bundleHash;
-        
+
         // Getters and setters...
-        public String getCampaignId() { return campaignId; }
-        public void setCampaignId(String campaignId) { this.campaignId = campaignId; }
-        
-        public String getCampaignName() { return campaignName; }
-        public void setCampaignName(String campaignName) { this.campaignName = campaignName; }
-        
-        public String getCampaignType() { return campaignType; }
-        public void setCampaignType(String campaignType) { this.campaignType = campaignType; }
-        
-        public String getBundleHash() { return bundleHash; }
-        public void setBundleHash(String bundleHash) { this.bundleHash = bundleHash; }
+        public String getCampaignId() {
+            return campaignId;
+        }
+
+        public void setCampaignId(String campaignId) {
+            this.campaignId = campaignId;
+        }
+
+        public String getCampaignName() {
+            return campaignName;
+        }
+
+        public void setCampaignName(String campaignName) {
+            this.campaignName = campaignName;
+        }
+
+        public String getCampaignType() {
+            return campaignType;
+        }
+
+        public void setCampaignType(String campaignType) {
+            this.campaignType = campaignType;
+        }
+
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public void setBundleHash(String bundleHash) {
+            this.bundleHash = bundleHash;
+        }
     }
 }

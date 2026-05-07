@@ -31,9 +31,6 @@ public class Assignment {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public Assignment() {
-    }
-
     public String getId() {
         return id;
     }

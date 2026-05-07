@@ -11,7 +11,9 @@ import java.util.Map;
  */
 public interface QuotaEventPort {
 
-    /** Persist a single quota event (INCR, DECR, or ROLLBACK). */
+    /**
+     * Persist a single quota event (INCR, DECR, or ROLLBACK).
+     */
     void save(QuotaEventEntity event);
 
     /**

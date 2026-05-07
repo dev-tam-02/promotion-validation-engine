@@ -42,11 +42,11 @@ public class QuotaEventRepositoryAdapter implements QuotaEventPort {
         List<Object[]> rows = repository.aggregateActiveWindowCounters(threshold);
         Map<String, Long> result = new LinkedHashMap<>();
         for (Object[] row : rows) {
-            String ruleId      = (String) row[0];
-            String bucketKey   = (String) row[1];
-            LocalDateTime ws   = (LocalDateTime) row[2];
-            LocalDateTime we   = (LocalDateTime) row[3];
-            Long netDelta      = ((Number) row[4]).longValue();
+            String ruleId = (String) row[0];
+            String bucketKey = (String) row[1];
+            LocalDateTime ws = (LocalDateTime) row[2];
+            LocalDateTime we = (LocalDateTime) row[3];
+            Long netDelta = ((Number) row[4]).longValue();
 
             long epochSec = ws != null
                     ? ws.toEpochSecond(java.time.ZoneOffset.UTC) : 0L;

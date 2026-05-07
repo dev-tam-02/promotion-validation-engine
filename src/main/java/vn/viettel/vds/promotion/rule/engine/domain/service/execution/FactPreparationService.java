@@ -7,13 +7,7 @@ import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.CandidateDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.CustomerDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderItemDto;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
-import vn.viettel.vds.promotion.rule.engine.domain.model.CustomerFact;
-import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
-import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;
-import vn.viettel.vds.promotion.rule.engine.domain.model.VoucherFact;
+import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -26,6 +20,7 @@ public class FactPreparationService {
     // Constants for commonly used attribute keys
     private static final String ATTR_EMAIL = "email";
     private static final String ATTR_PHONE = "phone";
+    private static final String CTX_EXECUTION_CONTEXT = "executionContext";
 
     public List<Object> prepareFacts(Map<String, Object> context) {
         logger.debug("Preparing facts from context with {} entries", context.size());
@@ -37,8 +32,8 @@ public class FactPreparationService {
         addOrderFacts(context.get("order"), facts);
         addCandidateFacts(context.get("candidate"), facts);
         addVoucherFacts(context.get("voucher"), facts);
-        addLimitsFacts(context.containsKey("executionContext") ? context.get("executionContext") : null, facts);
-        addExecutionContextFacts(context.get("executionContext"), facts);
+        addLimitsFacts(context.containsKey(CTX_EXECUTION_CONTEXT) ? context.get(CTX_EXECUTION_CONTEXT) : null, facts);
+        addExecutionContextFacts(context.get(CTX_EXECUTION_CONTEXT), facts);
 
         logger.debug("Prepared {} total facts for rule execution", facts.size());
         return facts;

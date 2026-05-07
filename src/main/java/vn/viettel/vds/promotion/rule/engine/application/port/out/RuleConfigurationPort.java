@@ -10,7 +10,7 @@ public interface RuleConfigurationPort {
      * @param subjectType canonical subject type (e.g. {@code DISCOUNT_COUPON})
      * @param subjectKey  canonical subject key (e.g. the resolved campaignId)
      * @return the loaded configuration, or {@code null} if no row is
-     *         configured for the subject — callers must fail-closed.
+     * configured for the subject — callers must fail-closed.
      */
     RuleConfiguration getConfiguration(String subjectType, String subjectKey);
 }
