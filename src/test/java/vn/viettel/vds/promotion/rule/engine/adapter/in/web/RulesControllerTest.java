@@ -18,7 +18,6 @@ import vn.viettel.vds.promotion.rule.engine.application.port.in.RegisterDrlUseCa
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -83,7 +82,7 @@ class RulesControllerTest {
         void shouldReturn400ForInvalidDrl() throws Exception {
             // Given
             RegisterRuleRequest req = new RegisterRuleRequest(RULE_ID, "bad drl");
-            when(registerDrlUseCase.register(eq(RULE_ID), eq("bad drl")))
+            when(registerDrlUseCase.register(RULE_ID, "bad drl"))
                     .thenThrow(new RegisterDrlUseCase.DrlCompileException(
                             "DRL compilation failed: syntax error", List.of("[ERROR] unexpected token")));
 
@@ -101,7 +100,7 @@ class RulesControllerTest {
         void shouldReturn409ForConflict() throws Exception {
             // Given
             RegisterRuleRequest req = new RegisterRuleRequest(RULE_ID, "different drl");
-            when(registerDrlUseCase.register(eq(RULE_ID), eq("different drl")))
+            when(registerDrlUseCase.register(RULE_ID, "different drl"))
                     .thenThrow(new RegisterDrlUseCase.DrlConflictException(
                             "Rule 'rule-promo-001' already exists with different DRL content."));
 
@@ -124,7 +123,7 @@ class RulesControllerTest {
             // Given
             String newHash = "sha256:newHash999";
             UpdateRuleRequest req = new UpdateRuleRequest(VALID_DRL);
-            when(registerDrlUseCase.update(eq(RULE_ID), eq(VALID_DRL)))
+            when(registerDrlUseCase.update(RULE_ID, VALID_DRL))
                     .thenReturn(new RegisterDrlUseCase.RegisterRuleResult(RULE_ID, newHash));
 
             // When / Then
@@ -141,7 +140,7 @@ class RulesControllerTest {
         void shouldReturn404ForUnknownRule() throws Exception {
             // Given
             UpdateRuleRequest req = new UpdateRuleRequest(VALID_DRL);
-            when(registerDrlUseCase.update(eq(RULE_ID), eq(VALID_DRL)))
+            when(registerDrlUseCase.update(RULE_ID, VALID_DRL))
                     .thenThrow(new RegisterDrlUseCase.RuleNotFoundException("Rule not found: " + RULE_ID));
 
             // When / Then
@@ -157,7 +156,7 @@ class RulesControllerTest {
         void shouldReturn400ForInvalidDrlOnPut() throws Exception {
             // Given
             UpdateRuleRequest req = new UpdateRuleRequest("invalid drl");
-            when(registerDrlUseCase.update(eq(RULE_ID), eq("invalid drl")))
+            when(registerDrlUseCase.update(RULE_ID, "invalid drl"))
                     .thenThrow(new RegisterDrlUseCase.DrlCompileException(
                             "DRL compilation failed", List.of("[ERROR] parse error")));
 

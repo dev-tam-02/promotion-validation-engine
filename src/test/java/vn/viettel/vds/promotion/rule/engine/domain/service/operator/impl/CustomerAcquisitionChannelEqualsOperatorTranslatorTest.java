@@ -50,8 +50,9 @@ class CustomerAcquisitionChannelEqualsOperatorTranslatorTest {
     @Test
     void translate_equals_rendersConstraint() {
         String result = translator.translate("n1", Map.of("comparator", "equals", "value", "paid"), "RC");
-        assertThat(result).contains("acquisitionChannel == \"paid\"");
-        assertThat(result).contains("$customer: Customer(");
+        assertThat(result)
+                .contains("acquisitionChannel == \"paid\"")
+                .contains("$customer: Customer(");
     }
 
     @Test
@@ -98,8 +99,9 @@ class CustomerAcquisitionChannelEqualsOperatorTranslatorTest {
 
     @Test
     void translate_unsupportedComparator_throws() {
+        Map<String, Object> params = Map.of("comparator", "between", "value", "paid");
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1", Map.of("comparator", "between", "value", "paid"), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 
     // --- escape ---
@@ -125,8 +127,8 @@ class CustomerAcquisitionChannelEqualsOperatorTranslatorTest {
 
     @Test
     void translate_in_emptyList_throws() {
+        Map<String, Object> params = Map.of("comparator", "in", "value", List.of());
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1",
-                        Map.of("comparator", "in", "value", List.of()), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 }

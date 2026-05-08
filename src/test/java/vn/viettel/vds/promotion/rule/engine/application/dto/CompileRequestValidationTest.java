@@ -51,8 +51,9 @@ class CompileRequestValidationTest {
             var violations = validator.validate(request);
 
             // Then
-            assertThat(violations).isNotEmpty();
-            assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("ruleId"));
+            assertThat(violations)
+                    .isNotEmpty()
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("ruleId"));
         }
 
         @Test

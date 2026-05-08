@@ -43,13 +43,13 @@ public class OrderItemProductApplicableAllOperatorTranslator implements Operator
         if (param instanceof List<?> list) {
             return list.stream()
                     .map(Object::toString)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         if (param instanceof String str) {
             return List.of(str.split(",")).stream()
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+                    .toList();
         }
         throw new IllegalArgumentException("Parameter '" + paramName + "' must be a list for order.item.product.applicable.all operator");
     }

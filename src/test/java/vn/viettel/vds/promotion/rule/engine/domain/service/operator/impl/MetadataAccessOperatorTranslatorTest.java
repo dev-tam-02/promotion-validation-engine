@@ -42,9 +42,10 @@ class MetadataAccessOperatorTranslatorTest {
     @Test
     void string_equals_customerMetadata() {
         String result = translate("customer", "vip_tier", "STRING", "equals", "platinum");
-        assertThat(result).contains("$customer: Customer(");
-        assertThat(result).contains("attrs != null");
-        assertThat(result).contains("attrs[\"vip_tier\"] == \"platinum\"");
+        assertThat(result)
+                .contains("$customer: Customer(")
+                .contains("attrs != null")
+                .contains("attrs[\"vip_tier\"] == \"platinum\"");
     }
 
     @Test
@@ -101,8 +102,9 @@ class MetadataAccessOperatorTranslatorTest {
     void number_between() {
         String result = translate("customer", "loyalty_score", "NUMBER", "between",
                 Map.of("min", 100, "max", 500));
-        assertThat(result).contains(".doubleValue() >= 100");
-        assertThat(result).contains(".doubleValue() <= 500");
+        assertThat(result)
+                .contains(".doubleValue() >= 100")
+                .contains(".doubleValue() <= 500");
     }
 
     // --- BOOLEAN ---
@@ -110,9 +112,10 @@ class MetadataAccessOperatorTranslatorTest {
     @Test
     void boolean_isTrue_orderMetadata() {
         String result = translate("order", "gift_wrap_requested", "BOOLEAN", "is_true", null);
-        assertThat(result).contains("$order: Order(");
-        assertThat(result).contains("metadata != null");
-        assertThat(result).contains("Boolean.TRUE.equals(metadata[\"gift_wrap_requested\"])");
+        assertThat(result)
+                .contains("$order: Order(")
+                .contains("metadata != null")
+                .contains("Boolean.TRUE.equals(metadata[\"gift_wrap_requested\"])");
     }
 
     @Test
@@ -126,8 +129,9 @@ class MetadataAccessOperatorTranslatorTest {
     @Test
     void date_after_customerMetadata() {
         String result = translate("customer", "first_purchase_date", "DATE", "after", "2025-01-01T00:00:00Z");
-        assertThat(result).contains("((java.time.Instant) attrs[\"first_purchase_date\"])");
-        assertThat(result).contains(".isAfter(java.time.Instant.parse(\"2025-01-01T00:00:00Z\"))");
+        assertThat(result)
+                .contains("((java.time.Instant) attrs[\"first_purchase_date\"])")
+                .contains(".isAfter(java.time.Instant.parse(\"2025-01-01T00:00:00Z\"))");
     }
 
     @Test
@@ -140,8 +144,9 @@ class MetadataAccessOperatorTranslatorTest {
     void date_between() {
         String result = translate("customer", "first_purchase_date", "DATE", "between",
                 Map.of("from", "2025-01-01T00:00:00Z", "to", "2026-01-01T00:00:00Z"));
-        assertThat(result).contains(".isAfter(java.time.Instant.parse(\"2025-01-01T00:00:00Z\"))");
-        assertThat(result).contains(".isBefore(java.time.Instant.parse(\"2026-01-01T00:00:00Z\"))");
+        assertThat(result)
+                .contains(".isAfter(java.time.Instant.parse(\"2025-01-01T00:00:00Z\"))")
+                .contains(".isBefore(java.time.Instant.parse(\"2026-01-01T00:00:00Z\"))");
     }
 
     // --- LIST ---

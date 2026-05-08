@@ -31,6 +31,7 @@ public class RuleTranslationService {
     private static final Pattern BARE_BINDING_PATTERN = Pattern.compile("^(\\$\\w+):\\s*\\w+\\(\\)$");
     private static final Pattern VAR_BINDING_PATTERN = Pattern.compile("^(\\$\\w+):\\s*\\w+\\(");
     private static final String DEFAULT_PACKAGE = "rules";
+    private static final String DEFAULT_RULE_ID = "default";
     private final OperatorTranslatorRegistry translatorRegistry;
 
     public RuleTranslationService(OperatorTranslatorRegistry translatorRegistry) {
@@ -38,11 +39,11 @@ public class RuleTranslationService {
     }
 
     public String translateToDrl(List<Map<String, Object>> nodes) {
-        return translateToDrl(nodes, false, "default");
+        return translateToDrl(nodes, false, DEFAULT_RULE_ID);
     }
 
     public String translateToDrl(List<Map<String, Object>> nodes, boolean hasTemporalPolicy) {
-        return translateToDrl(nodes, hasTemporalPolicy, "default");
+        return translateToDrl(nodes, hasTemporalPolicy, DEFAULT_RULE_ID);
     }
 
     public String translateToDrl(List<Map<String, Object>> nodes, boolean hasTemporalPolicy, String ruleId) {
@@ -115,7 +116,7 @@ public class RuleTranslationService {
     private void generateRule(StringBuilder drl, Map<String, Object> rootNode,
                               Map<String, Map<String, Object>> nodeMap, boolean hasTemporalPolicy,
                               String ruleId) {
-        String safeId = sanitizeRuleName(ruleId != null ? ruleId : "default");
+        String safeId = sanitizeRuleName(ruleId != null ? ruleId : DEFAULT_RULE_ID);
 
         // When no temporal policy, add rule to insert TemporalAllowed automatically
         if (!hasTemporalPolicy) {
