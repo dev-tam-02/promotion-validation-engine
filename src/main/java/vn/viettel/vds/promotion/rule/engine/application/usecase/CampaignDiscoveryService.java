@@ -5,7 +5,6 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.BundleRepositor
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CampaignDiscoveryService {
@@ -31,7 +30,7 @@ public class CampaignDiscoveryService {
                     return info;
                 })
                 .limit(request.getMaxResults())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static class DiscoveryRequest {

@@ -17,7 +17,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,11 +57,11 @@ class RebuildQuotaCountersJobTest {
 
         // Then: overwrite called with correct args
         verify(quotaCounterService).overwrite(
-                eq("rule-1"),
-                eq("bucket-1"),
-                eq(ws),
-                eq(we),
-                eq(5L)
+                "rule-1",
+                "bucket-1",
+                ws,
+                we,
+                5L
         );
         assertThat((Integer) result.get("rebuilt")).isEqualTo(1);
     }

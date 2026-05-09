@@ -193,7 +193,7 @@ class DroolsRuleEngineAdapterTest {
 
             assertNotNull(response);
             // Should return error/DENY response
-            assertFalse(Boolean.TRUE.equals(response.getOk()));
+            assertNotEquals(Boolean.TRUE, response.getOk());
         }
     }
 }

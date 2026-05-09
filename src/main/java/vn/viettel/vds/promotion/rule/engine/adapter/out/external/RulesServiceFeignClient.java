@@ -7,7 +7,7 @@ import vn.viettel.vds.promotion.rule.engine.adapter.out.config.FeignConfiguratio
 
 @FeignClient(
         name = "rules-service",
-        url = "${validation.external-services.rules-service.base-url:http://rules-service}",
+        url = "${validation.external-services.rules-service.base-url}",
         configuration = FeignConfiguration.class
 )
 public interface RulesServiceFeignClient {

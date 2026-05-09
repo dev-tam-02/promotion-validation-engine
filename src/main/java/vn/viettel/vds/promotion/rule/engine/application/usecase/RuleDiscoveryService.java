@@ -11,7 +11,6 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class RuleDiscoveryService {
@@ -120,7 +119,7 @@ public class RuleDiscoveryService {
             if (request.isExplainResults()) {
                 result.setExplain(response.getExplain().stream()
                         .map(entry -> entry.getNode() + ": " + entry.getOperator() + " = " + entry.getResult())
-                        .collect(Collectors.toList()));
+                        .toList());
             }
 
             results.add(result);

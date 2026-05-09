@@ -241,7 +241,12 @@ validation:
       prewarm-session-count: 3
       health-check-interval-seconds: 300
       refresh-ahead-enabled: true
-      refresh-ahead-interval-minutes: 15
+      refresh-ahead-interval-ms: 900000
+    session-pool:
+      cleanup-interval-ms: 900000
+  external-services:
+    rules-service:
+      base-url: http://rules-service
 
   # pp-validation Service (REST API for fetching rule bindings)
   service:

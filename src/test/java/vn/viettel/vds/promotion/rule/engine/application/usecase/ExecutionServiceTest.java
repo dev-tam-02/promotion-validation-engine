@@ -22,7 +22,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,7 +95,7 @@ class ExecutionServiceTest {
 
             // Then
             assertThat(result.getOk()).isTrue();
-            verify(ruleEnginePort).warmupBundle(eq(bundleHash), eq(artifactBytes));
+            verify(ruleEnginePort).warmupBundle(bundleHash, artifactBytes);
         }
 
         @Test
