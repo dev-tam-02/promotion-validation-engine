@@ -173,9 +173,10 @@ class IncrementalKieContainerServiceTest {
                 session.dispose();
             }
 
-            assertThat(results).containsExactly("ruleA-v2-fired");
-            // v1 rule should NOT fire
-            assertThat(results).doesNotContain("ruleA-v1-fired");
+            // v1 rule should NOT fire; only v2 should
+            assertThat(results)
+                    .containsExactly("ruleA-v2-fired")
+                    .doesNotContain("ruleA-v1-fired");
         }
 
         @Test
@@ -229,8 +230,9 @@ class IncrementalKieContainerServiceTest {
         @Test
         @DisplayName("Submitting invalid DRL throws IncrementalCompileException")
         void invalidDrlThrowsException() {
+            Map<String, String> emptyDrls = Collections.emptyMap();
             assertThatThrownBy(() ->
-                    sut.registerOrUpdate("badRule", DRL_INVALID, Collections.emptyMap()))
+                    sut.registerOrUpdate("badRule", DRL_INVALID, emptyDrls))
                     .isInstanceOf(IncrementalCompileException.class)
                     .satisfies(ex -> {
                         IncrementalCompileException ice = (IncrementalCompileException) ex;
@@ -241,8 +243,9 @@ class IncrementalKieContainerServiceTest {
         @Test
         @DisplayName("Container remains null after failed first registration")
         void containerRemainsNullAfterFirstFailure() {
+            Map<String, String> emptyDrls = Collections.emptyMap();
             assertThatThrownBy(() ->
-                    sut.registerOrUpdate("badRule", DRL_INVALID, Collections.emptyMap()))
+                    sut.registerOrUpdate("badRule", DRL_INVALID, emptyDrls))
                     .isInstanceOf(IncrementalCompileException.class);
 
             assertThat(sut.getActiveContainer()).isNull();
@@ -258,8 +261,9 @@ class IncrementalKieContainerServiceTest {
             KieContainer containerBeforeFailure = sut.getActiveContainer();
 
             // When: attempt invalid update
+            Map<String, String> currentDrls = Map.of("ruleA", DRL_RULE_A_V1);
             assertThatThrownBy(() ->
-                    sut.registerOrUpdate("ruleA", DRL_INVALID, Map.of("ruleA", DRL_RULE_A_V1)))
+                    sut.registerOrUpdate("ruleA", DRL_INVALID, currentDrls))
                     .isInstanceOf(IncrementalCompileException.class);
 
             // Then: version counter and container are unchanged
@@ -274,8 +278,9 @@ class IncrementalKieContainerServiceTest {
             sut.registerOrUpdate("ruleA", DRL_RULE_A_V1, Collections.emptyMap());
 
             // When: failed update
+            Map<String, String> currentDrls = Map.of("ruleA", DRL_RULE_A_V1);
             assertThatThrownBy(() ->
-                    sut.registerOrUpdate("ruleA", DRL_INVALID, Map.of("ruleA", DRL_RULE_A_V1)))
+                    sut.registerOrUpdate("ruleA", DRL_INVALID, currentDrls))
                     .isInstanceOf(IncrementalCompileException.class);
 
             // Then: original rule still evaluates correctly

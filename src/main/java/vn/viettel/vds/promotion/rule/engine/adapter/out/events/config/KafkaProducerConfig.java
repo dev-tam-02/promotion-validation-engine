@@ -23,7 +23,7 @@ public class KafkaProducerConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaProducerConfig.class);
 
-    @Value("${promix.messaging.kafka.bootstrap-servers:kafka-1:19092,kafka-2:19093,kafka-3:19094}")
+    @Value("${promix.messaging.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
     @Value("${promix.messaging.kafka.client-id:validation-engine}")

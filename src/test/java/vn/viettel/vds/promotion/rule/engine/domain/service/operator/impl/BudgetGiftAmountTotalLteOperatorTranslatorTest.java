@@ -51,15 +51,17 @@ class BudgetGiftAmountTotalLteOperatorTranslatorTest {
     @Test
     void translate_bigDecimalValue_rendersDrlPattern() {
         String result = translator.translate("n1", Map.of("maxValue", new BigDecimal("100000.00")), "RC");
-        assertThat(result).contains("$limits: LimitsCtx(");
-        assertThat(result).contains("totalGiftAmount.compareTo(new java.math.BigDecimal(\"100000.00\")) < 0");
+        assertThat(result)
+                .contains("$limits: LimitsCtx(")
+                .contains("totalGiftAmount.compareTo(new java.math.BigDecimal(\"100000.00\")) < 0");
     }
 
     @Test
     void translate_integerValue_parsedCorrectly() {
         String result = translator.translate("n1", Map.of("maxValue", 50000), "RC");
-        assertThat(result).contains("totalGiftAmount.compareTo(new java.math.BigDecimal(\"");
-        assertThat(result).contains(") < 0");
+        assertThat(result)
+                .contains("totalGiftAmount.compareTo(new java.math.BigDecimal(\"")
+                .contains(") < 0");
     }
 
     @Test
@@ -72,8 +74,9 @@ class BudgetGiftAmountTotalLteOperatorTranslatorTest {
 
     @Test
     void translate_missingMaxValue_throws() {
+        Map<String, Object> params = Map.of();
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1", Map.of(), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 
     @Test
@@ -86,19 +89,22 @@ class BudgetGiftAmountTotalLteOperatorTranslatorTest {
 
     @Test
     void translate_zeroMaxValue_throws() {
+        Map<String, Object> params = Map.of("maxValue", BigDecimal.ZERO);
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1", Map.of("maxValue", BigDecimal.ZERO), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 
     @Test
     void translate_negativeMaxValue_throws() {
+        Map<String, Object> params = Map.of("maxValue", new BigDecimal("-1"));
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1", Map.of("maxValue", new BigDecimal("-1")), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 
     @Test
     void translate_nonNumericString_throws() {
+        Map<String, Object> params = Map.of("maxValue", "abc");
         assertThrows(IllegalArgumentException.class, () ->
-                translator.translate("n1", Map.of("maxValue", "abc"), "RC"));
+                translator.translate("n1", params, "RC"));
     }
 }

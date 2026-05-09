@@ -42,6 +42,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
 
     private static final String OPERATOR_NAME = "metadata.access";
     private static final String CMP_EQUALS = "equals";
+    private static final String FOR_LITERAL = "' for ";
 
     @Override
     public String getOperatorName() {
@@ -101,7 +102,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
             case "contains" -> "((String) " + accessor + ").contains(\"" + escape(value) + "\")";
             case "starts_with" -> "((String) " + accessor + ").startsWith(\"" + escape(value) + "\")";
             default -> throw new IllegalArgumentException(
-                    "STRING does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
+                    "STRING does not support comparator '" + comparator + FOR_LITERAL + OPERATOR_NAME);
         };
     }
 
@@ -119,7 +120,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
                 yield num + " >= " + range.get("min") + " && " + num + " <= " + range.get("max");
             }
             default -> throw new IllegalArgumentException(
-                    "NUMBER does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
+                    "NUMBER does not support comparator '" + comparator + FOR_LITERAL + OPERATOR_NAME);
         };
     }
 
@@ -130,7 +131,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
             case "is_true" -> "Boolean.TRUE.equals(" + accessor + ")";
             case "is_false" -> "Boolean.FALSE.equals(" + accessor + ")";
             default -> throw new IllegalArgumentException(
-                    "BOOLEAN does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
+                    "BOOLEAN does not support comparator '" + comparator + FOR_LITERAL + OPERATOR_NAME);
         };
     }
 
@@ -149,7 +150,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
                         + inst + ".isBefore(java.time.Instant.parse(\"" + range.get("to") + "\"))";
             }
             default -> throw new IllegalArgumentException(
-                    "DATE does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
+                    "DATE does not support comparator '" + comparator + FOR_LITERAL + OPERATOR_NAME);
         };
     }
 
@@ -163,7 +164,7 @@ public class MetadataAccessOperatorTranslator implements OperatorTranslator {
             case "size_gte" -> list + ".size() >= " + value;
             case "size_lte" -> list + ".size() <= " + value;
             default -> throw new IllegalArgumentException(
-                    "LIST does not support comparator '" + comparator + "' for " + OPERATOR_NAME);
+                    "LIST does not support comparator '" + comparator + FOR_LITERAL + OPERATOR_NAME);
         };
     }
 

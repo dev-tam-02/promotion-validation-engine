@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class CustomerAcquisitionChannelEqualsOperatorTranslator implements OperatorTranslator {
 
     private static final String OPERATOR_NAME = "customer.acquisition_channel.equals";
+    private static final String ON_OPERATOR_LITERAL = "' on operator ";
 
     @Override
     public String getOperatorName() {
@@ -92,14 +93,14 @@ public class CustomerAcquisitionChannelEqualsOperatorTranslator implements Opera
         if (value == null) {
             throw new IllegalArgumentException(
                     "Missing required parameter 'value' for comparator '" + comparator
-                            + "' on operator " + OPERATOR_NAME);
+                            + ON_OPERATOR_LITERAL + OPERATOR_NAME);
         }
         if (value instanceof List) {
             List<String> list = (List<String>) value;
             if (list.isEmpty()) {
                 throw new IllegalArgumentException(
                         "Parameter 'value' must be non-empty for comparator '" + comparator
-                                + "' on operator " + OPERATOR_NAME);
+                                + ON_OPERATOR_LITERAL + OPERATOR_NAME);
             }
             return list;
         }
@@ -108,7 +109,7 @@ public class CustomerAcquisitionChannelEqualsOperatorTranslator implements Opera
         }
         throw new IllegalArgumentException(
                 "Parameter 'value' must be a List<String> or String for comparator '"
-                        + comparator + "' on operator " + OPERATOR_NAME);
+                        + comparator + ON_OPERATOR_LITERAL + OPERATOR_NAME);
     }
 
     private String escape(Object value) {
