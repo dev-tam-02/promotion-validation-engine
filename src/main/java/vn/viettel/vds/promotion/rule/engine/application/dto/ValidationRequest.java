@@ -5,7 +5,10 @@ import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 import java.util.List;
 import java.util.Map;
 
-public record ValidationRequest(
+// Sonar rules S100/S107/S1172 are false positives on Java records (older sonar-java plugins
+// analyze record components/canonical constructor as regular methods with too many/unused params).
+@SuppressWarnings({"java:S100", "java:S107", "java:S1172"})
+public record ValidationRequest( // NOSONAR
         Customer customer,
         Order order,
         Redemption redemption,

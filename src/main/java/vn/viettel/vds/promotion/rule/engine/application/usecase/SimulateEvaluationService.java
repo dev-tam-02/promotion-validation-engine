@@ -356,10 +356,14 @@ public class SimulateEvaluationService {
     // Inner: value holder
     // ------------------------------------------------------------------
 
-    private record SingleEvalResult(String verdict,
+    // Sonar rules S100/S1172/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1172", "java:S1186"})
+    private record SingleEvalResult(String verdict, // NOSONAR
                                     List<TraceEntry> trace,
                                     List<String> matchedNodes,
                                     List<String> unmatchedNodes,
                                     List<String> reasonCodes) {
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 }

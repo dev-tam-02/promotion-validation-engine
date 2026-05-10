@@ -235,7 +235,11 @@ public class IncrementalKieContainerService {
      * Immutable snapshot of a previously applied rule version.
      * Retained for rollback / auditing.
      */
-    public record VersionSnapshot(int version, ReleaseId releaseId, String ruleId, String drl) {
+    // Sonar rules S100/S1172/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1172", "java:S1186"})
+    public record VersionSnapshot(int version, ReleaseId releaseId, String ruleId, String drl) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
     /**
