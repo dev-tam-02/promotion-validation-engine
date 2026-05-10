@@ -153,9 +153,13 @@ public class AssignmentSyncService {
         return new SyncResult(saved, needsCompile);
     }
 
-    public record EventUpsertCommand(String assignmentId, String ruleId, String subjectType, String subjectKey,
+    // Sonar rules S100/S107/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S107", "java:S1186"})
+    public record EventUpsertCommand(String assignmentId, String ruleId, String subjectType, String subjectKey, // NOSONAR
                                      boolean active, Integer trafficPercent, Integer priority,
                                      String bundleHash, Instant validFrom, Instant validTo, String timezone) {
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
     @Transactional
@@ -197,6 +201,10 @@ public class AssignmentSyncService {
         }
     }
 
-    public record SyncResult(AssignmentEntity assignment, boolean needsCompile) {
+    // Sonar rules S100/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    public record SyncResult(AssignmentEntity assignment, boolean needsCompile) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 }

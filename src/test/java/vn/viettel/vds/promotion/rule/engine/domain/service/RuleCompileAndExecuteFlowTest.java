@@ -125,7 +125,11 @@ class RuleCompileAndExecuteFlowTest {
         return i;
     }
 
-    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {
+    // Sonar rules S100/S1186/S1172 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods with unused params).
+    @SuppressWarnings({"java:S100", "java:S1186", "java:S1172"})
+    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
     // ======== Tests ========
