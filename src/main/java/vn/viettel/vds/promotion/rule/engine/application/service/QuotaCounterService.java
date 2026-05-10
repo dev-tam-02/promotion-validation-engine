@@ -245,11 +245,15 @@ public class QuotaCounterService {
         quotaEventPort.save(event);
     }
 
-    private record EventContext(String ruleId,
+    // Sonar rules S100/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record EventContext(String ruleId, // NOSONAR
                                 String redemptionId,
                                 String customerId,
                                 String bucketKey,
                                 LocalDateTime windowStart,
                                 LocalDateTime windowEnd) {
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 }

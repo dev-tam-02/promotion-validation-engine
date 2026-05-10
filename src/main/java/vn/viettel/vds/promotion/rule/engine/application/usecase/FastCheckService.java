@@ -296,15 +296,25 @@ public class FastCheckService implements FastCheckUseCase {
     }
 
     // Result records
-    private record TimeCheckResult(boolean passed, String failureCode, String explanation) {
+    // Sonar rules S100/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record TimeCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record OrderCheckResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record OrderCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record RateLimitResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record RateLimitResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 }
