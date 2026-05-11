@@ -7,10 +7,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
-import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
-import vn.viettel.vds.promotion.engine.event.WarmupRequestedEvent;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.messaging.config.BroadcastKafkaConfig;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.EventPublisherPort;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,12 +20,6 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final BroadcastKafkaConfig broadcastKafkaConfig;
 
-    @Value("${kafka.topics.bundle-published:promotion_bundle_published}")
-    private String bundlePublishedTopic;
-
-    @Value("${kafka.topics.warmup-requested:promotion_warmup_requested}")
-    private String warmupRequestedTopic;
-
     @Value("${kafka.topics.bundle-cache-invalidation:promotion_bundle_cache_invalidation}")
     private String cacheInvalidationTopic;
 
@@ -39,41 +30,7 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
     }
 
     @Override
-    public void publishBundlePublished(BundlePublishedEvent event) {
-        logger.info("Publishing BundlePublished event: ruleId={}, bundleHash={}",
-                event.getRuleId(), event.getBundleHash());
-
-        sendToKafka(bundlePublishedTopic, event.getBundleHash(), event);
-    }
-
-    @Override
-    public void publishWarmupRequested(WarmupRequestedEvent event) {
-        logger.info("Publishing WarmupRequested event: bundleHash={}", event.getBundleHash());
-
-        sendToKafka(warmupRequestedTopic, event.getBundleHash(), event);
-    }
-
-    @Override
-    public void publishOutboxEvent(OutboxEventEntity outboxEvent) {
-        logger.info("Publishing outbox event: id={}, type={}",
-                outboxEvent.getId(), outboxEvent.getType());
-
-        if (OutboxEventEntity.EventType.BUNDLE_PUBLISHED.equals(outboxEvent.getType())) {
-            String ruleId = outboxEvent.getPayload().get("ruleId");
-            String bundleHash = outboxEvent.getPayload().get("bundleHash");
-            Integer ruleVersion = outboxEvent.getPayload().get("ruleVersion") != null
-                    ? Integer.parseInt(outboxEvent.getPayload().get("ruleVersion"))
-                    : null;
-
-            BundlePublishedEvent event = new BundlePublishedEvent(
-                    ruleId, ruleVersion, null, bundleHash);
-            publishBundlePublished(event);
-        }
-    }
-
-    @Override
     public void publishCacheInvalidation(BundleCacheInvalidationEvent event) {
-        // Set source instance ID so receiving instances can skip self-processing
         event.setSourceInstanceId(broadcastKafkaConfig.getInstanceId());
 
         logger.info("Publishing cache invalidation event: eventId={}, bundleHash={}, type={}, sourceInstance={}",

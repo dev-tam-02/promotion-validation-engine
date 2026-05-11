@@ -124,10 +124,21 @@ promix:
         enabled: true
         date-time-provider: system
 
-  # Outbox JPA Configuration
+  # Outbox Configuration — Promix starter (transactional outbox + scheduled Kafka publisher)
   outbox:
+    enabled: true
     jpa:
-      enabled: false  # Service has its own outbox implementation
+      enabled: true
+    kafka:
+      enabled: true
+    batch:
+      enabled: true
+      interval: 5000
+      chunk-size: 50
+    schedule:
+      enabled: true
+    cleanup:
+      enabled: true
 
   # Kafka Configuration
   messaging:
@@ -266,9 +277,6 @@ validation:
 # Kafka Topics Configuration
 kafka:
   topics:
-    # Bundle events
-    bundle-published: promotion_bundle_published
-    warmup-requested: promotion_warmup_requested
     # Cache invalidation topic (broadcast pattern - all instances receive)
     bundle-cache-invalidation: promotion_bundle_cache_invalidation
     # Validation events from pp-validation (assignment sync)
