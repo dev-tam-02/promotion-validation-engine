@@ -15,10 +15,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-// Sonar rule S2230 is a false positive on this class for older sonar-java plugins
-// that misread method visibility on classes containing inner records.
+// Sonar rules S2230, S1854, S1481 are false positives on this class for older sonar-java
+// plugins (partner Sonar) that misread method visibility on classes containing inner records
+// and incorrectly flag local variables (subjectType/subjectKey/ruleId/existing) as dead
+// stores or unused — they are read multiple times immediately after assignment.
 @Service
-@SuppressWarnings("java:S2230")
+@SuppressWarnings({"java:S2230", "java:S1854", "java:S1481"})
 public class AssignmentSyncService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssignmentSyncService.class);
