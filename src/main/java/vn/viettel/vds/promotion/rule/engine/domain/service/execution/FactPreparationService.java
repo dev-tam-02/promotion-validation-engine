@@ -7,11 +7,7 @@ import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.CandidateDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.CustomerDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderDto;
 import vn.viettel.vds.promotion.rule.engine.adapter.in.web.dto.OrderItemDto;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Candidate;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Customer;
-import vn.viettel.vds.promotion.rule.engine.domain.model.LimitsCtx;
-import vn.viettel.vds.promotion.rule.engine.domain.model.Order;
-import vn.viettel.vds.promotion.rule.engine.domain.model.OrderItem;
+import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -24,6 +20,7 @@ public class FactPreparationService {
     // Constants for commonly used attribute keys
     private static final String ATTR_EMAIL = "email";
     private static final String ATTR_PHONE = "phone";
+    private static final String CTX_EXECUTION_CONTEXT = "executionContext";
 
     public List<Object> prepareFacts(Map<String, Object> context) {
         logger.debug("Preparing facts from context with {} entries", context.size());
@@ -34,8 +31,9 @@ public class FactPreparationService {
         addCustomerFacts(context.get("customer"), facts);
         addOrderFacts(context.get("order"), facts);
         addCandidateFacts(context.get("candidate"), facts);
-        addLimitsFacts(context.containsKey("executionContext") ? context.get("executionContext") : null, facts);
-        addExecutionContextFacts(context.get("executionContext"), facts);
+        addVoucherFacts(context.get("voucher"), facts);
+        addLimitsFacts(context.containsKey(CTX_EXECUTION_CONTEXT) ? context.get(CTX_EXECUTION_CONTEXT) : null, facts);
+        addExecutionContextFacts(context.get(CTX_EXECUTION_CONTEXT), facts);
 
         logger.debug("Prepared {} total facts for rule execution", facts.size());
         return facts;
@@ -50,6 +48,59 @@ public class FactPreparationService {
         if (customer != null) {
             facts.add(customer);
             logger.debug("Added Customer fact: id={}", customer.getId());
+
+            // Also inject CustomerFact for template-compiled DRL rules (e.g. customer.is_owner)
+            CustomerFact customerFact = new CustomerFact(
+                    customer.getId(),
+                    customer.getSegments(),
+                    customer.getLoyaltyTier()
+            );
+            facts.add(customerFact);
+            logger.debug("Added CustomerFact: id={}", customer.getId());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addVoucherFacts(Object voucherObj, List<Object> facts) {
+        if (voucherObj == null) {
+            return;
+        }
+
+        VoucherFact voucher = convertToVoucherFact(voucherObj);
+        if (voucher != null) {
+            facts.add(voucher);
+            logger.debug("Added VoucherFact: code={}, ownerCustomerId={}", voucher.getCode(), voucher.getOwnerCustomerId());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private VoucherFact convertToVoucherFact(Object voucherObj) {
+        try {
+            if (voucherObj instanceof VoucherFact vf) {
+                return vf;
+            }
+
+            if (voucherObj instanceof Map<?, ?> voucherMap) {
+                Map<String, Object> m = (Map<String, Object>) voucherMap;
+                VoucherFact vf = new VoucherFact();
+                vf.setCode((String) m.get("code"));
+                vf.setOwnerCustomerId((String) m.get("ownerCustomerId"));
+                Object maxUses = m.get("maxUsesPerCode");
+                if (maxUses instanceof Number n) {
+                    vf.setMaxUsesPerCode(n.intValue());
+                }
+                Object usedCount = m.get("usedCount");
+                if (usedCount instanceof Number n) {
+                    vf.setUsedCount(n.intValue());
+                }
+                return vf;
+            }
+
+            logger.warn("Unable to convert voucher object of type: {}", voucherObj.getClass());
+            return null;
+        } catch (IllegalArgumentException | ClassCastException e) {
+            logger.error("Error converting voucher object: {}", e.getMessage());
+            return null;
         }
     }
 

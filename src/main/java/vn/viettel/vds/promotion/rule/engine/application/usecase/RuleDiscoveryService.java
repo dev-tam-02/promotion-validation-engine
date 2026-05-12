@@ -8,8 +8,9 @@ import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.BundleRepositoryPort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.RuleEnginePort;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class RuleDiscoveryService {
@@ -34,7 +35,7 @@ public class RuleDiscoveryService {
 
         // 1. Get all active bundles
         List<BundleEntity> activeBundles = bundleRepositoryPort.findActiveBundles();
-        
+
         if (activeBundles.isEmpty()) {
             logger.info("No active bundles found");
             return List.of();
@@ -58,17 +59,17 @@ public class RuleDiscoveryService {
         for (int i = 0; i < activeBundles.size(); i++) {
             BundleEntity bundle = activeBundles.get(i);
             ExecuteResponse response = responses.get(i);
-            
+
             if (Boolean.TRUE.equals(response.getOk()) && "ALLOW".equals(response.getDecision())) {
                 validCampaigns.add(bundle.getRuleId()); // Using ruleId as campaignId
                 logger.debug("Campaign {} is valid for this context", bundle.getRuleId());
             } else {
-                logger.debug("Campaign {} is invalid: decision={}, reasons={}", 
+                logger.debug("Campaign {} is invalid: decision={}, reasons={}",
                         bundle.getRuleId(), response.getDecision(), response.getReasonCodes());
             }
         }
 
-        logger.info("Found {} valid campaigns out of {} total", 
+        logger.info("Found {} valid campaigns out of {} total",
                 validCampaigns.size(), activeBundles.size());
 
         return validCampaigns;
@@ -81,7 +82,7 @@ public class RuleDiscoveryService {
         logger.info("Discovering campaigns with details");
 
         List<BundleEntity> activeBundles = bundleRepositoryPort.findActiveBundles();
-        
+
         if (activeBundles.isEmpty()) {
             return List.of();
         }
@@ -92,7 +93,7 @@ public class RuleDiscoveryService {
                         bundle.getId(),
                         request.getContext(),
                         new RuleEnginePort.ExecuteOptions(
-                                request.isExplainResults() ? "FULL" : "NONE", 
+                                request.isExplainResults() ? "FULL" : "NONE",
                                 30000, 1000
                         )
                 ))
@@ -105,7 +106,7 @@ public class RuleDiscoveryService {
         for (int i = 0; i < activeBundles.size(); i++) {
             BundleEntity bundle = activeBundles.get(i);
             ExecuteResponse response = responses.get(i);
-            
+
             CampaignValidationResult result = new CampaignValidationResult();
             result.setCampaignId(bundle.getRuleId());
             result.setBundleHash(bundle.getId());
@@ -114,13 +115,13 @@ public class RuleDiscoveryService {
             result.setReasonCodes(response.getReasonCodes());
             result.setLatencyMs(response.getEngine().getLatencyMs());
             result.setCacheHit(response.getEngine().getCacheHit());
-            
+
             if (request.isExplainResults()) {
                 result.setExplain(response.getExplain().stream()
                         .map(entry -> entry.getNode() + ": " + entry.getOperator() + " = " + entry.getResult())
-                        .collect(Collectors.toList()));
+                        .toList());
             }
-            
+
             results.add(result);
         }
 
@@ -136,11 +137,21 @@ public class RuleDiscoveryService {
         }
 
         // Getters and setters
-        public Map<String, Object> getContext() { return context; }
-        public void setContext(Map<String, Object> context) { this.context = context; }
-        
-        public boolean isExplainResults() { return explainResults; }
-        public void setExplainResults(boolean explainResults) { this.explainResults = explainResults; }
+        public Map<String, Object> getContext() {
+            return context;
+        }
+
+        public void setContext(Map<String, Object> context) {
+            this.context = context;
+        }
+
+        public boolean isExplainResults() {
+            return explainResults;
+        }
+
+        public void setExplainResults(boolean explainResults) {
+            this.explainResults = explainResults;
+        }
     }
 
     public static class CampaignValidationResult {
@@ -154,28 +165,68 @@ public class RuleDiscoveryService {
         private Boolean cacheHit;
 
         // Getters and setters
-        public String getCampaignId() { return campaignId; }
-        public void setCampaignId(String campaignId) { this.campaignId = campaignId; }
-        
-        public String getBundleHash() { return bundleHash; }
-        public void setBundleHash(String bundleHash) { this.bundleHash = bundleHash; }
-        
-        public boolean isValid() { return valid; }
-        public void setValid(boolean valid) { this.valid = valid; }
-        
-        public String getDecision() { return decision; }
-        public void setDecision(String decision) { this.decision = decision; }
-        
-        public List<String> getReasonCodes() { return reasonCodes; }
-        public void setReasonCodes(List<String> reasonCodes) { this.reasonCodes = reasonCodes; }
-        
-        public List<String> getExplain() { return explain; }
-        public void setExplain(List<String> explain) { this.explain = explain; }
-        
-        public Integer getLatencyMs() { return latencyMs; }
-        public void setLatencyMs(Integer latencyMs) { this.latencyMs = latencyMs; }
-        
-        public Boolean getCacheHit() { return cacheHit; }
-        public void setCacheHit(Boolean cacheHit) { this.cacheHit = cacheHit; }
+        public String getCampaignId() {
+            return campaignId;
+        }
+
+        public void setCampaignId(String campaignId) {
+            this.campaignId = campaignId;
+        }
+
+        public String getBundleHash() {
+            return bundleHash;
+        }
+
+        public void setBundleHash(String bundleHash) {
+            this.bundleHash = bundleHash;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public void setValid(boolean valid) {
+            this.valid = valid;
+        }
+
+        public String getDecision() {
+            return decision;
+        }
+
+        public void setDecision(String decision) {
+            this.decision = decision;
+        }
+
+        public List<String> getReasonCodes() {
+            return reasonCodes;
+        }
+
+        public void setReasonCodes(List<String> reasonCodes) {
+            this.reasonCodes = reasonCodes;
+        }
+
+        public List<String> getExplain() {
+            return explain;
+        }
+
+        public void setExplain(List<String> explain) {
+            this.explain = explain;
+        }
+
+        public Integer getLatencyMs() {
+            return latencyMs;
+        }
+
+        public void setLatencyMs(Integer latencyMs) {
+            this.latencyMs = latencyMs;
+        }
+
+        public Boolean getCacheHit() {
+            return cacheHit;
+        }
+
+        public void setCacheHit(Boolean cacheHit) {
+            this.cacheHit = cacheHit;
+        }
     }
 }

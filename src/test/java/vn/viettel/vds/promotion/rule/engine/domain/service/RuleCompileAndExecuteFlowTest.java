@@ -62,8 +62,6 @@ class RuleCompileAndExecuteFlowTest {
         return ks.newKieContainer(module.getReleaseId());
     }
 
-    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) {}
-
     private ExecutionResult executeRule(String drl, Customer customer, Order order) {
         KieContainer container = compileAndGetContainer(drl);
         StatelessKieSession session = container.newStatelessKieSession();
@@ -125,6 +123,13 @@ class RuleCompileAndExecuteFlowTest {
         i.setPrice(price);
         i.setQuantity(qty);
         return i;
+    }
+
+    // Sonar rules S100/S1186/S1172 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods with unused params).
+    @SuppressWarnings({"java:S100", "java:S1186", "java:S1172"})
+    private record ExecutionResult(String decision, boolean ok, List<String> reasonCodes) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
     // ======== Tests ========

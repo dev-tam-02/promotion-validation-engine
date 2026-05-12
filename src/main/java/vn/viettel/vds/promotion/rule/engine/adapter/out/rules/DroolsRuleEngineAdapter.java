@@ -1,5 +1,8 @@
 package vn.viettel.vds.promotion.rule.engine.adapter.out.rules;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Weigher;
 import org.kie.api.runtime.KieContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +24,6 @@ import vn.viettel.vds.promotion.rule.engine.domain.service.TemporalDrlGenerator;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.ExecutionMetricsService;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.KieSessionManager;
 import vn.viettel.vds.promotion.rule.engine.domain.service.execution.RuleExecutionOrchestrator;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Weigher;
 
 import java.time.Duration;
 import java.util.*;
@@ -98,7 +97,8 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
             // Generate business rule DRL with temporal policy awareness
             String businessRuleDrl = ruleTranslationService.translateToDrl(
                     input.getNodes(),
-                    hasTemporalPolicy
+                    hasTemporalPolicy,
+                    input.getRuleId()
             );
 
             logger.debug("Generated business rule DRL:\n{}", businessRuleDrl);
@@ -336,6 +336,7 @@ public class DroolsRuleEngineAdapter implements RuleEnginePort {
      * @param bundleHash the bundle hash identifier
      * @return artifact bytes or null if not found
      */
+    @SuppressWarnings("java:S2139")
     private byte[] loadBundleFromPersistence(String bundleHash) {
         // Find bundle entity in database
         Optional<BundleEntity> bundleOpt = bundleRepositoryPort.findById(bundleHash);

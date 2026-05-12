@@ -9,10 +9,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.promix.platform.outbox.spi.OutboxService;
+import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
 import vn.viettel.vds.promotion.rule.engine.TestFixtures;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.BundleEntity;
 import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.CompileJobEntity;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.OutboxEventEntity;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.*;
 
@@ -23,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,7 +39,7 @@ class CompileServiceTest {
     private CompileJobRepositoryPort compileJobRepository;
 
     @Mock
-    private OutboxEventRepositoryPort outboxEventRepository;
+    private OutboxService outboxService;
 
     @Mock
     private ObjectStoragePort objectStoragePort;
@@ -58,7 +61,7 @@ class CompileServiceTest {
     @BeforeEach
     void setUp() {
         sut = new CompileService(bundleRepository, compileJobRepository,
-                outboxEventRepository, objectStoragePort, eventPublisherPort, ruleEnginePort);
+                outboxService, objectStoragePort, eventPublisherPort, ruleEnginePort);
     }
 
     @Nested
@@ -91,8 +94,15 @@ class CompileServiceTest {
 
             verify(objectStoragePort).store(anyString(), any(byte[].class));
             verify(bundleRepository).save(any(BundleEntity.class));
-            verify(outboxEventRepository).save(any(OutboxEventEntity.class));
-            verify(eventPublisherPort).publishBundlePublished(any());
+            verify(outboxService).createEvent(
+                    eq("Bundle"),
+                    eq("sha256:abc123"),
+                    eq("BundlePublished"),
+                    any(BundlePublishedEvent.class),
+                    eq("promotion_bundle_published"),
+                    isNull(),
+                    eq(BundlePublishedEvent.class)
+            );
             verify(eventPublisherPort).publishCacheInvalidation(any());
         }
 

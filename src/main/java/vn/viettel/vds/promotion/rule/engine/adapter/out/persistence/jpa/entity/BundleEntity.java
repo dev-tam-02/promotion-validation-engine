@@ -37,21 +37,25 @@ public class BundleEntity extends BaseEntity {
     private String operatorsFingerprint;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private EngineInfo engine;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "bundle")
     private List<TimeLinkEntity> timeLinks;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private Limits limits;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private Artifact artifact;
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
     @Embedded
+    @SuppressWarnings("java:S1948")
     private Source source;
 
     @Lob

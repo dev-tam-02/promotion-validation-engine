@@ -11,11 +11,7 @@ import vn.viettel.vds.promotion.rule.engine.domain.model.ValidationResult;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 @Service
 public class RuleExecutionOrchestrator {
@@ -404,14 +400,14 @@ public class RuleExecutionOrchestrator {
      * Execute session with timeout enforcement.
      * Wraps the blocking session.execute() call in a CompletableFuture with timeout.
      *
-     * @param session the stateless KIE session
-     * @param facts the facts to insert
-     * @param timeoutMs timeout in milliseconds
+     * @param session     the stateless KIE session
+     * @param facts       the facts to insert
+     * @param timeoutMs   timeout in milliseconds
      * @param executionId execution ID for logging
      * @throws RuleExecutionTimeoutException if execution exceeds timeout
      */
     private void executeWithTimeout(StatelessKieSession session, List<Object> facts,
-                                     int timeoutMs, String executionId) {
+                                    int timeoutMs, String executionId) {
         try {
             CompletableFuture<Void> executionFuture = CompletableFuture.runAsync(
                     () -> session.execute(facts),

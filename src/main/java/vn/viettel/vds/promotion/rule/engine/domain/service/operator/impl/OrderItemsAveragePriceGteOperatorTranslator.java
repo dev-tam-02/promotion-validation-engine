@@ -9,7 +9,7 @@ import java.util.Map;
  * Operator: order.items.average.price.gte
  * Checks if the average price of order items is >= threshold.
  * Uses Drools accumulate for averaging.
- *
+ * <p>
  * Params: minAveragePrice (Number)
  */
 @Component

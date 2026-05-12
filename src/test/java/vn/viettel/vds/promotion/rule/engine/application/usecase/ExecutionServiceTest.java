@@ -8,10 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import vn.viettel.vds.promotion.rule.engine.TestFixtures;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.BundleEntity;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.EngineConfigEntity;
 import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteRequest;
-import vn.viettel.vds.promotion.rule.engine.application.dto.ExecuteResponse;
 import vn.viettel.vds.promotion.rule.engine.application.port.in.ExecutionUseCase;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.BundleRepositoryPort;
 import vn.viettel.vds.promotion.rule.engine.application.port.out.EngineConfigRepositoryPort;
@@ -25,7 +22,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,7 +95,7 @@ class ExecutionServiceTest {
 
             // Then
             assertThat(result.getOk()).isTrue();
-            verify(ruleEnginePort).warmupBundle(eq(bundleHash), eq(artifactBytes));
+            verify(ruleEnginePort).warmupBundle(bundleHash, artifactBytes);
         }
 
         @Test

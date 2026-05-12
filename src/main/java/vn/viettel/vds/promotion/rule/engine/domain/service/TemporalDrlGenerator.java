@@ -44,6 +44,7 @@ public class TemporalDrlGenerator {
     private static final String RETURN_FALSE_INDENT_12 = "            return false;\n";
     private static final String CLOSE_BRACE_DOUBLE_NEWLINE = "}\n\n";
     private static final String ELSE_BLOCK = "    } else {\n";
+
     /**
      * Generate timeframe.drl from temporal policy data.
      *

@@ -20,7 +20,7 @@ public class SessionPoolCleanupScheduler {
         this.sessionPool = sessionPool;
     }
 
-    @Scheduled(fixedRateString = "#{${validation.engine.session-pool.cleanup-interval-minutes:15} * 60 * 1000}")
+    @Scheduled(fixedRateString = "${validation.engine.session-pool.cleanup-interval-ms:900000}")
     public void cleanupExpiredSessions() {
         logger.debug("Starting scheduled session pool cleanup");
 

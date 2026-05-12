@@ -176,8 +176,8 @@ public class BundlePreloadService {
      * Runs every N minutes (default 15). Since container cache TTL is 60min and this runs every 15min,
      * containers are refreshed well before expiration — eliminating TTL-based cache misses.
      */
-    @Scheduled(fixedRateString = "#{${validation.engine.bundle.refresh-ahead-interval-minutes:15} * 60 * 1000}",
-               initialDelayString = "#{${validation.engine.bundle.refresh-ahead-interval-minutes:15} * 60 * 1000}")
+    @Scheduled(fixedRateString = "${validation.engine.bundle.refresh-ahead-interval-ms:900000}",
+            initialDelayString = "${validation.engine.bundle.refresh-ahead-interval-ms:900000}")
     public void refreshAhead() {
         if (!config.isRefreshAheadEnabled()) {
             return;

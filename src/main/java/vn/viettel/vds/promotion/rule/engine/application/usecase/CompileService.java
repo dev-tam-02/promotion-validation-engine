@@ -1,5 +1,6 @@
 package vn.viettel.vds.promotion.rule.engine.application.usecase;
 
+import com.promix.platform.outbox.spi.OutboxService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.viettel.vds.promotion.engine.event.BundleCacheInvalidationEvent;
 import vn.viettel.vds.promotion.engine.event.BundlePublishedEvent;
-import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.*;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.BundleEntity;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.CompileJobEntity;
+import vn.viettel.vds.promotion.rule.engine.adapter.out.persistence.jpa.entity.TimeLinkEntity;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileJobResponse;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileRequest;
 import vn.viettel.vds.promotion.rule.engine.application.dto.CompileResponse;
@@ -18,7 +21,9 @@ import vn.viettel.vds.promotion.rule.engine.application.port.out.*;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,9 +32,13 @@ public class CompileService implements CompileUseCase {
 
     private static final String ENGINE_TYPE_DROOLS = "drools";
 
+    private static final String BUNDLE_PUBLISHED_TOPIC = "promotion_bundle_published";
+    private static final String AGGREGATE_TYPE_BUNDLE = "Bundle";
+    private static final String EVENT_TYPE_BUNDLE_PUBLISHED = "BundlePublished";
+
     private final BundleRepositoryPort bundleRepository;
     private final CompileJobRepositoryPort compileJobRepository;
-    private final OutboxEventRepositoryPort outboxEventRepository;
+    private final OutboxService outboxService;
     private final ObjectStoragePort objectStoragePort;
     private final EventPublisherPort eventPublisherPort;
     private final RuleEnginePort ruleEnginePort;
@@ -40,13 +49,13 @@ public class CompileService implements CompileUseCase {
     public CompileService(
             BundleRepositoryPort bundleRepository,
             CompileJobRepositoryPort compileJobRepository,
-            OutboxEventRepositoryPort outboxEventRepository,
+            OutboxService outboxService,
             ObjectStoragePort objectStoragePort,
             EventPublisherPort eventPublisherPort,
             @Qualifier("droolsRuleEngineAdapter") RuleEnginePort ruleEnginePort) {
         this.bundleRepository = bundleRepository;
         this.compileJobRepository = compileJobRepository;
-        this.outboxEventRepository = outboxEventRepository;
+        this.outboxService = outboxService;
         this.objectStoragePort = objectStoragePort;
         this.eventPublisherPort = eventPublisherPort;
         this.ruleEnginePort = ruleEnginePort;
@@ -92,9 +101,11 @@ public class CompileService implements CompileUseCase {
             String artifactKey = generateArtifactKey(result.getBundleHash());
             objectStoragePort.store(artifactKey, result.getArtifactBytes());
 
-            // Create bundle entity
-            BundleEntity bundle = createBundle(request, result, artifactKey);
-            bundleRepository.save(bundle);
+            // Bundle hash is deterministic: reuse existing bundle if the same
+            // hash was already persisted to avoid optimistic-locking conflicts
+            // on re-compile of identical DRL content.
+            BundleEntity bundle = bundleRepository.findById(result.getBundleHash())
+                    .orElseGet(() -> bundleRepository.save(createBundle(request, result, artifactKey)));
 
             return handleCompilationSuccess(compileJob, request, result, bundle);
 
@@ -285,33 +296,25 @@ public class CompileService implements CompileUseCase {
     }
 
     private void publishBundlePublishedEvent(CompileRequest request, String bundleHash) {
-        // Create outbox event
-        OutboxEventEntity outboxEvent = new OutboxEventEntity();
-        outboxEvent.setId("ox_" + UUID.randomUUID().toString().replace("-", ""));
-        outboxEvent.setType(OutboxEventEntity.EventType.BUNDLE_PUBLISHED);
-        Map<String, String> payload = new HashMap<>();
-        payload.put("ruleId", request.getRuleId());
-        payload.put("ruleVersion", String.valueOf(request.getVersion()));
-        payload.put("bundleHash", bundleHash);
-        outboxEvent.setPayload(payload);
-        outboxEvent.setStatus(OutboxEventEntity.EventStatus.PENDING);
-        outboxEvent.setAttempts(0);
-        outboxEvent.setCreatedAt(Instant.now());
-
-        outboxEventRepository.save(outboxEvent);
-
-        // Publish bundle published event
         BundlePublishedEvent event = new BundlePublishedEvent(
                 request.getRuleId(), request.getVersion(), null, bundleHash);
-        eventPublisherPort.publishBundlePublished(event);
 
-        // Publish cache invalidation event to all instances (broadcast pattern)
+        outboxService.createEvent(
+                AGGREGATE_TYPE_BUNDLE,
+                request.getRuleId(),
+                EVENT_TYPE_BUNDLE_PUBLISHED,
+                event,
+                BUNDLE_PUBLISHED_TOPIC,
+                null,
+                BundlePublishedEvent.class
+        );
+
         BundleCacheInvalidationEvent cacheInvalidationEvent = new BundleCacheInvalidationEvent(
                 bundleHash,
                 request.getRuleId(),
                 request.getVersion(),
                 BundleCacheInvalidationEvent.InvalidationType.BUNDLE_UPDATED,
-                null  // sourceInstanceId will be set by KafkaEventPublisherAdapter
+                null
         );
         eventPublisherPort.publishCacheInvalidation(cacheInvalidationEvent);
     }

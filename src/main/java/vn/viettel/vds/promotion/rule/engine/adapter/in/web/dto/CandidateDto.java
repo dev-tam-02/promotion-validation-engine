@@ -7,9 +7,12 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Map;
 
+// Sonar rules S100/S1172/S1186 are false positives on Java records (older sonar-java plugins
+// analyze record components/canonical constructor as regular methods).
 @Schema(description = "Candidate data for rule execution")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record CandidateDto(
+@SuppressWarnings({"java:S100", "java:S1172", "java:S1186"})
+public record CandidateDto( // NOSONAR
         @Schema(description = "Candidate identifier", example = "SAVE20", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Candidate ID is required")
         @JsonProperty("id")
@@ -23,4 +26,5 @@ public record CandidateDto(
         @JsonProperty("metadata")
         Map<String, Object> metadata
 ) {
+    // Empty body intentional — Java record canonical constructor is implicit.
 }

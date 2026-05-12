@@ -41,14 +41,25 @@ public class FastCheckService implements FastCheckUseCase {
     @Override
     public FastCheckResponse performFastCheck(FastCheckRequest request) {
 
-        // Load fast check rules for the campaign/bundle
+        // Load fast check rules for the canonical (subjectType, subjectKey).
+        // Fail-closed: a null config means no rule is configured for this
+        // subject, which must deny rather than silently allow.
         RuleConfiguration config = ruleConfigurationPort.getConfiguration(
+                request.getSubjectType(),
                 request.getCampaignId()
         );
 
-        if (config == null || !config.hasFastCheckRules()) {
-            // No fast check rules configured - proceed to full evaluation
-            return FastCheckResponse.allow("No fast check rules configured");
+        if (config == null) {
+            log.warn("Fast-check denied — no rule configured for {}:{}",
+                    request.getSubjectType(), request.getCampaignId());
+            return FastCheckResponse.deny("NO_RULE_CONFIGURED",
+                    "No validation rule configured for " + request.getSubjectType() + ":" + request.getCampaignId());
+        }
+
+        if (!config.hasFastCheckRules()) {
+            // Config row exists but has no gate constraints — allow through
+            // to full Drools evaluation.
+            return FastCheckResponse.allow("Config row has no fast-check constraints");
         }
 
         // 1. TIME CHECKS (fastest - just timestamp comparison)
@@ -285,15 +296,25 @@ public class FastCheckService implements FastCheckUseCase {
     }
 
     // Result records
-    private record TimeCheckResult(boolean passed, String failureCode, String explanation) {
+    // Sonar rules S100/S1186 are false positives on Java records (older sonar-java plugins
+    // analyze record components/canonical constructor as regular methods).
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record TimeCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record OrderCheckResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record OrderCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record BlacklistCheckResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 
-    private record RateLimitResult(boolean passed, String failureCode, String explanation) {
+    @SuppressWarnings({"java:S100", "java:S1186"})
+    private record RateLimitResult(boolean passed, String failureCode, String explanation) { // NOSONAR
+        // Empty body intentional — Java record canonical constructor is implicit.
     }
 }

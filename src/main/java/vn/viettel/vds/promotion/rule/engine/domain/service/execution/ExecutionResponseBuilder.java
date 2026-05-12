@@ -20,14 +20,14 @@ public class ExecutionResponseBuilder {
                                                 long startTime,
                                                 ExecutionTracingService.TracingAgendaEventListener tracingListener) {
         ExecuteResponse response = new ExecuteResponse();
-        
+
         response.setOk(Boolean.TRUE.equals(result.getOk()));
         response.setDecision(result.getDecision() != null ? result.getDecision() : "DENY");
         response.setReasonCodes(determineReasonCodes(reasonCodes, result));
         response.setExplain(tracingListener != null ? tracingListener.getExplainEntries() : List.of());
-        
+
         response.setEngine(buildEngineInfo(startTime));
-        
+
         return response;
     }
 

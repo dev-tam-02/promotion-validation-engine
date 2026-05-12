@@ -14,8 +14,8 @@ public interface BundleRepositoryPort {
     Optional<BundleEntity> findByRuleIdAndRuleVersion(String ruleId, Integer ruleVersion);
 
     boolean existsById(String bundleHash);
-    
+
     List<BundleEntity> findActiveBundles();
-    
+
     List<BundleEntity> findBundlesByStatus(String status);
 }

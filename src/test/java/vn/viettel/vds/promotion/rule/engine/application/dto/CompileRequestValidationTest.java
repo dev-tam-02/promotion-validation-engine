@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import vn.viettel.vds.promotion.rule.engine.TestFixtures;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,8 +51,9 @@ class CompileRequestValidationTest {
             var violations = validator.validate(request);
 
             // Then
-            assertThat(violations).isNotEmpty();
-            assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("ruleId"));
+            assertThat(violations)
+                    .isNotEmpty()
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("ruleId"));
         }
 
         @Test

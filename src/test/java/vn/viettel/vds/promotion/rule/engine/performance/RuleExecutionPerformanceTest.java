@@ -53,7 +53,7 @@ class RuleExecutionPerformanceTest {
         long startTime = System.nanoTime();
         batchExecutor.executeOptimized(inputs, containerMap);
         long endTime = System.nanoTime();
-        
+
         // Then
         long durationMs = TimeUnit.NANOSECONDS.toMillis(endTime - startTime);
         assertTrue(durationMs < 5000, "Batch execution should complete within 5 seconds");

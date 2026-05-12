@@ -10,7 +10,10 @@ import org.kie.api.runtime.StatelessKieSession;
 import vn.viettel.vds.promotion.rule.engine.domain.model.*;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -92,16 +95,16 @@ class NewOperatorsDrlIntegrationTest {
 
         // Test Case 1: Brand rule should match
         testBrandRule(session);
-        
+
         // Test Case 2: Lifetime value rule should match
         testLifetimeValueRule(session);
-        
+
         // Test Case 3: Metadata rule should match
         testMetadataRule(session);
-        
+
         // Test Case 4: Initial amount rule should match
         testInitialAmountRule(session);
-        
+
         // Test Case 5: No rule should match
         testNoRuleMatch(session);
     }
@@ -117,7 +120,7 @@ class NewOperatorsDrlIntegrationTest {
         order.setId("order1");
         order.setInitialAmount(BigDecimal.valueOf(300000)); // Below threshold
         order.setMetadata(new HashMap<>()); // Initialize empty metadata to prevent NPE
-        
+
         OrderItem item = new OrderItem();
         item.setBrand("Nike"); // Should match brand rule
         item.setPrice(50000);

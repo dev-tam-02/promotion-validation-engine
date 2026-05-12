@@ -12,9 +12,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+// Sonar rules S100/S107/S1172/S1186 are false positives on Java records (older sonar-java plugins
+// analyze record components/canonical constructor as regular methods with too many/unused params).
 @Schema(description = "Order item data")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record OrderItemDto(
+@SuppressWarnings({"java:S100", "java:S107", "java:S1172", "java:S1186"})
+public record OrderItemDto( // NOSONAR
         @Schema(description = "SKU identifier (atomic unit of product)", example = "IPHONE-15-PRO-256GB-BLUE", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "SKU ID is required")
         @JsonProperty("skuId")
@@ -52,4 +55,5 @@ public record OrderItemDto(
         @JsonProperty("metadata")
         Map<String, Object> metadata
 ) {
+    // Empty body intentional — Java record canonical constructor is implicit.
 }

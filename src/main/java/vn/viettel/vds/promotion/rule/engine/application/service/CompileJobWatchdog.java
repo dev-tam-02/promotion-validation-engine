@@ -29,7 +29,7 @@ public class CompileJobWatchdog {
      * A job is considered stale if it has been RUNNING for more than 30 minutes.
      */
     @Scheduled(fixedDelayString = "${validation.sync.watchdog-interval-ms:300000}",
-               initialDelayString = "${validation.sync.watchdog-initial-delay-ms:60000}")
+            initialDelayString = "${validation.sync.watchdog-initial-delay-ms:60000}")
     public void cleanupStaleJobs() {
         Instant cutoff = Instant.now().minus(STALE_THRESHOLD);
         int cleaned = 0;

@@ -12,7 +12,7 @@ public class OrderItemPriceBetweenOperatorTranslator implements OperatorTranslat
     public String translate(String nodeId, Map<String, Object> params, String reasonCode) {
         Object minPrice = params.get("minPrice");
         Object maxPrice = params.get("maxPrice");
-        
+
         if (minPrice == null || maxPrice == null) {
             throw new IllegalArgumentException("Missing required parameters 'minPrice' and 'maxPrice' for order.item.price.between operator");
         }
@@ -20,7 +20,7 @@ public class OrderItemPriceBetweenOperatorTranslator implements OperatorTranslat
         StringBuilder sb = new StringBuilder();
         sb.append("        $order: Order()\n");
         sb.append("        exists(OrderItem(price >= ").append(minPrice)
-          .append(" && price <= ").append(maxPrice).append(") from $order.getItems())\n");
+                .append(" && price <= ").append(maxPrice).append(") from $order.getItems())\n");
 
         return sb.toString();
     }
