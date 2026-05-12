@@ -301,7 +301,7 @@ public class CompileService implements CompileUseCase {
 
         outboxService.createEvent(
                 AGGREGATE_TYPE_BUNDLE,
-                bundleHash,
+                request.getRuleId(),
                 EVENT_TYPE_BUNDLE_PUBLISHED,
                 event,
                 BUNDLE_PUBLISHED_TOPIC,
