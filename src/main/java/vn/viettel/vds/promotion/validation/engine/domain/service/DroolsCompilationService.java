@@ -53,12 +53,14 @@ public class DroolsCompilationService {
 
             Results results = kieBuilder.getResults();
 
+            List<String> errorMessages = new ArrayList<>();
             for (Message message : results.getMessages()) {
                 String logMessage = String.format("[%s] %s", message.getLevel(), message.getText());
                 logs.add(logMessage);
 
                 if (message.getLevel() == Message.Level.ERROR) {
                     logger.error("Compilation error: {}", message.getText());
+                    errorMessages.add(message.getText());
                 } else if (message.getLevel() == Message.Level.WARNING) {
                     logger.warn("Compilation warning: {}", message.getText());
                 } else {
@@ -66,8 +68,9 @@ public class DroolsCompilationService {
                 }
             }
 
-            if (results.hasMessages(Message.Level.ERROR)) {
-                throw new CompilationException("DRL compilation failed with errors", logs);
+            if (!errorMessages.isEmpty()) {
+                throw new CompilationException(
+                        "DRL compilation failed with errors: " + String.join("; ", errorMessages), logs);
             }
 
             InternalKieModule kieModule = (InternalKieModule) kieBuilder.getKieModule();
@@ -89,6 +92,8 @@ public class DroolsCompilationService {
                     KieServices.Factory.get().getClass().getPackage().getImplementationVersion()
             );
 
+        } catch (CompilationException e) {
+            throw e;
         } catch (Exception e) {
             throw new CompilationException(
                     String.format("DRL compilation failed for rule: %s", ruleId), e);
@@ -137,12 +142,14 @@ public class DroolsCompilationService {
 
             Results results = kieBuilder.getResults();
 
+            List<String> errorMessages = new ArrayList<>();
             for (Message message : results.getMessages()) {
                 String logMessage = String.format("[%s] %s", message.getLevel(), message.getText());
                 logs.add(logMessage);
 
                 if (message.getLevel() == Message.Level.ERROR) {
                     logger.error("Compilation error: {}", message.getText());
+                    errorMessages.add(message.getText());
                 } else if (message.getLevel() == Message.Level.WARNING) {
                     logger.warn("Compilation warning: {}", message.getText());
                 } else {
@@ -150,8 +157,9 @@ public class DroolsCompilationService {
                 }
             }
 
-            if (results.hasMessages(Message.Level.ERROR)) {
-                throw new CompilationException("DRL compilation failed with errors", logs);
+            if (!errorMessages.isEmpty()) {
+                throw new CompilationException(
+                        "DRL compilation failed with errors: " + String.join("; ", errorMessages), logs);
             }
 
             InternalKieModule kieModule = (InternalKieModule) kieBuilder.getKieModule();
@@ -172,6 +180,8 @@ public class DroolsCompilationService {
                     KieServices.Factory.get().getClass().getPackage().getImplementationVersion()
             );
 
+        } catch (CompilationException e) {
+            throw e;
         } catch (Exception e) {
             throw new CompilationException(
                     String.format("Multiple DRL compilation failed for bundle: %s", bundleId), e);
