@@ -113,7 +113,7 @@ public class RuleTranslationService {
         generateConditions(drl, rootNode, nodeMap, 2);
 
         drl.append(DRL_THEN);
-        drl.append("        System.out.println(\"[DROOLS] ✅ Rule MATCHED - All conditions passed\");\n");
+        drl.append("        System.out.println(\"[DROOLS] Rule MATCHED - All conditions passed\");\n");
         drl.append("        result.setDecision(\"ALLOW\");\n");
         drl.append("        result.setOk(true);\n");
         drl.append("        insert(new RuleMatched());  // Mark rule as matched to prevent failure rules from firing\n");
@@ -302,7 +302,7 @@ public class RuleTranslationService {
 
             drl.append("        )\n");
             drl.append(DRL_THEN);
-            drl.append("        System.out.println(\"[DROOLS] ❌ Condition FAILED - nodeId=")
+            drl.append("        System.out.println(\"[DROOLS] Condition FAILED - nodeId=")
                     .append(nodeId)
                     .append(", reasonCode=")
                     .append(reasonCode)
@@ -318,7 +318,7 @@ public class RuleTranslationService {
         drl.append(DRL_WHEN);
         drl.append("        not RuleMatched()  // Only fire if main rule didn't match\n");
         drl.append(DRL_THEN);
-        drl.append("        System.out.println(\"[DROOLS] 🚫 Overall DENY - reasonCodes=\" + reasonCodes);\n");
+        drl.append("        System.out.println(\"[DROOLS] Overall DENY - reasonCodes=\" + reasonCodes);\n");
         drl.append("        result.setDecision(\"DENY\");\n");
         drl.append("        result.setOk(false);\n");
         drl.append("        result.setReasonCodes(reasonCodes);\n");
