@@ -62,16 +62,21 @@ public class TemporalDrlGenerator {
         List<TimeWindow> windows = temporalData.getWindows();
         String startTs = temporalData.getStartTs();
         String endTs = temporalData.getEndTs();
+        String duration = temporalData.getDuration();
+        String interval = temporalData.getInterval();
 
-        logger.debug("Generating DRL: tz={}, rrule={}, daysOfWeek={}, windowsCount={}, startTs={}, endTs={}",
-                timezone, temporalData.getRrule(), daysOfWeekCsv, windows != null ? windows.size() : 0, startTs, endTs);
+        logger.debug("Generating DRL: tz={}, rrule={}, daysOfWeek={}, windowsCount={}, startTs={}, endTs={}, duration={}, interval={}",
+                timezone, temporalData.getRrule(), daysOfWeekCsv, windows != null ? windows.size() : 0, startTs, endTs,
+                duration, interval);
 
         // Generate DRL content
         StringBuilder drl = new StringBuilder();
         generateHeader(drl, tenantId);
         generateCheckDateRangeFunction(drl);
         generateCheckTimeWindowFunction(drl);
-        generateTemporalRules(drl, windows, timezone, daysOfWeekCsv, startTs, endTs);
+        generateCheckDurationIntervalFunction(drl);
+        generateTemporalRules(drl, windows, timezone, daysOfWeekCsv, startTs, endTs,
+                new Recurrence(duration, interval));
 
         String result = drl.toString();
         logger.info("Generated timeframe.drl for tenantId={}, assignmentId={}, size={} bytes",
@@ -108,6 +113,7 @@ public class TemporalDrlGenerator {
 
         // Imports
         drl.append("import vn.viettel.vds.promotion.validation.engine.domain.model.ValidationResult;\n");
+        drl.append("import vn.viettel.vds.promotion.validation.engine.domain.service.execution.FactPreparationService.ExecutionTimestamp;\n");
         drl.append("import java.time.ZonedDateTime;\n");
         drl.append("import java.time.Instant;\n");
         drl.append("import java.time.ZoneId;\n");
@@ -126,11 +132,11 @@ public class TemporalDrlGenerator {
 
     /**
      * Generate checkDateRange function for validating campaign start/end dates.
-     * Checks if current timestamp is within the valid date range (startTs to endTs).
+     * Checks if the evaluation time (ExecutionTimestamp fact) is within the valid date range (startTs to endTs).
      */
     private void generateCheckDateRangeFunction(StringBuilder drl) {
-        drl.append("function boolean checkDateRange(String startTs, String endTs) {\n");
-        drl.append("    Instant now = Instant.now();\n");
+        drl.append("function boolean checkDateRange(long nowMillis, String startTs, String endTs) {\n");
+        drl.append("    Instant now = Instant.ofEpochMilli(nowMillis);\n");
         drl.append(INDENT_4_NEWLINE);
         drl.append("    // Check start timestamp\n");
         drl.append("    if (startTs != null && !startTs.isEmpty()) {\n");
@@ -155,8 +161,8 @@ public class TemporalDrlGenerator {
     }
 
     private void generateCheckTimeWindowFunction(StringBuilder drl) {
-        drl.append("function boolean checkTimeWindow(String startTime, String endTime, String timezone, boolean spansMidnight, String daysOfWeekCsv) {\n");
-        drl.append("    ZonedDateTime zdt = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.of(timezone));\n");
+        drl.append("function boolean checkTimeWindow(long nowMillis, String startTime, String endTime, String timezone, boolean spansMidnight, String daysOfWeekCsv) {\n");
+        drl.append("    ZonedDateTime zdt = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.of(timezone));\n");
         drl.append("    DayOfWeek currentDay = zdt.getDayOfWeek();\n");
         drl.append("    LocalTime currentTime = zdt.toLocalTime();\n");
         drl.append("    LocalTime start = LocalTime.parse(startTime);\n");
@@ -184,12 +190,56 @@ public class TemporalDrlGenerator {
         drl.append("}\n\n");
     }
 
+    /**
+     * Generate checkDurationInterval function for "Lặp lại mỗi {interval} trong {duration}".
+     *
+     * Logic (same as Phase 2 validation-engine): cycles start at startTs and repeat every 'interval';
+     * the first 'duration' of each cycle is active.
+     * Example: startTs=Monday 09:00, interval=P2D, duration=PT3H
+     *   - Monday 09:00-12:00 ACTIVE, Wednesday 09:00-12:00 ACTIVE, ...
+     *
+     * Formula:
+     *   elapsed = now - startTs
+     *   positionInCycle = elapsed % intervalMs
+     *   isActive = positionInCycle < durationMs
+     */
+    private void generateCheckDurationIntervalFunction(StringBuilder drl) {
+        drl.append("function boolean checkDurationInterval(long nowMillis, String startTsStr, String isoDuration, String isoInterval) {\n");
+        drl.append("    long startMillis = Instant.parse(startTsStr).toEpochMilli();\n");
+        drl.append("    // Parse duration (ISO 8601)\n");
+        drl.append("    long durationMs;\n");
+        drl.append("    if (isoDuration.contains(\"T\")) {\n");
+        drl.append("        durationMs = java.time.Duration.parse(isoDuration).toMillis();\n");
+        drl.append("    } else {\n");
+        drl.append("        java.time.Period p = java.time.Period.parse(isoDuration);\n");
+        drl.append("        durationMs = (p.getDays() * 24L * 60L * 60L * 1000L) + (p.getMonths() * 30L * 24L * 60L * 60L * 1000L) + (p.getYears() * 365L * 24L * 60L * 60L * 1000L);\n");
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append(INDENT_4_NEWLINE);
+        drl.append("    // Parse interval (ISO 8601)\n");
+        drl.append("    long intervalMs;\n");
+        drl.append("    if (isoInterval.contains(\"T\")) {\n");
+        drl.append("        intervalMs = java.time.Duration.parse(isoInterval).toMillis();\n");
+        drl.append("    } else {\n");
+        drl.append("        java.time.Period p = java.time.Period.parse(isoInterval);\n");
+        drl.append("        intervalMs = (p.getDays() * 24L * 60L * 60L * 1000L) + (p.getMonths() * 30L * 24L * 60L * 60L * 1000L) + (p.getYears() * 365L * 24L * 60L * 60L * 1000L);\n");
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append(INDENT_4_NEWLINE);
+        drl.append("    // Calculate position in current cycle\n");
+        drl.append("    long positionInCycle = (nowMillis - startMillis) % intervalMs;\n");
+        drl.append("    boolean isActive = positionInCycle < durationMs;\n");
+        drl.append("    System.out.println(\"[TEMPORAL] Duration/Interval check: positionInCycle=\" + positionInCycle + \"ms, duration=\" + durationMs + \"ms, interval=\" + intervalMs + \"ms, isActive=\" + isActive);\n");
+        drl.append("    return isActive;\n");
+        drl.append("}\n\n");
+    }
+
     private void generateTemporalRules(StringBuilder drl, List<TimeWindow> windows,
                                        String timezone, String daysOfWeekCsv,
-                                       String startTs, String endTs) {
+                                       String startTs, String endTs, Recurrence recurrence) {
 
         boolean hasDateRange = (startTs != null && !startTs.isEmpty()) || (endTs != null && !endTs.isEmpty());
         boolean hasTimeWindows = windows != null && !windows.isEmpty();
+        // Recurrence is anchored on startTs; checkDateRange (evaluated first) already rejects times before it
+        boolean hasRecurrence = recurrence.isDefined() && startTs != null && !startTs.isEmpty();
 
         // If no constraints at all, generate always allow rule
         if (!hasDateRange && !hasTimeWindows) {
@@ -208,6 +258,9 @@ public class TemporalDrlGenerator {
                 hasDateRange, hasTimeWindows,
                 startTsParam, endTsParam
         );
+        if (hasRecurrence) {
+            context.recurrence = recurrence;
+        }
 
         // Generate allow and deny rules
         generateAllowRule(drl, context);
@@ -236,8 +289,16 @@ public class TemporalDrlGenerator {
     private java.util.List<String> buildConditions(TemporalRuleContext context) {
         java.util.List<String> conditions = new java.util.ArrayList<>();
 
+        // Evaluate against the time sent by the caller (e.g. transaction time), not the engine clock
+        conditions.add("ExecutionTimestamp($now : timestamp)");
+
         if (context.hasDateRange) {
-            conditions.add(String.format("eval(checkDateRange(\"%s\", \"%s\"))", context.startTsParam, context.endTsParam));
+            conditions.add(String.format("eval(checkDateRange($now, \"%s\", \"%s\"))", context.startTsParam, context.endTsParam));
+        }
+
+        if (context.recurrence != null) {
+            conditions.add(String.format("eval(checkDurationInterval($now, \"%s\", \"%s\", \"%s\"))",
+                    context.startTsParam, context.recurrence.duration(), context.recurrence.interval()));
         }
 
         if (context.hasTimeWindows) {
@@ -256,7 +317,7 @@ public class TemporalDrlGenerator {
 
     private String buildSingleWindowCondition(TimeWindow window, String timezone, String daysOfWeekCsv) {
         boolean spansMidnight = isSpansMidnight(window.getStartTime(), window.getEndTime());
-        return String.format("eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))",
+        return String.format("eval(checkTimeWindow($now, \"%s\", \"%s\", \"%s\", %s, \"%s\"))",
                 window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv);
     }
 
@@ -268,7 +329,7 @@ public class TemporalDrlGenerator {
             if (i > 0) {
                 windowCondition.append("            or\n");
             }
-            windowCondition.append(String.format("            eval(checkTimeWindow(\"%s\", \"%s\", \"%s\", %s, \"%s\"))%n",
+            windowCondition.append(String.format("            eval(checkTimeWindow($now, \"%s\", \"%s\", \"%s\", %s, \"%s\"))%n",
                     window.getStartTime(), window.getEndTime(), timezone, spansMidnight, daysOfWeekCsv));
         }
         windowCondition.append("        )");
@@ -395,6 +456,15 @@ public class TemporalDrlGenerator {
     );
 
     /**
+     * "Lặp lại mỗi {interval} trong {duration}" settings (ISO 8601), both required to be active.
+     */
+    private record Recurrence(String duration, String interval) {
+        boolean isDefined() {
+            return duration != null && !duration.isEmpty() && interval != null && !interval.isEmpty();
+        }
+    }
+
+    /**
      * Parameter object to reduce method parameter count.
      */
     private static class TemporalRuleContext {
@@ -405,6 +475,8 @@ public class TemporalDrlGenerator {
         private final boolean hasTimeWindows;
         private final String startTsParam;
         private final String endTsParam;
+        // Set only when the recurrence can be anchored on startTs
+        private Recurrence recurrence;
 
         TemporalRuleContext(List<TimeWindow> windows, String timezone, String daysOfWeekCsv,
                            boolean hasDateRange, boolean hasTimeWindows,

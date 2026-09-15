@@ -43,7 +43,8 @@ class TemporalDrlGeneratorTest {
         assertTrue(drl.contains("function boolean checkTimeWindow"));
         assertTrue(drl.contains("rule \"temporal_check_allow\""));
         assertTrue(drl.contains("salience 1000"));
-        assertTrue(drl.contains("eval(checkTimeWindow(\"09:00\", \"17:00\", \"Asia/Bangkok\", false, \"\"))"));
+        assertTrue(drl.contains("ExecutionTimestamp($now : timestamp)"));
+        assertTrue(drl.contains("eval(checkTimeWindow($now, \"09:00\", \"17:00\", \"Asia/Bangkok\", false, \"\"))"));
         assertTrue(drl.contains("insert(new TemporalAllowed())"));
         assertTrue(drl.contains("rule \"temporal_check_deny\""));
         assertTrue(drl.contains("salience 999"));
