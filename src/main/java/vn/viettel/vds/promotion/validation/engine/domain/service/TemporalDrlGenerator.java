@@ -74,6 +74,7 @@ public class TemporalDrlGenerator {
         generateHeader(drl, tenantId);
         generateCheckDateRangeFunction(drl);
         generateCheckTimeWindowFunction(drl);
+        generateCheckDayOfWeekFunction(drl);
         generateCheckDurationIntervalFunction(drl);
         generateTemporalRules(drl, windows, timezone, daysOfWeekCsv, startTs, endTs,
                 new Recurrence(duration, interval));
@@ -191,6 +192,23 @@ public class TemporalDrlGenerator {
     }
 
     /**
+     * Generate checkDayOfWeek function for "Ngày áp dụng trong tuần" without time-of-day windows
+     * (with windows, checkTimeWindow already checks the day).
+     */
+    private void generateCheckDayOfWeekFunction(StringBuilder drl) {
+        drl.append("function boolean checkDayOfWeek(long nowMillis, String timezone, String daysOfWeekCsv) {\n");
+        drl.append("    String currentDay = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.of(timezone)).getDayOfWeek().name();\n");
+        drl.append("    for (String day : daysOfWeekCsv.split(\",\")) {\n");
+        drl.append("        if (currentDay.equals(day.trim())) {\n");
+        drl.append("            return true;\n");
+        drl.append(INDENT_8_CLOSE_BRACE);
+        drl.append(INDENT_4_CLOSE_BRACE);
+        drl.append("    System.out.println(\"[TEMPORAL] Day check: \" + currentDay + \" is not in \" + daysOfWeekCsv);\n");
+        drl.append("    return false;\n");
+        drl.append("}\n\n");
+    }
+
+    /**
      * Generate checkDurationInterval function for "Lặp lại mỗi {interval} trong {duration}".
      *
      * Logic (same as Phase 2 validation-engine): cycles start at startTs and repeat every 'interval';
@@ -238,11 +256,12 @@ public class TemporalDrlGenerator {
 
         boolean hasDateRange = (startTs != null && !startTs.isEmpty()) || (endTs != null && !endTs.isEmpty());
         boolean hasTimeWindows = windows != null && !windows.isEmpty();
+        boolean hasDaysOfWeek = daysOfWeekCsv != null && !daysOfWeekCsv.isEmpty();
         // Recurrence is anchored on startTs; checkDateRange (evaluated first) already rejects times before it
         boolean hasRecurrence = recurrence.isDefined() && startTs != null && !startTs.isEmpty();
 
         // If no constraints at all, generate always allow rule
-        if (!hasDateRange && !hasTimeWindows) {
+        if (!hasDateRange && !hasTimeWindows && !hasDaysOfWeek) {
             logger.warn("No temporal constraints defined, generating 24/7 allow rule");
             generateAlwaysAllowRule(drl);
             return;
@@ -303,6 +322,9 @@ public class TemporalDrlGenerator {
 
         if (context.hasTimeWindows) {
             conditions.add(buildTimeWindowCondition(context.windows, context.timezone, context.daysOfWeekCsv));
+        } else if (context.daysOfWeekCsv != null && !context.daysOfWeekCsv.isEmpty()) {
+            conditions.add(String.format("eval(checkDayOfWeek($now, \"%s\", \"%s\"))",
+                    context.timezone, context.daysOfWeekCsv));
         }
 
         return conditions;

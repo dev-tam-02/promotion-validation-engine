@@ -110,6 +110,70 @@ class TemporalDrlEvaluationTimeTest {
         assertEquals(DENY, decide(container, "2026-09-16T10:00:00+07:00"));
     }
 
+    @Test
+    @DisplayName("Days of week without time windows are judged at the transaction time (PROM-1585)")
+    void daysOfWeekWithoutTimeWindows() {
+        // "Ngày áp dụng trong tuần": Monday and Wednesday, whole day, within the campaign dates
+        CompileRequest.TemporalPolicyData data = new CompileRequest.TemporalPolicyData();
+        data.setTimezone(TIMEZONE);
+        data.setRrule("FREQ=WEEKLY;BYDAY=MO,WE");
+        data.setStartTs("2026-09-01T00:00:00Z");
+        data.setEndTs("2026-12-31T00:00:00Z");
+        KieContainer container = compile(data);
+
+        assertEquals(ALLOW, decide(container, "2026-09-14T00:00:00+07:00"));
+        assertEquals(ALLOW, decide(container, "2026-09-16T23:59:00+07:00"));
+        assertEquals(DENY, decide(container, "2026-09-15T10:00:00+07:00"));
+        // Monday 23:30 in UTC is already Tuesday in the campaign timezone
+        assertEquals(DENY, decide(container, "2026-09-14T17:30:00Z"));
+        // Selected day but outside the campaign dates
+        assertEquals(DENY, decide(container, "2026-08-31T10:00:00+07:00"));
+    }
+
+    @Test
+    @DisplayName("Days of week alone (no dates, no time windows) still restrict the day (PROM-1585)")
+    void daysOfWeekOnly() {
+        CompileRequest.TemporalPolicyData data = new CompileRequest.TemporalPolicyData();
+        data.setTimezone(TIMEZONE);
+        data.setRrule("FREQ=WEEKLY;BYDAY=MO");
+        KieContainer container = compile(data);
+
+        assertEquals(ALLOW, decide(container, "2026-09-14T10:00:00+07:00"));
+        assertEquals(DENY, decide(container, "2026-09-15T10:00:00+07:00"));
+    }
+
+    @Test
+    @DisplayName("Repeat window without time windows also respects days of week (PROM-1585)")
+    void recurringWindowWithoutTimeWindowsRespectsDaysOfWeek() {
+        CompileRequest.TemporalPolicyData data = new CompileRequest.TemporalPolicyData();
+        data.setTimezone(TIMEZONE);
+        data.setRrule("FREQ=WEEKLY;BYDAY=MO");
+        data.setStartTs("2026-09-14T02:00:00Z");
+        data.setInterval("P2D");
+        data.setDuration("PT3H");
+        KieContainer container = compile(data);
+
+        assertEquals(ALLOW, decide(container, "2026-09-14T10:00:00+07:00"));
+        // Active repeat window but Wednesday is not a selected day
+        assertEquals(DENY, decide(container, "2026-09-16T10:00:00+07:00"));
+    }
+
+    @Test
+    @DisplayName("Repeat window without time windows or days of week (PROM-1585)")
+    void recurringWindowWithoutTimeWindows() {
+        CompileRequest.TemporalPolicyData data = new CompileRequest.TemporalPolicyData();
+        data.setTimezone(TIMEZONE);
+        data.setStartTs("2026-09-14T02:00:00Z");
+        data.setInterval("P2D");
+        data.setDuration("PT3H");
+        KieContainer container = compile(data);
+
+        assertEquals(ALLOW, decide(container, "2026-09-14T10:00:00+07:00"));
+        assertEquals(DENY, decide(container, "2026-09-14T14:00:00+07:00"));
+        assertEquals(DENY, decide(container, "2026-09-15T10:00:00+07:00"));
+        assertEquals(ALLOW, decide(container, "2026-09-16T10:00:00+07:00"));
+    }
+
     private CompileRequest.TemporalPolicyData temporalData(String rrule, String startTime, String endTime) {
         CompileRequest.TemporalPolicyData data = new CompileRequest.TemporalPolicyData();
         data.setTimezone(TIMEZONE);
