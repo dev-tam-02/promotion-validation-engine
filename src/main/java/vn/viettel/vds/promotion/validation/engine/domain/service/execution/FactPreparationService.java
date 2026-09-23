@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CandidateDto;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.CustomerDto;
+import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.ExecutionContextDto;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.OrderDto;
 import vn.viettel.vds.promotion.validation.engine.adapter.in.web.dto.OrderItemDto;
 import vn.viettel.vds.promotion.validation.engine.domain.model.Candidate;
@@ -34,9 +35,23 @@ public class FactPreparationService {
         addOrderFacts(context.get("order"), facts);
         addCandidateFacts(context.get("candidate"), facts);
         addExecutionContextFacts(context.get("executionContext"), facts);
+        ensureExecutionTimestamp(facts);
 
         logger.debug("Prepared {} total facts for rule execution", facts.size());
         return facts;
+    }
+
+    /**
+     * Temporal rules evaluate against the ExecutionTimestamp fact, so one must always be present.
+     * Falls back to the current time when the caller did not send an evaluation time.
+     */
+    private void ensureExecutionTimestamp(List<Object> facts) {
+        boolean present = facts.stream().anyMatch(ExecutionTimestamp.class::isInstance);
+        if (!present) {
+            long now = System.currentTimeMillis();
+            facts.add(new ExecutionTimestamp(now));
+            logger.debug("No evaluation time in execution context, using current time: {}", now);
+        }
     }
 
     private void addCustomerFacts(Object customerObj, List<Object> facts) {
@@ -88,6 +103,15 @@ public class FactPreparationService {
     }
 
     private void addExecutionContextFacts(Object executionContextObj, List<Object> facts) {
+        // /v1/execute sends ExecutionContextDto: "now" is the moment the rules must be evaluated at
+        // (e.g. the transaction time), not the moment the engine happens to process the request
+        if (executionContextObj instanceof ExecutionContextDto dto) {
+            if (dto.getNow() != null) {
+                facts.add(new ExecutionTimestamp(dto.getNow().toEpochMilli()));
+                logger.debug("Added ExecutionTimestamp fact from execution context: now={}", dto.getNow());
+            }
+            return;
+        }
         if (executionContextObj instanceof Map<?, ?> execContext) {
             facts.addAll(prepareContextFacts((Map<String, Object>) execContext));
         }
